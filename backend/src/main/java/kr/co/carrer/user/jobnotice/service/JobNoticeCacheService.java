@@ -34,11 +34,11 @@ public class JobNoticeCacheService {
     @Transactional(readOnly = true)
     public JobNoticeDTO.ResponseList getAnonymousJobNoticeList(
             String keyword,
-            JobType jobType,
-            String jobCategory,
-            CareerLevel careerLevel,
-            String location,
-            CompanySize companySize,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
             String period,
             String sort,
             int page,
@@ -47,11 +47,11 @@ public class JobNoticeCacheService {
         PageRequest pageRequest = PageRequest.of(page - 1, size);
 
         List<JobNotice> jobNotices = jobNoticeQueryRepository.findActiveJobNoticeContent(
-                keyword, jobType, jobCategory, careerLevel, location, companySize,
+                keyword, jobTypes, jobCategories, careerLevels, locations, companySizes,
                 period, sort, pageRequest
         );
         long totalElements = self.getActiveJobNoticeCount(
-                keyword, jobType, jobCategory, careerLevel, location, companySize, period
+                keyword, jobTypes, jobCategories, careerLevels, locations, companySizes, period
         );
         int totalPages = (int) Math.ceil((double) totalElements / size);
 
@@ -101,20 +101,20 @@ public class JobNoticeCacheService {
 
     @Cacheable(
             value = CacheConfig.JOB_NOTICE_LIST_COUNT,
-            key = "{#keyword, #jobType, #jobCategory, #careerLevel, #location, #companySize, #period}"
+            key = "{#keyword, #jobTypes, #jobCategories, #careerLevels, #locations, #companySizes, #period}"
     )
     @Transactional(readOnly = true)
     public long getActiveJobNoticeCount(
             String keyword,
-            JobType jobType,
-            String jobCategory,
-            CareerLevel careerLevel,
-            String location,
-            CompanySize companySize,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
             String period
     ) {
         return jobNoticeQueryRepository.countActiveJobNotices(
-                keyword, jobType, jobCategory, careerLevel, location, companySize, period
+                keyword, jobTypes, jobCategories, careerLevels, locations, companySizes, period
         );
     }
 

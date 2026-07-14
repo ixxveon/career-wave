@@ -9,7 +9,6 @@ import {
   createInitialFilters,
   createFilterGroups,
   createJobNoticeQueryParams,
-  DEFAULT_FILTER_VALUE,
   getJobBookmark,
   normalizeFilters,
   type Bookmarks,
@@ -46,6 +45,7 @@ export default function JobNoticeListPage() {
   const [period, setPeriod] = useState<Period>('기간 전체');
   const [sort, setSort] = useState<SortOption>('추천순');
   const [sortOpen, setSortOpen] = useState(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobNotice | null>(null);
   const isClosingRef = useRef(false);
   const [filters, setFilters] = useState<Filters>(createInitialFilters);
@@ -117,8 +117,8 @@ export default function JobNoticeListPage() {
           ? 'success'
           : 'empty';
 
-  function updateFilter(label: FilterLabel, value: string) {
-    setFilters((current) => ({ ...current, [label]: value }));
+  function applyFilters(nextFilters: Filters) {
+    setFilters(nextFilters);
   }
 
   async function toggleBookmark(id: number, fallbackBookmarked = false) {
@@ -154,8 +154,11 @@ export default function JobNoticeListPage() {
     }
   }
 
-  function resetFilter(label: FilterLabel) {
-    updateFilter(label, DEFAULT_FILTER_VALUE);
+  function resetFilter(label: FilterLabel, value: string) {
+    setFilters((current) => ({
+      ...current,
+      [label]: current[label].filter((selectedValue) => selectedValue !== value),
+    }));
   }
 
   function selectSort(option: SortOption) {
@@ -202,7 +205,9 @@ export default function JobNoticeListPage() {
     if (!availableFilterOptions) return;
     setFilters((current) => {
       const next = normalizeFilters(current, filterGroups);
-      return Object.keys(current).every((key) => current[key as FilterLabel] === next[key as FilterLabel]) ? current : next;
+      return Object.keys(current).every((key) => (
+        current[key as FilterLabel].join('|') === next[key as FilterLabel].join('|')
+      )) ? current : next;
     });
   }, [filterGroups]);
 
@@ -268,9 +273,17 @@ export default function JobNoticeListPage() {
       <JobNoticeBanner searchQuery={searchQuery} onSearch={setSearchQuery} stats={listStats} />
 
       <div className="jn-layout">
-        <JobNoticeFilters filters={filters} filterGroups={filterGroups} onChange={updateFilter} />
+        <JobNoticeFilters filters={filters} filterGroups={filterGroups} onApply={applyFilters} className="jn-filter-panel--desktop" />
 
         <main className="jn-results">
+          <button
+            type="button"
+            className="jn-mobile-filter-trigger"
+            aria-expanded={isMobileFilterOpen}
+            onClick={() => setIsMobileFilterOpen(true)}
+          >
+            <Filter size={17} /> 필터
+          </button>
           <JobNoticeResultToolbar
             resultTotalItems={resultTotalItems}
             filters={filters}
@@ -340,6 +353,25 @@ export default function JobNoticeListPage() {
           )}
         </main>
       </div>
+
+      {isMobileFilterOpen && (
+        <div className="jn-mobile-filter-drawer" role="dialog" aria-modal="true" aria-label="채용 공고 필터">
+          <button type="button" className="jn-mobile-filter-drawer__backdrop" aria-label="필터 닫기" onClick={() => setIsMobileFilterOpen(false)} />
+          <section className="jn-mobile-filter-drawer__content">
+            <div className="jn-mobile-filter-drawer__head">
+              <strong>필터</strong>
+              <button type="button" aria-label="필터 닫기" onClick={() => setIsMobileFilterOpen(false)}>×</button>
+            </div>
+            <JobNoticeFilters
+              filters={filters}
+              filterGroups={filterGroups}
+              onApply={applyFilters}
+              className="jn-filter-panel--drawer"
+              onApplied={() => setIsMobileFilterOpen(false)}
+            />
+          </section>
+        </div>
+      )}
 
       <button type="button" className="jn-scroll-top" aria-label="위로 이동" onClick={scrollToTop}>
         <ArrowUp size={18} />

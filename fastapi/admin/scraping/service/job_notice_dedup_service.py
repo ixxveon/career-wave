@@ -27,6 +27,8 @@ class JobNoticeDedupService:
                 company_size=notice.company_size,
                 job_category=notice.job_category,
                 career_level=notice.career_level,
+                career_min_years=notice.career_min_years,
+                career_max_years=notice.career_max_years,
                 location=notice.location,
                 salary=notice.salary,
                 notice_status=notice.notice_status,

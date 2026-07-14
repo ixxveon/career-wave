@@ -23,6 +23,8 @@ class NormalizedJobNotice:
     view_count: int
     deadline: date | None
     company_logo_url: str | None = None
+    career_min_years: int | None = None
+    career_max_years: int | None = None
 
 
 class JobNoticeNormalizer:
@@ -34,6 +36,11 @@ class JobNoticeNormalizer:
         ("FRONTEND", ("FRONTEND", "WEB PUBLISHER", "\ud504\ub860\ud2b8\uc5d4\ub4dc", "\ud37c\ube14\ub9ac\uc154")),
         ("DATA", ("DATA", "ANALYST", "ANALYTICS", "MACHINE LEARNING", "ML", "AI", "\ub370\uc774\ud130", "\ubd84\uc11d", "\uba38\uc2e0\ub7ec\ub2dd")),
         ("DEVOPS", ("DEVOPS", "SRE", "INFRA", "INFRASTRUCTURE", "CLOUD", "PLATFORM", "\uc778\ud504\ub77c", "\ud50c\ub7ab\ud3fc")),
+        ("MOBILE", ("MOBILE", "ANDROID", "IOS", "FLUTTER", "REACT NATIVE", "\ubaa8\ubc14\uc77c", "\uc548\ub4dc\ub85c\uc774\ub4dc")),
+        ("SECURITY", ("SECURITY", "SECOPS", "INFORMATION SECURITY", "\ubcf4\uc548")),
+        ("QA", ("QA", "QUALITY ASSURANCE", "TEST ENGINEER", "TESTING", "\ud14c\uc2a4\ud2b8", "\ud488\uc9c8")),
+        ("GAME", ("GAME", "UNITY", "UNREAL", "\uac8c\uc784")),
+        ("EMBEDDED", ("EMBEDDED", "FIRMWARE", "C++", "\uc784\ubca0\ub514\ub4dc", "\ud38c\uc6e8\uc5b4")),
     )
     _STANDARD_LOCATIONS = (
         ("\uc11c\uc6b8", ("\uc11c\uc6b8", "SEOUL")),
@@ -101,6 +108,9 @@ class JobNoticeNormalizer:
             fallback=raw_notice.original_url,
         )
         raw_categories = job_category if job_category is not None else raw_notice.job_category
+        normalized_career_value = career_level if career_level is not None else raw_notice.career_level
+        career_min_years, career_max_years = self._normalize_career_year_range(normalized_career_value)
+
         return NormalizedJobNotice(
             company_name=company_name if company_name is not None else self._normalize_text(raw_notice.company_name),
             title=normalized_title,
@@ -109,7 +119,9 @@ class JobNoticeNormalizer:
             job_type=self._normalize_job_type(job_type if job_type is not None else raw_notice.job_type),
             company_size=self._normalize_company_size(company_size if company_size is not None else raw_notice.company_size),
             job_category=self._normalize_job_categories(normalized_title, raw_categories),
-            career_level=self._normalize_career_level(career_level if career_level is not None else raw_notice.career_level),
+            career_level=self._normalize_career_level(normalized_career_value),
+            career_min_years=career_min_years,
+            career_max_years=career_max_years,
             location=self._normalize_location(location if location is not None else raw_notice.location),
             salary=salary if salary is not None else self._normalize_text(raw_notice.salary),
             notice_status=self._notice_status_from_date(parsed_deadline),
@@ -263,6 +275,19 @@ class JobNoticeNormalizer:
         if years:
             return "SENIOR" if max(years) >= 5 else "JUNIOR"
         return cls._DEFAULT_CAREER_LEVEL
+
+    @classmethod
+    def _normalize_career_year_range(cls, value: str | None) -> tuple[int | None, int | None]:
+        normalized = cls._normalize_token(value)
+        if normalized is None or any(marker in normalized for marker in ("ANY", "NOEXPERIENCE", "INTERN")):
+            return None, None
+
+        years = sorted(set(cls._extract_year_numbers(normalized)))
+        if not years:
+            return None, None
+        if len(years) == 1:
+            return years[0], None
+        return years[0], years[-1]
 
     @staticmethod
     def _notice_status_from_date(parsed_deadline: date | None) -> str:

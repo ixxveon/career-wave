@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -32,11 +33,11 @@ public class UserJobNoticeController implements UserJobNoticeControllerDocs {
     @GetMapping
     public ResponseEntity<ApiResponse<JobNoticeDTO.ResponseList>> getJobNotices(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) JobType jobType,
-            @RequestParam(required = false) String jobCategory,
-            @RequestParam(required = false) CareerLevel careerLevel,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) CompanySize companySize,
+            @RequestParam(required = false) List<JobType> jobType,
+            @RequestParam(required = false) List<String> jobCategory,
+            @RequestParam(required = false) List<CareerLevel> careerLevel,
+            @RequestParam(required = false) List<String> location,
+            @RequestParam(required = false) List<CompanySize> companySize,
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "1") int page,

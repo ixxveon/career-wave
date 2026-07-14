@@ -3,7 +3,7 @@ import { ChevronDown, Search } from 'lucide-react';
 import { createBannerStats, type BannerStat } from './jobNoticeStats';
 import type { JobNoticeListStats } from '../../../types/user/jobNotice';
 import {
-  DEFAULT_FILTER_VALUE,
+  createInitialFilters,
   getFilterOptionLabel,
   PERIODS,
   POPULAR_SEARCH_TAGS,
@@ -94,36 +94,44 @@ function BannerStats({ stats }: { stats: JobNoticeListStats }) {
   );
 }
 
-function FilterBlock({ group, value, onChange }: { group: FilterGroup; value: string; onChange: (label: FilterLabel, value: string) => void }) {
+function FilterBlock({ group, values, onChange }: { group: FilterGroup; values: string[]; onChange: (label: FilterLabel, value: string) => void }) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
 
   function selectOption(option: string) {
     onChange(group.label, option);
-    if (detailsRef.current) {
-      detailsRef.current.open = false;
-    }
+  }
+
+  function renderOption(option: string) {
+    return (
+      <button
+        type="button"
+        key={option}
+        className={values.includes(option) ? 'is-active' : ''}
+        aria-label={`${group.label} 필터 ${getFilterOptionLabel(option)} 선택`}
+        aria-pressed={values.includes(option)}
+        onClick={() => selectOption(option)}
+      >
+        {getFilterOptionLabel(option)}
+      </button>
+    );
   }
 
   return (
     <details className="jn-filter-block" ref={detailsRef}>
-      <summary aria-label={`${group.label} 필터 선택, 현재 값 ${value}`}>
+      <summary aria-label={`${group.label} 필터 선택, 현재 ${values.length}개 선택`}>
         <span>{group.label}</span>
-        {value !== DEFAULT_FILTER_VALUE && <em>{getFilterOptionLabel(value)}</em>}
+        {values.length > 0 && <em>{values.length}개 선택</em>}
         <strong>+</strong>
       </summary>
       <div>
-        {group.options.map((option) => (
-          <button
-            type="button"
-            key={option}
-            className={value === option ? 'is-active' : ''}
-            aria-label={`${group.label} 필터 ${getFilterOptionLabel(option)} 선택`}
-            aria-pressed={value === option}
-            onClick={() => selectOption(option)}
-          >
-            {getFilterOptionLabel(option)}
-          </button>
-        ))}
+        {group.optionGroups
+          ? group.optionGroups.map((optionGroup) => (
+            <section className="jn-filter-option-group" key={optionGroup.label}>
+              <strong>{optionGroup.label}</strong>
+              <div>{optionGroup.options.map(renderOption)}</div>
+            </section>
+          ))
+          : group.options.map(renderOption)}
       </div>
     </details>
   );
@@ -174,15 +182,17 @@ function SortDropdown({ selected, isOpen, onToggle, onSelect }: { selected: Sort
   );
 }
 
-function ActiveFilterChips({ filters, onReset }: { filters: Filters; onReset: (label: FilterLabel) => void }) {
-  const activeFilters = (Object.entries(filters) as Array<[FilterLabel, string]>).filter(([, value]) => value !== DEFAULT_FILTER_VALUE);
+function ActiveFilterChips({ filters, onReset }: { filters: Filters; onReset: (label: FilterLabel, value: string) => void }) {
+  const activeFilters = (Object.entries(filters) as Array<[FilterLabel, string[]]>).flatMap(([label, values]) =>
+    values.map((value) => [label, value] as const)
+  );
 
   if (activeFilters.length === 0) return null;
 
   return (
     <div className="jn-active-filters">
       {activeFilters.map(([label, value]) => (
-        <button key={label} type="button" aria-label={`${label} 필터 해제`} onClick={() => onReset(label)}>
+        <button key={`${label}-${value}`} type="button" aria-label={`${label} 필터 해제`} onClick={() => onReset(label, value)}>
           {getFilterOptionLabel(value)} ×
         </button>
       ))}
@@ -202,17 +212,44 @@ export function JobNoticeBanner({ searchQuery, onSearch, stats }: { searchQuery:
 export function JobNoticeFilters({
   filters,
   filterGroups,
-  onChange,
+  onApply,
+  className,
+  onApplied,
 }: {
   filters: Filters;
   filterGroups: FilterGroup[];
-  onChange: (label: FilterLabel, value: string) => void;
+  onApply: (filters: Filters) => void;
+  className?: string;
+  onApplied?: () => void;
 }) {
+  const [draftFilters, setDraftFilters] = useState<Filters>(filters);
+
+  useEffect(() => {
+    setDraftFilters(filters);
+  }, [filters]);
+
+  function toggleFilter(label: FilterLabel, value: string) {
+    setDraftFilters((current) => {
+      const selectedValues = current[label];
+      const nextValues = selectedValues.includes(value)
+        ? selectedValues.filter((selectedValue) => selectedValue !== value)
+        : [...selectedValues, value];
+      return { ...current, [label]: nextValues };
+    });
+  }
+
   return (
-    <aside className="jn-filter-panel">
+    <aside className={`jn-filter-panel${className ? ` ${className}` : ''}`}>
       {filterGroups.map((group) => (
-        <FilterBlock key={group.label} group={group} value={filters[group.label]} onChange={onChange} />
+        <FilterBlock key={group.label} group={group} values={draftFilters[group.label]} onChange={toggleFilter} />
       ))}
+      <div className="jn-filter-actions">
+        <button type="button" onClick={() => setDraftFilters(createInitialFilters())}>초기화</button>
+        <button type="button" onClick={() => {
+          onApply(draftFilters);
+          onApplied?.();
+        }}>필터 적용</button>
+      </div>
     </aside>
   );
 }
@@ -220,7 +257,7 @@ export function JobNoticeFilters({
 export function JobNoticeResultToolbar(props: {
   resultTotalItems: number;
   filters: Filters;
-  onReset: (label: FilterLabel) => void;
+  onReset: (label: FilterLabel, value: string) => void;
   period: Period;
   onPeriodChange: (period: Period) => void;
   sort: SortOption;
