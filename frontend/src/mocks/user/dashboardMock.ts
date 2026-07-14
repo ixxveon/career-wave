@@ -30,7 +30,7 @@ export const mockScrapJobs: ScrapJob[] = [
     deadline: "2026-06-30",
     noticeStatus: "ACTIVE",
     deleted: false,
-    createdAt: "2026-05-20T10:00:00Z",
+    bookmarkedAt: "2026-05-20T10:00:00Z",
   },
   {
     bookmarkId: 2,
@@ -42,7 +42,7 @@ export const mockScrapJobs: ScrapJob[] = [
     deadline: "2026-07-15",
     noticeStatus: "ACTIVE",
     deleted: false,
-    createdAt: "2026-05-21T09:00:00Z",
+    bookmarkedAt: "2026-05-21T09:00:00Z",
   },
   {
     bookmarkId: 3,
@@ -54,6 +54,6 @@ export const mockScrapJobs: ScrapJob[] = [
     deadline: "-",
     noticeStatus: "CLOSED",
     deleted: true,
-    createdAt: "2026-05-19T09:00:00Z",
+    bookmarkedAt: "2026-05-19T09:00:00Z",
   },
 ];

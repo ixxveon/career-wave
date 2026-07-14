@@ -62,7 +62,7 @@ const createJobNoticeViewModel = (job: ScrapJob): JobNoticeViewModel => ({
   bookmarked: true,
   stacks: [],
   tags: [],
-  postedAt: job.createdAt,
+  postedAt: job.bookmarkedAt,
   recommended: false,
   recommendScore: 0,
   views: 0,
@@ -119,7 +119,7 @@ function ScrappedJobPage() {
   const sortedScrapJobs = useMemo(() => {
     return [...scrappedJobs].sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        new Date(b.bookmarkedAt).getTime() - new Date(a.bookmarkedAt).getTime(),
     );
   }, [scrappedJobs]);
 
@@ -235,7 +235,7 @@ function ScrappedJobPage() {
 
                     <p className="cw-scrap-keywords">
                       등록일{" "}
-                      {new Date(job.createdAt).toLocaleDateString("ko-KR")}
+                      {new Date(job.bookmarkedAt).toLocaleDateString("ko-KR")}
                     </p>
 
                     {isDeleted && (
