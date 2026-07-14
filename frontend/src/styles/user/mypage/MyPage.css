@@ -3264,7 +3264,10 @@ Empty UI
 }
 
 .cw-card-notice {
-  margin: -4px 0 16px;
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px 0 0;
   padding: 10px 14px;
   border-radius: 10px;
   background: #fff9ef;
