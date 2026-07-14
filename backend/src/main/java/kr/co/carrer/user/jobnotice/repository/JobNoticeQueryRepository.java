@@ -112,9 +112,12 @@ public class JobNoticeQueryRepository {
         }
 
         // 2) 해당 페이지의 전체 행만 조회 후 동일 정렬 (페이지 크기만큼이라 재정렬 비용 무시 가능)
+        //    predicate를 다시 적용한다: 기본 READ_COMMITTED 격리 수준에서는 1)·2) 쿼리 사이에
+        //    공고 상태(ACTIVE→CLOSED)나 필터 대상 값이 바뀔 수 있어, ID 조건만 쓰면 이미 필터를
+        //    벗어난 공고가 응답에 섞일 수 있다. 페이지 크기만 조회하므로 성능 영향은 무시 가능.
         return queryFactory
                 .selectFrom(jobNotice)
-                .where(jobNotice.jobNoticeId.in(pageIds))
+                .where(predicate, jobNotice.jobNoticeId.in(pageIds))
                 .orderBy(orderSpecifiers)
                 .fetch();
     }
