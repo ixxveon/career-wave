@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useJobNoticeList } from '@/hooks/user/jobNotice/useJobNoticeList';
 import {
@@ -10,6 +11,7 @@ import {
   Bookmark,
   Briefcase,
   CalendarDays,
+  ChevronLeft,
   ChevronRight,
   FileSearch,
   Filter,
@@ -45,7 +47,7 @@ const featureCards = [
 
 const RECOMMENDED_JOB_QUERY_PARAMS = {
   page: 1,
-  size: 3,
+  size: 9,
   sort: 'recommend',
   period: 'all',
 };
@@ -95,6 +97,31 @@ function formatDeadline(deadline) {
   })}`;
 }
 
+const ONE_DAY_MS = 1000 * 60 * 60 * 24;
+
+// formatDeadline과 동일하게 KST 기준으로 날짜 경계를 계산한다 (사용자 시스템 타임존에 의존하지 않도록).
+function getKstMidnightUtcMs(date) {
+  const kstDateStr = date.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+  const [year, month, day] = kstDateStr.split('-').map(Number);
+  return Date.UTC(year, month - 1, day);
+}
+
+function getDday(deadline) {
+  if (!deadline) return null;
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(deadline);
+  const endMs = dateOnlyMatch
+    ? Date.UTC(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]))
+    : getKstMidnightUtcMs(new Date(deadline));
+  if (Number.isNaN(endMs)) return null;
+
+  const todayMs = getKstMidnightUtcMs(new Date());
+  const diff = Math.round((endMs - todayMs) / ONE_DAY_MS);
+  if (diff < 0) return null;
+  if (diff === 0) return 'D-day';
+  return `D-${diff}`;
+}
+
 function toRecommendedJobCard(job) {
   return {
     id: job.id,
@@ -105,6 +132,7 @@ function toRecommendedJobCard(job) {
     location: job.location || '지역 미정',
     career: getCareerLabel(job.careerLevel),
     date: formatDeadline(job.deadline),
+    dday: getDday(job.deadline),
     source: job.source,
     tags: (job.tags ?? []).slice(0, 4),
   };
@@ -113,6 +141,26 @@ function toRecommendedJobCard(job) {
 
 function JobSeekerDashboardPage() {
   const isLoggedIn = !!authSession.getAccessToken();
+  const viewportRef = useRef(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+
+  const syncScrollState = useCallback(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    setAtStart(el.scrollLeft <= 2);
+    setAtEnd(el.scrollLeft >= el.scrollWidth - el.clientWidth - 2);
+  }, []);
+
+  function scrollCarousel(dir) {
+    const el = viewportRef.current;
+    if (!el) return;
+    const card = el.querySelector('.cw-home-job');
+    if (!card) return;
+    const step = card.offsetWidth + 12;
+    el.scrollBy({ left: dir * step, behavior: 'smooth' });
+  }
+
   const {
     data: recommendedJobListApiResponse,
     isError: isRecommendedJobsError,
@@ -120,9 +168,15 @@ function JobSeekerDashboardPage() {
     refetch: refetchRecommendedJobs,
   } = useJobNoticeList(RECOMMENDED_JOB_QUERY_PARAMS);
   const recommendedJobs =
-    recommendedJobListApiResponse?.data?.content
+    recommendedJobListApiResponse?.pages?.[0]?.data?.content
       ?.map(mapJobNoticeApiToViewModel)
       .map(toRecommendedJobCard) ?? [];
+
+  useEffect(() => {
+    syncScrollState();
+    window.addEventListener('resize', syncScrollState);
+    return () => window.removeEventListener('resize', syncScrollState);
+  }, [syncScrollState, recommendedJobs.length]);
   const recommendedJobsStatus = isRecommendedJobsLoading
     ? 'loading'
     : isRecommendedJobsError
@@ -190,17 +244,6 @@ function JobSeekerDashboardPage() {
       </section>
 
       <section className="cw-home-jobs" id="jobs">
-        <header>
-          <div>
-            <h2>추천 공고</h2>
-            <p>AI가 당신에게 추천하는 맞춤 공고예요.</p>
-          </div>
-          <Link to="/jobs">
-            전체 공고 보기
-            <ChevronRight size={15} />
-          </Link>
-        </header>
-
         <div className={`cw-home-job-lockup ${isLoggedIn ? '' : 'is-locked'}`}>
           {!isLoggedIn && (
             <div className="cw-home-job-lockup__overlay">
@@ -216,50 +259,75 @@ function JobSeekerDashboardPage() {
             </div>
           )}
 
+          <div className="cw-home-job-lockup__header">
+            <div>
+              <span className="cw-home-job-lockup__badge">
+                <Sparkles size={12} />
+                오늘의 AI 추천
+              </span>
+              <p>AI가 지원 이력과 관심 활동을 반영해 선별했어요</p>
+            </div>
+            <Link to="/jobs">
+              전체 공고 보기
+              <ChevronRight size={14} />
+            </Link>
+          </div>
+
           {recommendedJobsStatus === 'success' && (
-            <div className="cw-home-job-grid" aria-hidden={!isLoggedIn}>
-              {recommendedJobs.map((job) => (
-                <article className="cw-home-job" key={job.id}>
-                  <div className="cw-home-job__head">
-                    <span className={`cw-home-job__logo is-${job.logoClass}`}>{job.logo}</span>
-                    <button type="button" aria-label={`${job.title} 저장 준비 중`} disabled>
-                      <Bookmark size={20} />
-                    </button>
-                  </div>
-                  <h3>{job.title}</h3>
-                  <p>{job.company}</p>
-                  <div className="cw-home-job__tags">
-                    {job.tags.length > 0 ? (
-                      job.tags.map((tag) => (
-                        <em key={tag}>{tag}</em>
-                      ))
-                    ) : (
-                      <em>{job.source}</em>
-                    )}
-                  </div>
-                  <dl className="cw-home-job__meta">
-                    <div>
-                      <MapPin size={14} />
-                      <dt>위치</dt>
-                      <dd>{job.location}</dd>
+            <div className="cw-home-job-carousel" aria-hidden={!isLoggedIn}>
+              {!atStart && (
+                <button
+                  type="button"
+                  className="cw-home-job-carousel__arrow cw-home-job-carousel__arrow--prev"
+                  aria-label="이전 공고"
+                  tabIndex={isLoggedIn ? 0 : -1}
+                  onClick={() => scrollCarousel(-1)}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+              )}
+              <div
+                className="cw-home-job-carousel__viewport"
+                ref={viewportRef}
+                onScroll={syncScrollState}
+              >
+                {recommendedJobs.map((job) => (
+                  <Link
+                    key={job.id}
+                    className="cw-home-job"
+                    tabIndex={isLoggedIn ? 0 : -1}
+                    to={`/jobs?jobNoticeId=${job.id}`}
+                  >
+                    <div className="cw-home-job__title-row">
+                      <h3>{job.title}</h3>
                     </div>
-                    <div>
-                      <Briefcase size={14} />
-                      <dt>경력</dt>
-                      <dd>{job.career}</dd>
+                    <p className="cw-home-job__company">
+                      {job.company}
+                      {job.dday && <em className="cw-home-job__dday">{job.dday}</em>}
+                    </p>
+                    <div className="cw-home-job__tags">
+                      {job.tags.length > 0
+                        ? job.tags.map((tag) => <span key={tag}>{tag}</span>)
+                        : <span>{job.source}</span>}
                     </div>
-                    <div>
-                      <CalendarDays size={14} />
-                      <dt>마감</dt>
-                      <dd>{job.date}</dd>
-                    </div>
-                  </dl>
-                  <Link className="cw-home-job__detail" tabIndex={isLoggedIn ? 0 : -1} to={`/jobs?jobNoticeId=${job.id}`}>
-                    상세보기
-                    <ChevronRight size={15} />
+                    <p className="cw-home-job__location">
+                      <MapPin size={12} />
+                      {job.location}
+                    </p>
                   </Link>
-                </article>
-              ))}
+                ))}
+              </div>
+              {!atEnd && (
+                <button
+                  type="button"
+                  className="cw-home-job-carousel__arrow cw-home-job-carousel__arrow--next"
+                  aria-label="다음 공고"
+                  tabIndex={isLoggedIn ? 0 : -1}
+                  onClick={() => scrollCarousel(1)}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              )}
             </div>
           )}
 
@@ -284,7 +352,7 @@ function JobSeekerDashboardPage() {
               <Filter size={18} />
               <strong>추천 공고를 불러오지 못했습니다.</strong>
               <span>잠시 후 다시 시도해주세요.</span>
-              <button type="button" onClick={() => refetchRecommendedJobs()}>
+              <button type="button" tabIndex={isLoggedIn ? 0 : -1} onClick={() => refetchRecommendedJobs()}>
                 다시 시도
               </button>
             </div>

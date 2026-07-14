@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowUp, FileText, Filter } from 'lucide-react';
@@ -41,6 +41,7 @@ export default function JobNoticeListPage() {
   const [sort, setSort] = useState<SortOption>('추천순');
   const [sortOpen, setSortOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobNotice | null>(null);
+  const isClosingRef = useRef(false);
   const [filters, setFilters] = useState<Filters>(createInitialFilters);
   const [bookmarks, setBookmarks] = useState<Bookmarks>({});
   const [bookmarkErrorMessage, setBookmarkErrorMessage] = useState('');
@@ -158,6 +159,7 @@ export default function JobNoticeListPage() {
   }
 
   function closeSelectedJob() {
+    isClosingRef.current = true;
     setSelectedJob(null);
 
     if (!jobNoticeIdParam) return;
@@ -209,7 +211,12 @@ export default function JobNoticeListPage() {
   }, [jobNoticeListPages]);
 
   useEffect(() => {
-    if (!jobNoticeIdParam) return;
+    if (!jobNoticeIdParam) {
+      isClosingRef.current = false;
+      return;
+    }
+
+    if (isClosingRef.current) return;
 
     if (deepLinkJobNoticeId == null) {
       setBookmarkErrorMessage('요청한 공고 주소가 올바르지 않습니다.');
