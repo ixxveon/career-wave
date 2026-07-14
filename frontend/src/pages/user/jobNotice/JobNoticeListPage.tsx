@@ -202,7 +202,7 @@ export default function JobNoticeListPage() {
       const next = normalizeFilters(current, filterGroups);
       return Object.keys(current).every((key) => current[key as FilterLabel] === next[key as FilterLabel]) ? current : next;
     });
-  }, [availableFilterOptions, filterGroups]);
+  }, [filterGroups]);
 
   useEffect(() => {
     const allLoadedJobs = jobNoticeListPages.flatMap((page) => page.content);
