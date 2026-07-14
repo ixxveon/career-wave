@@ -304,7 +304,7 @@ function UserMyPage() {
   const hasEditFormChanges =
     editForm.name.trim() !== userProfile.name ||
     editForm.email.trim() !== (userProfile.email ?? "") ||
-    editForm.phone.replace(/-/g, "").trim() !== userProfile.phone ||
+    editForm.phone.replace(/-/g, "").trim() !== (userProfile.phone ?? "") ||
     normalizeGithubUrl(editForm.githubUrl) !== (githubProfile?.githubUrl ?? "");
 
   return (
