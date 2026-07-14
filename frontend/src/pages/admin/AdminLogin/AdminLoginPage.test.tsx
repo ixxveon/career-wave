@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ADMIN_MANAGEMENT_ADMINS_QUERY_KEY } from '../../../constants/admin/adminManagementQueryKeys';
@@ -34,7 +34,7 @@ vi.mock('../../../api/admin/adminAuthApi', () => ({
   },
 }));
 
-function renderPage(queryClient: QueryClient) {
+function renderPage(queryClient: QueryClient = new QueryClient()) {
   const result = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
@@ -101,5 +101,66 @@ describe('AdminLoginPage', () => {
       expect(adminAuthMock.login).toHaveBeenCalledOnce();
     });
     expect(invalidateQueries).not.toHaveBeenCalled();
+  });
+});
+
+describe('AdminLoginPage 로그인 실패 안내', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('423 응답이면 서버가 내려준 잠금 메시지를 보여준다', async () => {
+    adminAuthMock.login.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 423, data: { message: '로그인 시도 횟수를 초과하여 계정이 잠겼습니다.' } },
+    });
+
+    const { container } = renderPage();
+    fireEvent.submit(getLoginForm(container));
+
+    expect((await screen.findByRole('alert')).textContent).toBe('로그인 시도 횟수를 초과하여 계정이 잠겼습니다.');
+  });
+
+  it('423 응답에 메시지가 없으면 기본 잠금 안내 문구로 대체한다', async () => {
+    adminAuthMock.login.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 423, data: {} },
+    });
+
+    const { container } = renderPage();
+    fireEvent.submit(getLoginForm(container));
+
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      '로그인 시도 횟수를 초과하여 계정이 잠겼습니다. 관리자에게 문의해주세요.',
+    );
+  });
+
+  it('일반 인증 실패(401)에는 기존과 동일한 안내 문구를 보여준다', async () => {
+    adminAuthMock.login.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 401, data: { message: '인증에 실패했습니다.' } },
+    });
+
+    const { container } = renderPage();
+    fireEvent.submit(getLoginForm(container));
+
+    expect((await screen.findByRole('alert')).textContent).toBe('아이디 또는 비밀번호가 올바르지 않습니다.');
+  });
+
+  it('네트워크 오류(응답 없음)에도 기존과 동일한 안내 문구로 대체한다', async () => {
+    adminAuthMock.login.mockRejectedValueOnce({
+      isAxiosError: true,
+      code: 'ERR_NETWORK',
+      message: 'Network Error',
+    });
+
+    const { container } = renderPage();
+    fireEvent.submit(getLoginForm(container));
+
+    expect((await screen.findByRole('alert')).textContent).toBe('아이디 또는 비밀번호가 올바르지 않습니다.');
   });
 });

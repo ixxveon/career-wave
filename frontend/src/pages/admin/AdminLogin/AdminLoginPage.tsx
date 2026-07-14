@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { adminAuthApi, adminSession } from '../../../api/admin/adminAuthApi';
+import axios from 'axios';
+import { adminAuthApi, adminSession, type ApiResponse, type AdminLoginResponse } from '../../../api/admin/adminAuthApi';
 import { ADMIN_MANAGEMENT_ADMINS_QUERY_KEY } from '../../../constants/admin/adminManagementQueryKeys';
 import type { AdminDetailRole } from '../../../constants/admin/adminRoleConstants';
 import { ADMIN_ROUTE_PATHS } from '../../../constants/admin/adminRouteConstants';
@@ -48,9 +49,14 @@ export default function AdminLoginPage() {
       syncAdminToken(data.accessToken, data.adminInfo);
       void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_ADMINS_QUERY_KEY });
       navigate(ADMIN_ROUTE_PATHS.dashboard, { replace: true });
-    } catch {
+    } catch (err) {
       clearAdminToken();
-      setErrorMessage('아이디 또는 비밀번호가 올바르지 않습니다.');
+      if (axios.isAxiosError(err) && err.response?.status === 423) {
+        const body = err.response.data as ApiResponse<AdminLoginResponse> | undefined;
+        setErrorMessage(body?.message || '로그인 시도 횟수를 초과하여 계정이 잠겼습니다. 관리자에게 문의해주세요.');
+      } else {
+        setErrorMessage('아이디 또는 비밀번호가 올바르지 않습니다.');
+      }
     } finally {
       setIsLoading(false);
     }
