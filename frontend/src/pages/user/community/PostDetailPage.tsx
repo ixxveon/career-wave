@@ -8,7 +8,6 @@ import {
   MessageCircle,
   Flag,
   Send,
-  Pencil,
   Trash2,
 } from "lucide-react";
 import "@/styles/user/community/PostDetailPage.css";
@@ -294,7 +293,7 @@ export default function PostDetailPage() {
     isError: isBoardError,
   } = useCommunityBoard(validBoardId);
 
-  const { data: apiComments = [] } = useCommunityComments(validBoardId);
+  const { data: apiComments } = useCommunityComments(validBoardId);
 
   const { mutate: createComment, isPending: isCreatingComment } =
     useCreateCommunityComment(validBoardId ?? 0);
@@ -335,7 +334,7 @@ export default function PostDetailPage() {
   }, [post?.id, post?.likes, post?.reportCount]);
 
   useEffect(() => {
-    setComments(toComments(apiComments));
+    setComments(toComments(apiComments ?? []));
   }, [apiComments]);
 
   function handleLike() {
@@ -500,10 +499,6 @@ export default function PostDetailPage() {
 
         {isPostOwner && (
           <div className="pd-owner-actions">
-            <button type="button">
-              <Pencil size={14} /> 수정
-            </button>
-
             <button
               type="button"
               onClick={handleDeleteBoard}

@@ -228,7 +228,7 @@ export default function CommunityPage() {
 
       try {
         const params = new URLSearchParams({
-          page: String(page),
+          page: String(page + 1),
           size: String(PAGE_SIZE),
         });
 
@@ -296,9 +296,10 @@ export default function CommunityPage() {
       <div className="cm-ops-panel">
         <div>
           <Database size={18} />
-          <strong>궁금한 점을 질문하고, 면접 후기와 이력서 팁을 함께 나눠보세요.</strong>
+          <strong>
+            궁금한 점을 질문하고, 면접 후기와 이력서 팁을 함께 나눠보세요.
+          </strong>
         </div>
-  
       </div>
 
       <div className="cm-toolbar">
