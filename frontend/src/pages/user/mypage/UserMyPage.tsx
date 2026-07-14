@@ -10,7 +10,10 @@ import {
 } from "lucide-react";
 import { useSubscriptionStatus } from "@/hooks/user/subscription";
 import { updateDashboardProfile } from "@/api/user/dashboard";
-import { formatPhoneNumber, PHONE_MAX_LENGTH } from "@/utils/user/member/registerSchema";
+import {
+  formatPhoneNumber,
+  PHONE_MAX_LENGTH,
+} from "@/utils/user/member/registerSchema";
 import {
   useDashboardGithub,
   useDashboardProfile,
@@ -195,6 +198,23 @@ function UserMyPage() {
       isSavingProfileRef.current = false;
       return;
     }
+    if (!trimmedName) {
+      setEditErrorMessage("이름을 입력해 주세요.");
+      isSavingProfileRef.current = false;
+      return;
+    }
+
+    if (!trimmedEmail) {
+      setEditErrorMessage("이메일을 입력해 주세요.");
+      isSavingProfileRef.current = false;
+      return;
+    }
+
+    if (!normalizedPhone) {
+      setEditErrorMessage("휴대폰 번호를 입력해 주세요.");
+      isSavingProfileRef.current = false;
+      return;
+    }
 
     if (!isValidName(trimmedName)) {
       setEditErrorMessage("이름은 2~20자의 한글 또는 영문으로 입력해 주세요.");
@@ -202,13 +222,13 @@ function UserMyPage() {
       return;
     }
 
-    if (trimmedEmail && !isValidEmail(trimmedEmail)) {
+    if (!isValidEmail(trimmedEmail)) {
       setEditErrorMessage("이메일 형식이 올바르지 않습니다.");
       isSavingProfileRef.current = false;
       return;
     }
 
-    if (normalizedPhone && !/^010[0-9]{8}$/.test(normalizedPhone)) {
+    if (!/^010[0-9]{8}$/.test(normalizedPhone)) {
       setEditErrorMessage("휴대폰 번호는 01012345678 형식으로 입력해 주세요.");
       isSavingProfileRef.current = false;
       return;
@@ -229,7 +249,7 @@ function UserMyPage() {
         name: trimmedName,
         email: trimmedEmail,
         phone: normalizedPhone,
-        githubUrl: normalizedGithubUrl,
+        ...(!isCompanyMember && { githubUrl: normalizedGithubUrl }),
       });
 
       await Promise.all([refetchProfile(), refetchGithub()]);
@@ -356,7 +376,9 @@ function UserMyPage() {
                 <span>휴대폰 번호</span>
                 <strong>
                   <Phone size={15} />
-                  {userProfile.phone ? formatPhoneNumber(userProfile.phone) : "등록된 휴대폰 번호가 없습니다."}
+                  {userProfile.phone
+                    ? formatPhoneNumber(userProfile.phone)
+                    : "등록된 휴대폰 번호가 없습니다."}
                 </strong>
               </div>
               <div className="cw-info-row">
@@ -419,66 +441,67 @@ function UserMyPage() {
         </div>
 
         {!isCompanyMember && (
-        <section className="cw-account-card cw-github-card">
-          <div className="cw-card-title">
-            <div className="cw-card-title-left">
-              <Github size={18} />
-              <h3>GitHub 연동 정보</h3>
-            </div>
-
-            <button
-              type="button"
-              className="cw-card-edit-button"
-              onClick={handleGithubManage}
-            >
-              연동 관리
-            </button>
-          </div>
-
-          {hasGithubProfileError ? (
-            <div className="cw-state-box is-error">
-              GitHub 정보를 불러오지 못했습니다.
-            </div>
-          ) : (
-            <div className="cw-github-simple-grid">
-              <div>
-                <span>GitHub ID</span>
-                <strong>
-                  {githubProfile?.githubId ?? "연동된 GitHub ID가 없습니다."}
-                </strong>
-              </div>
-
-              <div>
-                <span>GitHub URL</span>
-                <strong>
-                  {githubProfile?.githubUrl ?? "연동된 GitHub URL이 없습니다."}
-                </strong>
-              </div>
-
-              <div>
-                <span>연동 상태</span>
-                <strong
-                  className={
-                    githubProfile?.linked ? "cw-connected" : "cw-warning"
-                  }
-                >
-                  {githubProfile?.linked ? "연동 완료" : "미연동"}
-                </strong>
+          <section className="cw-account-card cw-github-card">
+            <div className="cw-card-title">
+              <div className="cw-card-title-left">
+                <Github size={18} />
+                <h3>GitHub 연동 정보</h3>
               </div>
 
               <button
                 type="button"
-                className="cw-github-profile-button"
-                onClick={() =>
-                  alert("GitHub 프로필 이동은 API 연동 후 처리됩니다.")
-                }
-                disabled={!githubProfile?.linked}
+                className="cw-card-edit-button"
+                onClick={handleGithubManage}
               >
-                GitHub 프로필 보기
+                연동 관리
               </button>
             </div>
-          )}
-        </section>
+
+            {hasGithubProfileError ? (
+              <div className="cw-state-box is-error">
+                GitHub 정보를 불러오지 못했습니다.
+              </div>
+            ) : (
+              <div className="cw-github-simple-grid">
+                <div>
+                  <span>GitHub ID</span>
+                  <strong>
+                    {githubProfile?.githubId ?? "연동된 GitHub ID가 없습니다."}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>GitHub URL</span>
+                  <strong>
+                    {githubProfile?.githubUrl ??
+                      "연동된 GitHub URL이 없습니다."}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>연동 상태</span>
+                  <strong
+                    className={
+                      githubProfile?.linked ? "cw-connected" : "cw-warning"
+                    }
+                  >
+                    {githubProfile?.linked ? "연동 완료" : "미연동"}
+                  </strong>
+                </div>
+
+                <button
+                  type="button"
+                  className="cw-github-profile-button"
+                  onClick={() =>
+                    alert("GitHub 프로필 이동은 API 연동 후 처리됩니다.")
+                  }
+                  disabled={!githubProfile?.linked}
+                >
+                  GitHub 프로필 보기
+                </button>
+              </div>
+            )}
+          </section>
         )}
       </section>
 
