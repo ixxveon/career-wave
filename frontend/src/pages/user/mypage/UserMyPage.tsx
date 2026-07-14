@@ -407,7 +407,6 @@ function UserMyPage() {
             >
               연동 관리
             </button>
-            <span className="cw-badge-soon">구현 예정</span>
           </div>
 
           <p className="cw-card-notice">
