@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
-import { authSession, AUTH_CHANGE_EVENT } from '../../utils/user/member/authSession';
-import { probeAuth } from '../../api/user/member/memberApiClient';
-import { memberAuthApi } from '../../api/user/member/authApi';
+import { useState, useEffect } from "react";
+import {
+  authSession,
+  AUTH_CHANGE_EVENT,
+} from "../../utils/user/member/authSession";
+import { probeAuth } from "../../api/user/member/memberApiClient";
+import { memberAuthApi } from "../../api/user/member/authApi";
 
 function getIsLoggedIn() {
   return authSession.getAccessToken() !== null;
@@ -9,12 +12,14 @@ function getIsLoggedIn() {
 
 export function useAuth() {
   const [isLoggedIn, setIsLoggedIn] = useState(getIsLoggedIn);
+  const [member, setMember] = useState(() => authSession.getMember());
   // 토큰이 없을 때만 cookie probe가 필요하다.
   const [isChecking, setIsChecking] = useState(() => !getIsLoggedIn());
 
   useEffect(() => {
     function sync() {
       setIsLoggedIn(getIsLoggedIn());
+      setMember(authSession.getMember());
     }
     window.addEventListener(AUTH_CHANGE_EVENT, sync);
     return () => window.removeEventListener(AUTH_CHANGE_EVENT, sync);
@@ -28,18 +33,21 @@ export function useAuth() {
     probeAuth().then((ok) => {
       if (!cancelled) {
         setIsLoggedIn(ok);
+        setMember(authSession.getMember());
         setIsChecking(false);
       }
     });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isChecking]);
 
   function logout() {
     memberAuthApi.logout(); // 백엔드 logout API 호출 (refresh token 폐기) + authSession.clear()
-    authSession.clear();    // 즉시 UI 상태 업데이트
+    authSession.clear(); // 즉시 UI 상태 업데이트
     setIsChecking(false);
   }
 
-  return { isLoggedIn, isChecking, logout };
+  return { isLoggedIn, isChecking, member, logout };
 }

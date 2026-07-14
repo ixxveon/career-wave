@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { memberApiClient } from "@/api/user/member/memberApiClient";
+import { useAuth } from "@/hooks/user/useAuth";
 import {
   Search,
   ThumbsUp,
@@ -63,11 +64,6 @@ type PaginationResponse<T> = {
   totalPages?: number;
 };
 
-type ApiResponse<T> = {
-  data?: T;
-  result?: T;
-};
-
 function toPosts(response: BoardResponse[]): CommunityPost[] {
   return response.map((board) => ({
     id: board.boardId,
@@ -83,12 +79,6 @@ function toPosts(response: BoardResponse[]): CommunityPost[] {
     hot: board.viewCount >= 100,
     reportCount: 0,
   }));
-}
-
-function getPaginationPayload(
-  response: ApiResponse<PaginationResponse<BoardResponse>>,
-) {
-  return response.data ?? response.result;
 }
 
 function getBoardList(payload?: PaginationResponse<BoardResponse>) {
@@ -213,17 +203,23 @@ function PostCard({
 
 export default function CommunityPage() {
   const navigate = useNavigate();
-
+  const { isLoggedIn, isChecking } = useAuth();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("전체");
   const [page, setPage] = useState(0);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isChecking || !isLoggedIn) {
+      setPosts([]);
+      setTotalPages(1);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     let ignore = false;
 
     async function fetchBoards() {
@@ -232,7 +228,7 @@ export default function CommunityPage() {
 
       try {
         const params = new URLSearchParams({
-          page: String(page),
+          page: String(page + 1),
           size: String(PAGE_SIZE),
         });
 
@@ -240,24 +236,22 @@ export default function CommunityPage() {
           params.append("category", category);
         }
 
-        const json = await memberApiClient<
-          ApiResponse<PaginationResponse<BoardResponse>>
+        const payload = await memberApiClient<
+          PaginationResponse<BoardResponse>
         >(`/api/v1/user/community/boards?${params.toString()}`, {
           method: "GET",
           auth: true,
         });
 
-        const payload = getPaginationPayload(json);
-
         const boards = getBoardList(payload);
+
         const total =
           payload?.totalElements ?? payload?.totalCount ?? boards.length;
 
         if (!ignore) {
           setPosts(toPosts(boards));
-          setTotalElements(total);
           setTotalPages(
-            payload?.totalPages ?? Math.max(1, Math.ceil(total / PAGE_SIZE)),
+            Math.max(1, payload?.totalPages ?? Math.ceil(total / PAGE_SIZE)),
           );
         }
       } catch {
@@ -276,7 +270,7 @@ export default function CommunityPage() {
     return () => {
       ignore = true;
     };
-  }, [category, page]);
+  }, [category, page, isChecking, isLoggedIn]);
 
   const filteredPosts = useMemo(() => {
     if (!search) return posts;
@@ -302,15 +296,10 @@ export default function CommunityPage() {
       <div className="cm-ops-panel">
         <div>
           <Database size={18} />
-          <strong>페이지 기반 게시글 목록</strong>
-          <span>
-            현재 페이지: {page + 1} / {totalPages}
-          </span>
+          <strong>
+            궁금한 점을 질문하고, 면접 후기와 이력서 팁을 함께 나눠보세요.
+          </strong>
         </div>
-        <p>
-          게시글 목록은 page/size 기반 API로 조회하며, 총 {totalElements}개의
-          게시글을 페이지 단위로 확인합니다.
-        </p>
       </div>
 
       <div className="cm-toolbar">
@@ -318,21 +307,22 @@ export default function CommunityPage() {
           <Search size={16} />
           <input
             type="search"
-            placeholder="현재 페이지 내 검색"
+            placeholder="게시글 검색"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
 
-        <button
-          className="cm-write"
-          type="button"
-          onClick={() => navigate("/community/posts/create")}
-        >
-          글쓰기
-        </button>
+        {isLoggedIn && (
+          <button
+            className="cm-write"
+            type="button"
+            onClick={() => navigate("/community/posts/create")}
+          >
+            글쓰기
+          </button>
+        )}
       </div>
-
       <div className="cm-categories">
         {CATEGORIES.map((item) => (
           <button
@@ -361,14 +351,33 @@ export default function CommunityPage() {
       </section>
 
       <div className="cm-list">
-        {loading && <div className="cm-empty">게시글을 불러오는 중입니다.</div>}
-        {!loading && error && <div className="cm-empty">{error}</div>}
+        {isChecking && (
+          <div className="cm-empty">로그인 상태를 확인하는 중입니다.</div>
+        )}
 
-        {!loading && !error && filteredPosts.length === 0 && (
+        {!isChecking && !isLoggedIn && (
+          <div className="cm-empty">
+            커뮤니티 게시글은 로그인 후 열람할 수 있습니다.
+            <button type="button" onClick={() => navigate("/auth/login")}>
+              로그인하러 가기
+            </button>
+          </div>
+        )}
+
+        {isLoggedIn && loading && (
+          <div className="cm-empty">게시글을 불러오는 중입니다.</div>
+        )}
+
+        {isLoggedIn && !loading && error && (
+          <div className="cm-empty">{error}</div>
+        )}
+
+        {isLoggedIn && !loading && !error && filteredPosts.length === 0 && (
           <div className="cm-empty">검색 결과가 없습니다.</div>
         )}
 
-        {!loading &&
+        {isLoggedIn &&
+          !loading &&
           filteredPosts.map((post) => (
             <PostCard
               key={post.id}
