@@ -49,29 +49,6 @@ function isValidGithubUrl(githubUrl: string) {
   return /^https:\/\/(www\.)?github\.com\/[A-Za-z0-9-]+$/.test(githubUrl);
 }
 
-function maskEmail(email: string | null) {
-  if (!email) return "이메일 없음";
-  const [localPart, domain] = email.split("@");
-
-  if (!localPart || !domain) {
-    return email;
-  }
-
-  const visibleCount = Math.min(2, localPart.length);
-  const visible = localPart.slice(0, visibleCount);
-  const masked = "*".repeat(localPart.length - visibleCount);
-
-  return `${visible}${masked}@${domain}`;
-}
-
-function maskLoginId(loginId: string) {
-  const visibleCount = Math.min(4, loginId.length);
-  const visible = loginId.slice(0, visibleCount);
-  const masked = "*".repeat(loginId.length - visibleCount);
-
-  return `${visible}${masked}`;
-}
-
 const ROLE_TYPE_LABELS: Record<UserProfile["roleType"], string> = {
   USER: "일반 회원",
   COMPANY: "기업 회원",
@@ -349,7 +326,7 @@ function UserMyPage() {
                 <span>이메일</span>
                 <strong>
                   <Mail size={15} />
-                  {maskEmail(userProfile.email)}
+                  {userProfile.email ?? "이메일 없음"}
                 </strong>
               </div>
               <div className="cw-info-row">
@@ -383,7 +360,7 @@ function UserMyPage() {
               </div>
               <div className="cw-info-row">
                 <span>로그인 ID</span>
-                <strong>{maskLoginId(userProfile.loginId)}</strong>
+                <strong>{userProfile.loginId}</strong>
               </div>
 
               {!isCompanyMember && (
