@@ -203,7 +203,7 @@ export default function NoticeTab({ onMutate }: NoticeTabProps) {
                 <tr><td colSpan={6} style={{ textAlign: 'center', padding: 32, color: '#7a8da4' }}>불러오는 중...</td></tr>
               ) : notices.map((n, idx) => (
                 <tr key={n.noticeId}>
-                  <td style={{ color: '#7a8da4', fontSize: 13 }}>{(noticePage - 1) * 20 + idx + 1}</td>
+                  <td style={{ color: '#7a8da4', fontSize: 13 }}>{noticeTotalItems - ((noticePage - 1) * 20 + idx)}</td>
                   <td><span className="statusBadge normal csNoticeCat">{NOTICE_CATEGORY_LABEL[n.category]}</span></td>
                   <td>{n.title}</td>
                   <td>{new Date(n.createdAt).toLocaleDateString('ko-KR')}</td>
