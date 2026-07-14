@@ -84,7 +84,6 @@ function UserMyPage() {
   const {
     data: githubProfile,
     isLoading: isGithubLoading,
-    isError: hasGithubProfileError,
     refetch: refetchGithub,
   } = useDashboardGithub();
 
@@ -412,50 +411,8 @@ function UserMyPage() {
           </div>
 
           <p className="cw-card-notice">
-            GitHub 연동 기능은 현재 이용할 수 없습니다. (v2 제공 예정)
+            GitHub 연동 기능은 현재 이용할 수 없습니다.
           </p>
-
-          {hasGithubProfileError ? (
-            <div className="cw-state-box is-error">
-              GitHub 정보를 불러오지 못했습니다.
-            </div>
-          ) : (
-            <div className="cw-github-simple-grid">
-              <div>
-                <span>GitHub ID</span>
-                <strong>
-                  {githubProfile?.githubId ?? "연동된 GitHub ID가 없습니다."}
-                </strong>
-              </div>
-
-              <div>
-                <span>GitHub URL</span>
-                <strong>
-                  {githubProfile?.githubUrl ?? "연동된 GitHub URL이 없습니다."}
-                </strong>
-              </div>
-
-              <div>
-                <span>연동 상태</span>
-                <strong
-                  className={
-                    githubProfile?.linked ? "cw-connected" : "cw-warning"
-                  }
-                >
-                  {githubProfile?.linked ? "연동 완료" : "미연동"}
-                </strong>
-              </div>
-
-              <button
-                type="button"
-                className="cw-github-profile-button"
-                disabled
-                title="GitHub OAuth 연동 기능은 v2에서 제공될 예정입니다."
-              >
-                GitHub 프로필 보기
-              </button>
-            </div>
-          )}
         </section>
         )}
       </section>
