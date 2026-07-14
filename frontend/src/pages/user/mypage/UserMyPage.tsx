@@ -142,9 +142,6 @@ function UserMyPage() {
     setEditErrorMessage("");
     setIsEditModalOpen(false);
   }
-  function handleGithubManage() {
-    alert("GitHub OAuth 연동 기능은 v2에서 제공될 예정입니다.");
-  }
 
   function handleEditFormChange(field: keyof EditProfileForm, value: string) {
     setEditErrorMessage("");
@@ -406,10 +403,12 @@ function UserMyPage() {
             <button
               type="button"
               className="cw-card-edit-button"
-              onClick={handleGithubManage}
+              disabled
+              title="GitHub OAuth 연동 기능은 v2에서 제공될 예정입니다."
             >
               연동 관리
             </button>
+            <span className="cw-badge-soon">구현 예정</span>
           </div>
 
           {hasGithubProfileError ? (
