@@ -6,11 +6,11 @@
 .cw-home-hero {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   align-items: center;
-  gap: 48px;
+  gap: 32px;
   min-height: 390px;
-  padding: 62px 92px 66px;
+  padding: 62px clamp(28px, 6vw, 92px) 66px;
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(235, 246, 255, 0.9)),
@@ -48,6 +48,7 @@
   position: relative;
   z-index: 3;
   max-width: 660px;
+  text-shadow: 0 1px 8px rgba(255, 255, 255, 0.85);
 }
 
 .cw-home-hero__eyebrow {
@@ -801,15 +802,25 @@
 }
 
 
-@media (max-width: 1180px) {
+@media (max-width: 1100px) {
+  .cw-sailboat {
+    right: 10px;
+    transform: scale(0.75);
+    transform-origin: right bottom;
+    opacity: 0.6;
+  }
+}
+
+@media (max-width: 720px) {
   .cw-home-hero {
     grid-template-columns: 1fr;
-    padding: 38px 28px 64px;
+    gap: 24px;
+    padding: 38px 18px 56px;
   }
 
   .cw-home-profile-card {
-    max-width: 380px;
-    justify-self: end;
+    max-width: 100%;
+    justify-self: stretch;
   }
 
   .cw-sailboat {
@@ -828,17 +839,8 @@
 }
 
 @media (max-width: 780px) {
-  .cw-home-hero {
-    padding: 30px 18px 54px;
-  }
-
   .cw-home-hero h1 {
     font-size: 34px;
-  }
-
-  .cw-home-profile-card {
-    width: 100%;
-    max-width: none;
   }
 
   .cw-sailboat {
