@@ -94,7 +94,7 @@ function BannerStats({ stats }: { stats: JobNoticeListStats }) {
   );
 }
 
-function FilterBlock({ group, values, onChange }: { group: FilterGroup; values: string[]; onChange: (label: FilterLabel, value: string) => void }) {
+function FilterBlock({ group, values, onChange, forceOpen = false }: { group: FilterGroup; values: string[]; onChange: (label: FilterLabel, value: string) => void; forceOpen?: boolean }) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
 
   function selectOption(option: string) {
@@ -117,7 +117,7 @@ function FilterBlock({ group, values, onChange }: { group: FilterGroup; values: 
   }
 
   return (
-    <details className="jn-filter-block" ref={detailsRef}>
+    <details className="jn-filter-block" ref={detailsRef} open={forceOpen || undefined}>
       <summary aria-label={`${group.label} 필터 선택, 현재 ${values.length}개 선택`}>
         <span>{group.label}</span>
         {values.length > 0 && <em>{values.length}개 선택</em>}
@@ -223,10 +223,17 @@ export function JobNoticeFilters({
   onApplied?: () => void;
 }) {
   const [draftFilters, setDraftFilters] = useState<Filters>(filters);
+  const [activeLabel, setActiveLabel] = useState<FilterLabel>(() => filterGroups[0]?.label ?? '직무');
 
   useEffect(() => {
     setDraftFilters(filters);
   }, [filters]);
+
+  useEffect(() => {
+    if (!filterGroups.some((group) => group.label === activeLabel) && filterGroups[0]) {
+      setActiveLabel(filterGroups[0].label);
+    }
+  }, [activeLabel, filterGroups]);
 
   function toggleFilter(label: FilterLabel, value: string) {
     setDraftFilters((current) => {
@@ -240,9 +247,34 @@ export function JobNoticeFilters({
 
   return (
     <aside className={`jn-filter-panel${className ? ` ${className}` : ''}`}>
-      {filterGroups.map((group) => (
-        <FilterBlock key={group.label} group={group} values={draftFilters[group.label]} onChange={toggleFilter} />
-      ))}
+      {className?.includes('dialog') ? (
+        <div className="jn-filter-dialog__body">
+          <nav className="jn-filter-dialog__menu" aria-label="필터 항목">
+            {filterGroups.map((group) => (
+              <button
+                type="button"
+                key={group.label}
+                className={activeLabel === group.label ? 'is-active' : ''}
+                onClick={() => setActiveLabel(group.label)}
+              >
+                <span>{group.label}</span>
+                {draftFilters[group.label].length > 0 && <em>{draftFilters[group.label].length}</em>}
+              </button>
+            ))}
+          </nav>
+          <div className="jn-filter-dialog__options">
+            {filterGroups
+              .filter((group) => group.label === activeLabel)
+              .map((group) => (
+                <FilterBlock key={group.label} group={group} values={draftFilters[group.label]} onChange={toggleFilter} forceOpen />
+              ))}
+          </div>
+        </div>
+      ) : (
+        filterGroups.map((group) => (
+          <FilterBlock key={group.label} group={group} values={draftFilters[group.label]} onChange={toggleFilter} />
+        ))
+      )}
       <div className="jn-filter-actions">
         <button type="button" onClick={() => setDraftFilters(createInitialFilters())}>초기화</button>
         <button type="button" onClick={() => {
