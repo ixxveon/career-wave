@@ -142,8 +142,13 @@ public class UserVerificationServiceImpl implements UserVerificationService {
         }
     }
 
+    // REGISTER(신규 가입) 및 EMAIL_CHANGE/PHONE_CHANGE(마이페이지 변경)는 target이
+    // 다른 회원에게 이미 사용 중이면 안 된다 — SOCIAL_SIGNUP은 기존 가입 번호도 허용해야 하므로 제외.
     private void validateRegisterTargetAvailable(UserVerificationDto.RequestSendVerification request) {
-        if (request.getPurpose() != VerificationPurpose.REGISTER) {
+        VerificationPurpose purpose = request.getPurpose();
+        if (purpose != VerificationPurpose.REGISTER
+                && purpose != VerificationPurpose.EMAIL_CHANGE
+                && purpose != VerificationPurpose.PHONE_CHANGE) {
             return;
         }
         if (request.getChannel() == VerificationChannel.EMAIL

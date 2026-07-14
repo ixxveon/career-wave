@@ -51,6 +51,9 @@ export const VERIFICATION_PURPOSE = {
   RESET_PASSWORD: 'RESET_PASSWORD',
   // 소셜 가입 추가정보 단계 휴대폰 인증 — 기존 가입 번호도 허용(계정 연동을 위해)
   SOCIAL_SIGNUP: 'SOCIAL_SIGNUP',
+  // 마이페이지에서 이메일/휴대폰 번호를 변경할 때 사용
+  EMAIL_CHANGE: 'EMAIL_CHANGE',
+  PHONE_CHANGE: 'PHONE_CHANGE',
 } as const;
 
 export type VerificationPurpose = (typeof VERIFICATION_PURPOSE)[keyof typeof VERIFICATION_PURPOSE];

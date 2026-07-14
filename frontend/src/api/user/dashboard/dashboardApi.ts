@@ -11,6 +11,8 @@ export interface UpdateDashboardProfileRequest {
   email: string;
   phone: string;
   githubUrl: string;
+  emailVerificationToken?: string;
+  phoneVerificationToken?: string;
 }
 
 export async function getDashboardProfile() {

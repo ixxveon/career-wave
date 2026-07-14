@@ -6,10 +6,14 @@ import kr.co.carrer.user.dashboard.entity.PersonalProfile;
 import kr.co.carrer.user.dashboard.repository.PersonalProfileRepository;
 import kr.co.carrer.user.dashboard.service.impl.DashboardServiceImpl;
 import kr.co.carrer.user.member.entity.Member;
+import kr.co.carrer.user.member.entity.MemberVerification;
+import kr.co.carrer.user.member.repository.MemberVerificationRepository;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.RoleType;
 import kr.co.carrer.user.member.type.SubscriptionStatus;
+import kr.co.carrer.user.member.type.VerificationChannel;
+import kr.co.carrer.user.member.type.VerificationPurpose;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +44,9 @@ class DashboardServiceTest {
 
     @Mock
     private PersonalProfileRepository personalProfileRepository;
+
+    @Mock
+    private MemberVerificationRepository verificationRepository;
 
     @InjectMocks
     private DashboardServiceImpl dashboardService;
@@ -121,10 +128,14 @@ class DashboardServiceTest {
                 "고유리",
                 null,
                 "010-9999-8888",
-                "https://github.com/yul941117");
+                "https://github.com/yul941117",
+                null,
+                "phone-token");
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
         when(personalProfileRepository.findByMemberId(memberId)).thenReturn(Optional.of(personalProfile));
+        when(verificationRepository.findByVerificationToken("phone-token"))
+                .thenReturn(Optional.of(verifiedPhoneChange("010-9999-8888", "phone-token")));
 
         DashboardDTO.ProfileResponse response = dashboardService.updateProfile(memberId, request);
 
@@ -150,10 +161,14 @@ class DashboardServiceTest {
                 "고유리",
                 null,
                 "010-9999-8888",
-                "https://github.com/yul941117");
+                "https://github.com/yul941117",
+                null,
+                "phone-token");
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
         when(personalProfileRepository.findByMemberId(memberId)).thenReturn(Optional.empty());
+        when(verificationRepository.findByVerificationToken("phone-token"))
+                .thenReturn(Optional.of(verifiedPhoneChange("010-9999-8888", "phone-token")));
 
         DashboardDTO.ProfileResponse response = dashboardService.updateProfile(memberId, request);
 
@@ -173,12 +188,139 @@ class DashboardServiceTest {
                 "고유리",
                 null,
                 "010-9999-8888",
-                "https://github.com/yul941117");
+                "https://github.com/yul941117",
+                null,
+                "phone-token");
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> dashboardService.updateProfile(memberId, request))
                 .isInstanceOf(CustomException.class);
+    }
+
+    @Test
+    @DisplayName("프로필 수정 - 이메일 변경 시 인증 토큰 없으면 실패")
+    void updateProfile_emailChanged_withoutToken_throws() throws Exception {
+        UUID memberId = UUID.randomUUID();
+        Member member = createMember(memberId);
+
+        DashboardDTO.ProfileUpdateRequest request = new DashboardDTO.ProfileUpdateRequest(
+                null,
+                "new-email@test.com",
+                null,
+                null,
+                null,
+                null);
+
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+
+        assertThatThrownBy(() -> dashboardService.updateProfile(memberId, request))
+                .isInstanceOf(CustomException.class);
+    }
+
+    @Test
+    @DisplayName("프로필 수정 - 휴대폰 변경 시 인증 토큰 없으면 실패")
+    void updateProfile_phoneChanged_withoutToken_throws() throws Exception {
+        UUID memberId = UUID.randomUUID();
+        Member member = createMember(memberId);
+
+        DashboardDTO.ProfileUpdateRequest request = new DashboardDTO.ProfileUpdateRequest(
+                null,
+                null,
+                "010-9999-8888",
+                null,
+                null,
+                null);
+
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+
+        assertThatThrownBy(() -> dashboardService.updateProfile(memberId, request))
+                .isInstanceOf(CustomException.class);
+    }
+
+    @Test
+    @DisplayName("프로필 수정 - 이메일 변경 시 유효한 토큰이면 성공")
+    void updateProfile_emailChanged_withValidToken_success() throws Exception {
+        UUID memberId = UUID.randomUUID();
+        Member member = createMember(memberId);
+
+        DashboardDTO.ProfileUpdateRequest request = new DashboardDTO.ProfileUpdateRequest(
+                null,
+                "new-email@test.com",
+                null,
+                null,
+                "email-token",
+                null);
+
+        MemberVerification verification = MemberVerification.issue(
+                VerificationChannel.EMAIL, "new-email@test.com", VerificationPurpose.EMAIL_CHANGE,
+                "hash", Instant.now().plusSeconds(300), Instant.now().plusSeconds(60));
+        verification.markVerified("email-token");
+
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+        when(verificationRepository.findByVerificationToken("email-token")).thenReturn(Optional.of(verification));
+
+        DashboardDTO.ProfileResponse response = dashboardService.updateProfile(memberId, request);
+
+        assertThat(response.email()).isEqualTo("new-email@test.com");
+    }
+
+    @Test
+    @DisplayName("프로필 수정 - 토큰의 인증 대상이 요청 값과 다르면 실패")
+    void updateProfile_tokenTargetMismatch_throws() throws Exception {
+        UUID memberId = UUID.randomUUID();
+        Member member = createMember(memberId);
+
+        DashboardDTO.ProfileUpdateRequest request = new DashboardDTO.ProfileUpdateRequest(
+                null,
+                "new-email@test.com",
+                null,
+                null,
+                "email-token",
+                null);
+
+        // 토큰은 다른 이메일(other@test.com)에 대해 발급된 것 — target 불일치
+        MemberVerification verification = MemberVerification.issue(
+                VerificationChannel.EMAIL, "other@test.com", VerificationPurpose.EMAIL_CHANGE,
+                "hash", Instant.now().plusSeconds(300), Instant.now().plusSeconds(60));
+        verification.markVerified("email-token");
+
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+        when(verificationRepository.findByVerificationToken("email-token")).thenReturn(Optional.of(verification));
+
+        assertThatThrownBy(() -> dashboardService.updateProfile(memberId, request))
+                .isInstanceOf(CustomException.class);
+    }
+
+    @Test
+    @DisplayName("프로필 수정 - 이메일/휴대폰 미변경 시 인증 토큰 불필요")
+    void updateProfile_unchangedEmailAndPhone_noTokenRequired() throws Exception {
+        UUID memberId = UUID.randomUUID();
+        Member member = createMember(memberId);
+
+        DashboardDTO.ProfileUpdateRequest request = new DashboardDTO.ProfileUpdateRequest(
+                "새이름",
+                "user01@test.com",
+                "010-1234-5678",
+                null,
+                null,
+                null);
+
+        when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+
+        DashboardDTO.ProfileResponse response = dashboardService.updateProfile(memberId, request);
+
+        assertThat(response.name()).isEqualTo("새이름");
+        assertThat(response.email()).isEqualTo("user01@test.com");
+        assertThat(response.phone()).isEqualTo("010-1234-5678");
+    }
+
+    private MemberVerification verifiedPhoneChange(String phone, String token) {
+        MemberVerification verification = MemberVerification.issue(
+                VerificationChannel.PHONE, phone, VerificationPurpose.PHONE_CHANGE,
+                "hash", Instant.now().plusSeconds(300), Instant.now().plusSeconds(60));
+        verification.markVerified(token);
+        return verification;
     }
 
     @ParameterizedTest

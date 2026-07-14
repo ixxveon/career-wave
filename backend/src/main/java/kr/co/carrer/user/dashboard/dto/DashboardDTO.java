@@ -54,7 +54,11 @@ public class DashboardDTO {
 
                         @Schema(description = "휴대폰 번호", example = "01012345678") @Pattern(regexp = "^01[0-9]{8,9}$", message = "휴대폰 번호 형식이 올바르지 않습니다.") String phone,
 
-                        @Schema(description = "GitHub URL", example = "https://github.com/octocat") @Size(max = 300) @Pattern(regexp = "^https://(www\\.)?github\\.com/[A-Za-z0-9-]+/?$", message = "GitHub URL 형식이 올바르지 않습니다.") String githubUrl
+                        @Schema(description = "GitHub URL", example = "https://github.com/octocat") @Size(max = 300) @Pattern(regexp = "^https://(www\\.)?github\\.com/[A-Za-z0-9-]+/?$", message = "GitHub URL 형식이 올바르지 않습니다.") String githubUrl,
+
+                        @Schema(description = "이메일 변경 시 필수 — purpose=EMAIL_CHANGE로 발급받은 인증 완료 토큰") String emailVerificationToken,
+
+                        @Schema(description = "휴대폰 번호 변경 시 필수 — purpose=PHONE_CHANGE로 발급받은 인증 완료 토큰") String phoneVerificationToken
 
         ) {
         }

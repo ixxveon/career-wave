@@ -171,14 +171,14 @@ CREATE TABLE member_verifications (
     CONSTRAINT pk_member_verifications         PRIMARY KEY (verification_id),
     CONSTRAINT uq_member_verification_token    UNIQUE      (verification_token),
     CONSTRAINT chk_verification_channel        CHECK (channel             IN ('EMAIL', 'PHONE')),
-    CONSTRAINT chk_verification_purpose        CHECK (purpose             IN ('REGISTER', 'FIND_ID', 'RESET_PASSWORD', 'SOCIAL_SIGNUP')),
+    CONSTRAINT chk_verification_purpose        CHECK (purpose             IN ('REGISTER', 'FIND_ID', 'RESET_PASSWORD', 'SOCIAL_SIGNUP', 'EMAIL_CHANGE', 'PHONE_CHANGE')),
     CONSTRAINT chk_verification_status         CHECK (verification_status IN ('SENT', 'VERIFIED', 'CONSUMED', 'EXPIRED', 'FAILED', 'RATE_LIMITED'))
 );
-COMMENT ON TABLE  member_verifications                      IS '이메일/휴대폰 인증 테이블 (회원 FK 없음 - 가입 전 인증)';
+COMMENT ON TABLE  member_verifications                      IS '이메일/휴대폰 인증 테이블 (회원 FK 없음 - 가입 전 인증 및 마이페이지 정보 변경 인증)';
 COMMENT ON COLUMN member_verifications.verification_id     IS '인증 요청 고유 식별자';
 COMMENT ON COLUMN member_verifications.channel             IS '인증 채널 (EMAIL / PHONE)';
 COMMENT ON COLUMN member_verifications.target              IS '인증 대상 (이메일 주소 또는 휴대폰 번호)';
-COMMENT ON COLUMN member_verifications.purpose             IS '인증 목적 (REGISTER / FIND_ID / RESET_PASSWORD / SOCIAL_SIGNUP)';
+COMMENT ON COLUMN member_verifications.purpose             IS '인증 목적 (REGISTER / FIND_ID / RESET_PASSWORD / SOCIAL_SIGNUP / EMAIL_CHANGE / PHONE_CHANGE)';
 COMMENT ON COLUMN member_verifications.code_hash           IS '인증번호 해시값';
 COMMENT ON COLUMN member_verifications.verification_token  IS '인증 완료 후 발급되는 단기 토큰';
 COMMENT ON COLUMN member_verifications.verification_status IS '인증 상태 (SENT / VERIFIED / CONSUMED / EXPIRED / FAILED / RATE_LIMITED)';
