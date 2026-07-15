@@ -1,10 +1,12 @@
-import { useRef, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FileSearch, FileText, ScrollText } from 'lucide-react';
 import HistoryItem from '../../../components/user/resume/HistoryItem';
 import { useResumeHistory } from '../../../hooks/user/resume/useResumeHistory';
-import type { FileType, ResumeHistoryItem } from '../../../types/user/resume';
+import type { FileType } from '../../../types/user/resume';
 import '@/styles/user/resume/ResumeHistoryPage.css';
+
+const PAGE_SIZE = 10;
 
 const TYPE_TABS: { label: string; value: FileType | 'ALL'; Icon: typeof FileText }[] = [
   { label: '전체',       value: 'ALL',          Icon: FileSearch },
@@ -14,47 +16,56 @@ const TYPE_TABS: { label: string; value: FileType | 'ALL'; Icon: typeof FileText
 
 export default function ResumeHistoryPage() {
   const [activeType, setActiveType] = useState<FileType | 'ALL'>('ALL');
+  const [page, setPage] = useState(0);
 
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useResumeHistory();
-
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const listWrapRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      },
-      { root: listWrapRef.current, threshold: 0.1 },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const { data, isLoading, isError, refetch } = useResumeHistory(page);
 
   function handleTabChange(type: FileType | 'ALL'): void {
     setActiveType(type);
+    setPage(0);
   }
 
-  const allItems: ResumeHistoryItem[] = data?.pages.flatMap((page) => page.items) ?? [];
-  // 탭 필터는 클라이언트 사이드 적용 (백엔드 미지원)
+  const allItems = data?.items ?? [];
   const filteredItems = activeType === 'ALL'
     ? allItems
     : allItems.filter(item => item.fileType === activeType);
 
+  const totalPages = data?.totalPages ?? 0;
+
+  function renderPagination(): React.ReactNode {
+    if (totalPages <= 1) return null;
+    const pages = Array.from({ length: totalPages }, (_, i) => i);
+    return (
+      <div className="rh-pagination">
+        <button
+          type="button"
+          className="rh-page-btn"
+          disabled={page === 0}
+          onClick={() => setPage(p => p - 1)}
+        >
+          이전
+        </button>
+        {pages.map(p => (
+          <button
+            key={p}
+            type="button"
+            className={`rh-page-btn${page === p ? ' rh-page-btn--active' : ''}`}
+            onClick={() => setPage(p)}
+          >
+            {p + 1}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="rh-page-btn"
+          disabled={page >= totalPages - 1}
+          onClick={() => setPage(p => p + 1)}
+        >
+          다음
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="rh">
@@ -86,7 +97,7 @@ export default function ResumeHistoryPage() {
           ))}
         </div>
 
-        {/* 로딩 (첫 페이지) */}
+        {/* 로딩 */}
         {isLoading && (
           <div role="status" aria-label="불러오는 중">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -120,31 +131,15 @@ export default function ResumeHistoryPage() {
               </div>
             ) : (
               <>
-                <p className="rh-count">총 {filteredItems.length}건</p>
-                <div className="rh-list-wrap" ref={listWrapRef}>
-                  <ul className="rh-list" aria-label="분석 이력 목록">
-                    {filteredItems.map((item) => (
-                      <li key={item.documentId}>
-                        <HistoryItem item={item} />
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* 무한스크롤 센티넬 */}
-                  <div ref={sentinelRef} aria-hidden="true" />
-                </div>
-
-                {isFetchingNextPage && (
-                  <div role="status" aria-label="추가 항목 불러오는 중">
-                    {Array.from({ length: 2 }).map((_, i) => (
-                      <div key={i} className="rh-skeleton" aria-hidden="true" />
-                    ))}
-                  </div>
-                )}
-
-                {!hasNextPage && allItems.length > 0 && (
-                  <p className="rh-end-msg">모든 이력을 확인했습니다.</p>
-                )}
+                <p className="rh-count">총 {data?.totalItems ?? filteredItems.length}건</p>
+                <ul className="rh-list" aria-label="분석 이력 목록">
+                  {filteredItems.map((item) => (
+                    <li key={item.documentId}>
+                      <HistoryItem item={item} />
+                    </li>
+                  ))}
+                </ul>
+                {renderPagination()}
               </>
             )}
           </>
