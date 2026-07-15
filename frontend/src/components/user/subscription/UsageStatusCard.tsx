@@ -17,9 +17,15 @@ export function UsageStatusCard({ item }: { item: UsageItem }) {
     limit > 0 ? Math.min(Math.round((clampedUsed / limit) * clampedLimit), clampedLimit) : 0;
   const usageBoxes = limit > 0 ? Array.from({ length: clampedLimit }, (_, i) => i < filledBoxes) : [];
   const unit = formatUsageUnit(item.usage?.unit);
-  const nextBillingDate = formatBillingDate(item.subscription?.nextBillingAt ?? null);
   const isPaymentFailed = item.subscription?.status === SUBSCRIPTION_STATUS.PAYMENT_FAILED;
   const isCancelScheduled = item.subscription?.status === SUBSCRIPTION_STATUS.CANCEL_SCHEDULED;
+  // 해지 예정 상태는 더 이상 결제가 없으므로 "다음 결제일"이 아니라 "이용 종료일" 의미의
+  // currentPeriodEnd를 봐야 한다 (formatSubscriptionStatusLabel과 동일한 출처로 통일).
+  const periodEndDate = formatBillingDate(
+    isCancelScheduled
+      ? item.subscription?.currentPeriodEnd ?? null
+      : item.subscription?.nextBillingAt ?? null,
+  );
 
   return (
     <article className={`cw-subscription-usage-card is-${item.accent}`}>
@@ -61,7 +67,7 @@ export function UsageStatusCard({ item }: { item: UsageItem }) {
             <dt>{isCancelScheduled ? '이용 종료일' : '다음 결제일'}</dt>
             <dd>
               <CalendarDays size={13} />
-              {nextBillingDate}
+              {periodEndDate}
             </dd>
           </div>
         </dl>
@@ -76,7 +82,7 @@ export function UsageStatusCard({ item }: { item: UsageItem }) {
         {isCancelScheduled && (
           <p className="cw-subscription-usage-card__cancel-scheduled" role="status">
             <CalendarDays size={14} />
-            {nextBillingDate}까지 이용 가능하며, 이후 자동 결제가 중단됩니다.
+            {periodEndDate}까지 이용 가능하며, 이후 자동 결제가 중단됩니다.
           </p>
         )}
       </div>
