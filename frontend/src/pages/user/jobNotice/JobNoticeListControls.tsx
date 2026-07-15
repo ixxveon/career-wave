@@ -216,6 +216,7 @@ export function JobNoticeFilters({
   className,
   isDialog = false,
   onApplied,
+  onOpen,
 }: {
   filters: Filters;
   filterGroups: FilterGroup[];
@@ -223,6 +224,7 @@ export function JobNoticeFilters({
   className?: string;
   isDialog?: boolean;
   onApplied?: () => void;
+  onOpen?: () => void;
 }) {
   const [draftFilters, setDraftFilters] = useState<Filters>(filters);
   const [activeLabel, setActiveLabel] = useState<FilterLabel>(() => filterGroups[0]?.label ?? '직무');
@@ -273,17 +275,30 @@ export function JobNoticeFilters({
           </div>
         </div>
       ) : (
-        filterGroups.map((group) => (
-          <FilterBlock key={group.label} group={group} values={draftFilters[group.label]} onChange={toggleFilter} />
-        ))
+        <>
+          <div className="jn-filter-panel__head">
+            <strong>필터</strong>
+            <span>{Object.values(filters).flat().length}개 선택</span>
+          </div>
+          <div className="jn-filter-panel__summary">
+            {filterGroups.map((group) => (
+              <button type="button" key={group.label} onClick={onOpen} aria-label={`${group.label} 필터 선택`}>
+                <span>{group.label}</span>
+                <em>{filters[group.label].length > 0 ? `${filters[group.label].length}개 선택` : '전체'}</em>
+                <strong>+</strong>
+              </button>
+            ))}
+          </div>
+          <button type="button" className="jn-filter-panel__open" onClick={onOpen}>상세 필터 선택</button>
+        </>
       )}
-      <div className="jn-filter-actions">
+      {isDialog && <div className="jn-filter-actions">
         <button type="button" onClick={() => setDraftFilters(createInitialFilters())}>초기화</button>
         <button type="button" onClick={() => {
           onApply(draftFilters);
           onApplied?.();
         }}>필터 적용</button>
-      </div>
+      </div>}
     </aside>
   );
 }

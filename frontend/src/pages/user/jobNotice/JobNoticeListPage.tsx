@@ -273,6 +273,12 @@ export default function JobNoticeListPage() {
       <JobNoticeBanner searchQuery={searchQuery} onSearch={setSearchQuery} stats={listStats} />
 
       <div className="jn-layout">
+        <JobNoticeFilters
+          filters={filters}
+          filterGroups={filterGroups}
+          onApply={applyFilters}
+          onOpen={() => setIsFilterOpen(true)}
+        />
         <main className="jn-results">
           <button
             type="button"
