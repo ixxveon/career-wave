@@ -372,7 +372,7 @@ function UserMyPage() {
         name: trimmedName,
         email: trimmedEmail,
         phone: normalizedPhone,
-        ...(!isCompanyMember && { githubUrl: normalizedGithubUrl }),
+        ...(normalizedGithubUrl && { githubUrl: normalizedGithubUrl }),
         emailVerificationToken: emailChanged ? emailVerification.verificationToken : undefined,
         phoneVerificationToken: phoneChanged ? phoneVerification.verificationToken : undefined,
       });
