@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { useInterviewHistory } from '../../../hooks/user/interview/useInterviewReport';
 import { useSubscriptionStatus } from '../../../hooks/user/subscription';
-import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
 import { useEntitlements } from '../../../hooks/user/subscription/useEntitlements';
 import { PRODUCT_CODE } from '../../../types/user/subscription';
 import { SESSION_TYPE_LABEL } from '../../../constants/user/interview';
@@ -23,7 +22,6 @@ function InterviewHomePage() {
   const navigate = useNavigate();
   const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useInterviewHistory(0, 3);
   const { subscribedItems, unsubscribedItems } = useSubscriptionStatus();
-  const { data: resumeQuota } = useResumeQuota();
   const { data: entitlements } = useEntitlements();
 
   /* 서류 AI 코칭 / AI 모의면접 usage 항목 (구독 여부 무관) */
@@ -33,10 +31,11 @@ function InterviewHomePage() {
 
   const docSubscribed = docItem?.isSubscribed ?? false;
   const ivSubscribed  = ivItem?.isSubscribed  ?? false;
-  const hasIvEntitlement = entitlements ? entitlements[PRODUCT_CODE.INTERVIEW] : true;
+  const hasDocEntitlement = entitlements ? entitlements[PRODUCT_CODE.DOCUMENT_COACHING] : true;
+  const hasIvEntitlement  = entitlements ? entitlements[PRODUCT_CODE.INTERVIEW] : true;
 
-  const docUsed  = resumeQuota?.usedCount  ?? 0;
-  const docLimit = resumeQuota?.limitCount ?? DEFAULT_DOC_LIMIT;
+  const docUsed  = docSubscribed ? (docItem?.usage?.used ?? 0) : (hasDocEntitlement ? 0 : 1);
+  const docLimit = docSubscribed ? (docItem?.usage?.limit ?? DEFAULT_DOC_LIMIT) : 1;
   const docPct   = Math.min((docUsed / docLimit) * 100, 100);
 
   // 미구독: 무료 체험 1회 기준 / 구독 중: API 사용량 기준
