@@ -8,7 +8,6 @@ import {
   Github,
   Pencil,
   CheckCircle2,
-  UserX,
 } from "lucide-react";
 import { useSubscriptionStatus } from "@/hooks/user/subscription";
 import { updateDashboardProfile } from "@/api/user/dashboard";
@@ -602,27 +601,18 @@ function UserMyPage() {
         </section>
         )}
 
-        <section className="cw-account-card cw-withdrawal-card">
-          <div className="cw-card-title">
-            <div className="cw-card-title-left">
-              <UserX size={18} />
-              <h3>회원 탈퇴</h3>
-            </div>
-
-            <button
-              type="button"
-              className="cw-card-edit-button"
-              disabled
-              title="회원 탈퇴 기능은 준비 중입니다."
-            >
-              탈퇴 신청
-            </button>
-          </div>
-
-          <p className="cw-card-notice">
-            회원 탈퇴 기능은 현재 준비 중입니다. 탈퇴가 필요하신 경우 1:1 문의를 통해 요청해 주세요.
-          </p>
-        </section>
+        <p className="cw-withdrawal-notice">
+          회원 탈퇴를 원하시면{" "}
+          <button
+            type="button"
+            className="cw-withdrawal-notice__link"
+            disabled
+            title="회원 탈퇴 기능은 준비 중입니다."
+          >
+            1:1 문의
+          </button>
+          를 통해 요청해 주세요.
+        </p>
       </section>
 
       {isEditModalOpen && (
