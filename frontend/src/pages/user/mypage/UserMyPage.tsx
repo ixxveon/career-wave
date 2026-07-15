@@ -7,16 +7,20 @@ import {
   ShieldCheck,
   Github,
   Pencil,
+  CheckCircle2,
 } from "lucide-react";
 import { useSubscriptionStatus } from "@/hooks/user/subscription";
 import { updateDashboardProfile } from "@/api/user/dashboard";
-import { formatPhoneNumber, PHONE_MAX_LENGTH } from "@/utils/user/member/registerSchema";
+import { memberVerificationApi } from "@/api/user/member";
+import { formatPhoneNumber, isValidVerificationCode, normalizePhone, PHONE_MAX_LENGTH } from "@/utils/user/member/registerSchema";
+import { formatRemaining, getRecoveryErrorMessage, getRemainingSeconds } from "@/utils/user/member/recoveryView";
+import { useVerificationNow } from "@/hooks/user/member";
 import {
   useDashboardGithub,
   useDashboardProfile,
 } from "../../../hooks/user/dashboard";
 
-import { MEMBER_TYPE } from "@/types/user/member";
+import { MEMBER_TYPE, VERIFICATION_CHANNEL, VERIFICATION_PURPOSE } from "@/types/user/member";
 import type { UserProfile } from "@/types/user/dashboard";
 
 import "@/styles/user/mypage/MyPage.css";
@@ -73,6 +77,24 @@ type EditProfileForm = {
   githubUrl: string;
 };
 
+type FieldVerification = {
+  verificationId: string;
+  verificationToken: string;
+  verifiedValue: string;
+  code: string;
+  expiresAt: string;
+  resendAvailableAt: string;
+};
+
+const EMPTY_FIELD_VERIFICATION: FieldVerification = {
+  verificationId: "",
+  verificationToken: "",
+  verifiedValue: "",
+  code: "",
+  expiresAt: "",
+  resendAvailableAt: "",
+};
+
 function UserMyPage() {
   const {
     data: userProfile,
@@ -105,6 +127,14 @@ function UserMyPage() {
   const isSavingProfileRef = useRef(false);
   const [editErrorMessage, setEditErrorMessage] = useState("");
 
+  const [emailVerification, setEmailVerification] = useState<FieldVerification>(EMPTY_FIELD_VERIFICATION);
+  const [phoneVerification, setPhoneVerification] = useState<FieldVerification>(EMPTY_FIELD_VERIFICATION);
+  const [isSendingEmailCode, setIsSendingEmailCode] = useState(false);
+  const [isSendingPhoneCode, setIsSendingPhoneCode] = useState(false);
+  const [isConfirmingEmailCode, setIsConfirmingEmailCode] = useState(false);
+  const [isConfirmingPhoneCode, setIsConfirmingPhoneCode] = useState(false);
+  const now = useVerificationNow();
+
   const isLoading = isProfileLoading || isGithubLoading;
 
   useEffect(() => {
@@ -132,6 +162,8 @@ function UserMyPage() {
       phone: formatPhoneNumber(userProfile.phone ?? ""),
       githubUrl: githubProfile?.githubUrl ?? "",
     });
+    setEmailVerification(EMPTY_FIELD_VERIFICATION);
+    setPhoneVerification(EMPTY_FIELD_VERIFICATION);
 
     setEditErrorMessage("");
     setIsEditModalOpen(true);
@@ -151,6 +183,110 @@ function UserMyPage() {
       ...prev,
       [field]: formattedValue,
     }));
+
+    // 이메일/휴대폰 값을 다시 바꾸면 이전에 받은 인증 상태는 더 이상 유효하지 않다.
+    if (field === "email") {
+      setEmailVerification(EMPTY_FIELD_VERIFICATION);
+    }
+    if (field === "phone") {
+      setPhoneVerification(EMPTY_FIELD_VERIFICATION);
+    }
+  }
+
+  async function handleSendEmailCode() {
+    const target = editForm.email.trim();
+    if (!isValidEmail(target)) {
+      setEditErrorMessage("이메일 형식이 올바르지 않습니다.");
+      return;
+    }
+    setEditErrorMessage("");
+    setIsSendingEmailCode(true);
+    try {
+      const result = await memberVerificationApi.send({
+        channel: VERIFICATION_CHANNEL.EMAIL,
+        target,
+        purpose: VERIFICATION_PURPOSE.EMAIL_CHANGE,
+      });
+      setEmailVerification({
+        ...EMPTY_FIELD_VERIFICATION,
+        verificationId: result.verificationId,
+        expiresAt: result.expiresAt,
+        resendAvailableAt: result.resendAvailableAt,
+      });
+    } catch (error) {
+      setEditErrorMessage(getRecoveryErrorMessage(error, "이메일 인증번호 발송에 실패했습니다."));
+    } finally {
+      setIsSendingEmailCode(false);
+    }
+  }
+
+  async function handleConfirmEmailCode() {
+    if (!emailVerification.verificationId) return;
+    setEditErrorMessage("");
+    setIsConfirmingEmailCode(true);
+    try {
+      const result = await memberVerificationApi.confirm({
+        verificationId: emailVerification.verificationId,
+        code: emailVerification.code.trim(),
+      });
+      setEmailVerification((prev) => ({
+        ...prev,
+        verificationToken: result.verificationToken,
+        verifiedValue: editForm.email.trim(),
+      }));
+    } catch (error) {
+      setEditErrorMessage(getRecoveryErrorMessage(error, "이메일 인증에 실패했습니다."));
+    } finally {
+      setIsConfirmingEmailCode(false);
+    }
+  }
+
+  async function handleSendPhoneCode() {
+    const target = normalizePhone(editForm.phone);
+    if (!/^010[0-9]{8}$/.test(target)) {
+      setEditErrorMessage("휴대폰 번호는 010으로 시작하는 11자리 숫자로 입력해주세요.");
+      return;
+    }
+    setEditErrorMessage("");
+    setIsSendingPhoneCode(true);
+    try {
+      const result = await memberVerificationApi.send({
+        channel: VERIFICATION_CHANNEL.PHONE,
+        target,
+        purpose: VERIFICATION_PURPOSE.PHONE_CHANGE,
+      });
+      setPhoneVerification({
+        ...EMPTY_FIELD_VERIFICATION,
+        verificationId: result.verificationId,
+        expiresAt: result.expiresAt,
+        resendAvailableAt: result.resendAvailableAt,
+      });
+    } catch (error) {
+      setEditErrorMessage(getRecoveryErrorMessage(error, "휴대폰 인증번호 발송에 실패했습니다."));
+    } finally {
+      setIsSendingPhoneCode(false);
+    }
+  }
+
+  async function handleConfirmPhoneCode() {
+    if (!phoneVerification.verificationId) return;
+    setEditErrorMessage("");
+    setIsConfirmingPhoneCode(true);
+    try {
+      const result = await memberVerificationApi.confirm({
+        verificationId: phoneVerification.verificationId,
+        code: phoneVerification.code.trim(),
+      });
+      setPhoneVerification((prev) => ({
+        ...prev,
+        verificationToken: result.verificationToken,
+        verifiedValue: normalizePhone(editForm.phone),
+      }));
+    } catch (error) {
+      setEditErrorMessage(getRecoveryErrorMessage(error, "휴대폰 인증에 실패했습니다."));
+    } finally {
+      setIsConfirmingPhoneCode(false);
+    }
   }
 
   async function saveProfileEdit() {
@@ -160,7 +296,7 @@ function UserMyPage() {
 
     const trimmedName = editForm.name.trim();
     const trimmedEmail = editForm.email.trim();
-    const normalizedPhone = (editForm.phone ?? "").replace(/-/g, "").trim();
+    const normalizedPhone = normalizePhone(editForm.phone);
     const normalizedGithubUrl = normalizeGithubUrl(editForm.githubUrl);
     if (!hasEditFormChanges) {
       setIsEditModalOpen(false);
@@ -195,6 +331,21 @@ function UserMyPage() {
       return;
     }
 
+    const emailChanged = trimmedEmail !== "" && trimmedEmail !== (userProfile.email ?? "");
+    const phoneChanged = normalizedPhone !== "" && normalizedPhone !== userProfile.phone;
+
+    if (emailChanged && emailVerification.verifiedValue !== trimmedEmail) {
+      setEditErrorMessage("이메일 인증을 완료해 주세요.");
+      isSavingProfileRef.current = false;
+      return;
+    }
+
+    if (phoneChanged && phoneVerification.verifiedValue !== normalizedPhone) {
+      setEditErrorMessage("휴대폰 인증을 완료해 주세요.");
+      isSavingProfileRef.current = false;
+      return;
+    }
+
     try {
       setIsSavingProfile(true);
 
@@ -203,6 +354,8 @@ function UserMyPage() {
         email: trimmedEmail,
         phone: normalizedPhone,
         githubUrl: normalizedGithubUrl,
+        emailVerificationToken: emailChanged ? emailVerification.verificationToken : undefined,
+        phoneVerificationToken: phoneChanged ? phoneVerification.verificationToken : undefined,
       });
 
       await Promise.all([refetchProfile(), refetchGithub()]);
@@ -259,6 +412,17 @@ function UserMyPage() {
     editForm.email.trim() !== (userProfile.email ?? "") ||
     editForm.phone.replace(/-/g, "").trim() !== userProfile.phone ||
     normalizeGithubUrl(editForm.githubUrl) !== (githubProfile?.githubUrl ?? "");
+
+  const trimmedEditEmail = editForm.email.trim();
+  const normalizedEditPhone = normalizePhone(editForm.phone);
+  const isEmailChanged = trimmedEditEmail !== "" && trimmedEditEmail !== (userProfile.email ?? "");
+  const isPhoneChanged = normalizedEditPhone !== "" && normalizedEditPhone !== userProfile.phone;
+  const isEmailVerified = emailVerification.verificationToken !== "" && emailVerification.verifiedValue === trimmedEditEmail;
+  const isPhoneVerified = phoneVerification.verificationToken !== "" && phoneVerification.verifiedValue === normalizedEditPhone;
+  const emailExpiresIn = getRemainingSeconds(emailVerification.expiresAt, now);
+  const emailResendIn = getRemainingSeconds(emailVerification.resendAvailableAt, now);
+  const phoneExpiresIn = getRemainingSeconds(phoneVerification.expiresAt, now);
+  const phoneResendIn = getRemainingSeconds(phoneVerification.resendAvailableAt, now);
 
   return (
     <div className="cw-mypage-layout">
@@ -445,31 +609,133 @@ function UserMyPage() {
 
                 <label>
                   이메일
-                  <input
-                    type="text"
-                    value={editForm.email ?? ""}
-                    placeholder="example@email.com"
-                    spellCheck={false}
-                    autoCapitalize="off"
-                    autoCorrect="off"
-                    onChange={(event) =>
-                      handleEditFormChange("email", event.target.value)
-                    }
-                  />
+                  <div className="cw-verify-inline">
+                    <input
+                      type="text"
+                      value={editForm.email ?? ""}
+                      placeholder="example@email.com"
+                      spellCheck={false}
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      onChange={(event) =>
+                        handleEditFormChange("email", event.target.value)
+                      }
+                    />
+                    {isEmailChanged && !isEmailVerified && (
+                      <button
+                        type="button"
+                        className="cw-verify-send-button"
+                        onClick={() => void handleSendEmailCode()}
+                        disabled={isSendingEmailCode || emailResendIn > 0}
+                      >
+                        {isSendingEmailCode
+                          ? "전송 중"
+                          : emailVerification.verificationId
+                            ? `재전송${emailResendIn > 0 ? ` ${formatRemaining(emailResendIn)}` : ""}`
+                            : "인증번호 전송"}
+                      </button>
+                    )}
+                  </div>
+                  {isEmailChanged && isEmailVerified && (
+                    <span className="cw-verify-status">
+                      <CheckCircle2 size={14} /> 이메일 인증 완료
+                    </span>
+                  )}
+                  {isEmailChanged && !isEmailVerified && emailVerification.verificationId && (
+                    <div className="cw-verify-inline">
+                      <input
+                        type="text"
+                        value={emailVerification.code}
+                        placeholder="인증번호 6자리"
+                        onChange={(event) =>
+                          setEmailVerification((prev) => ({ ...prev, code: event.target.value }))
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="cw-verify-send-button"
+                        onClick={() => void handleConfirmEmailCode()}
+                        disabled={
+                          isConfirmingEmailCode ||
+                          emailExpiresIn <= 0 ||
+                          !isValidVerificationCode(emailVerification.code)
+                        }
+                      >
+                        {isConfirmingEmailCode ? "확인 중" : "인증 확인"}
+                      </button>
+                    </div>
+                  )}
+                  {isEmailChanged && !isEmailVerified && emailVerification.verificationId && emailExpiresIn > 0 && (
+                    <small className="cw-input-help">인증번호 유효 시간 {formatRemaining(emailExpiresIn)}</small>
+                  )}
+                  {isEmailChanged && !isEmailVerified && emailVerification.verificationId && emailExpiresIn <= 0 && (
+                    <small className="cw-input-help">인증번호가 만료되었습니다. 다시 전송해 주세요.</small>
+                  )}
                 </label>
 
                 <label>
                   휴대폰 번호
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={PHONE_MAX_LENGTH}
-                    value={editForm.phone ?? ""}
-                    placeholder="휴대폰번호('-' 없이 숫자만 입력)"
-                    onChange={(event) =>
-                      handleEditFormChange("phone", event.target.value)
-                    }
-                  />
+                  <div className="cw-verify-inline">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={PHONE_MAX_LENGTH}
+                      value={editForm.phone ?? ""}
+                      placeholder="휴대폰번호('-' 없이 숫자만 입력)"
+                      onChange={(event) =>
+                        handleEditFormChange("phone", event.target.value)
+                      }
+                    />
+                    {isPhoneChanged && !isPhoneVerified && (
+                      <button
+                        type="button"
+                        className="cw-verify-send-button"
+                        onClick={() => void handleSendPhoneCode()}
+                        disabled={isSendingPhoneCode || phoneResendIn > 0}
+                      >
+                        {isSendingPhoneCode
+                          ? "전송 중"
+                          : phoneVerification.verificationId
+                            ? `재전송${phoneResendIn > 0 ? ` ${formatRemaining(phoneResendIn)}` : ""}`
+                            : "인증번호 전송"}
+                      </button>
+                    )}
+                  </div>
+                  {isPhoneChanged && isPhoneVerified && (
+                    <span className="cw-verify-status">
+                      <CheckCircle2 size={14} /> 휴대폰 인증 완료
+                    </span>
+                  )}
+                  {isPhoneChanged && !isPhoneVerified && phoneVerification.verificationId && (
+                    <div className="cw-verify-inline">
+                      <input
+                        type="text"
+                        value={phoneVerification.code}
+                        placeholder="인증번호 6자리"
+                        onChange={(event) =>
+                          setPhoneVerification((prev) => ({ ...prev, code: event.target.value }))
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="cw-verify-send-button"
+                        onClick={() => void handleConfirmPhoneCode()}
+                        disabled={
+                          isConfirmingPhoneCode ||
+                          phoneExpiresIn <= 0 ||
+                          !isValidVerificationCode(phoneVerification.code)
+                        }
+                      >
+                        {isConfirmingPhoneCode ? "확인 중" : "인증 확인"}
+                      </button>
+                    </div>
+                  )}
+                  {isPhoneChanged && !isPhoneVerified && phoneVerification.verificationId && phoneExpiresIn > 0 && (
+                    <small className="cw-input-help">인증번호 유효 시간 {formatRemaining(phoneExpiresIn)}</small>
+                  )}
+                  {isPhoneChanged && !isPhoneVerified && phoneVerification.verificationId && phoneExpiresIn <= 0 && (
+                    <small className="cw-input-help">인증번호가 만료되었습니다. 다시 전송해 주세요.</small>
+                  )}
                 </label>
 
               </div>

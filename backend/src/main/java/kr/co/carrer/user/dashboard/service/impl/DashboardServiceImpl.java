@@ -12,7 +12,13 @@ import kr.co.carrer.user.jobnotice.entity.Bookmark;
 import kr.co.carrer.user.jobnotice.exception.JobNoticeErrorCode;
 import kr.co.carrer.user.jobnotice.repository.BookmarkRepository;
 import kr.co.carrer.user.member.entity.Member;
+import kr.co.carrer.user.member.entity.MemberVerification;
+import kr.co.carrer.user.member.exception.UserAuthErrorCode;
+import kr.co.carrer.user.member.repository.MemberVerificationRepository;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
+import kr.co.carrer.user.member.service.impl.UserVerificationServiceImpl;
+import kr.co.carrer.user.member.type.VerificationChannel;
+import kr.co.carrer.user.member.type.VerificationPurpose;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -20,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.time.ZoneId;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -33,6 +40,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final PersonalProfileRepository personalProfileRepository;
     private final BookmarkRepository bookmarkRepository;
     private final DashboardBookmarkQueryRepository dashboardBookmarkQueryRepository;
+    private final MemberVerificationRepository verificationRepository;
 
     @Override
     public DashboardDTO.ProfileResponse getProfile(UUID memberId) {
@@ -66,6 +74,15 @@ public class DashboardServiceImpl implements DashboardService {
         ? request.email()
         : member.getEmail();
         String phone = request.phone() != null ? request.phone() : member.getPhone();
+
+        // 이메일/휴대폰을 실제로 다른 값으로 변경하는 경우에만 인증을 요구한다
+        // (미변경이거나 빈 값으로 지우는 경우는 소유권 증명이 필요 없다).
+        if (email != null && !email.isBlank() && !Objects.equals(email, member.getEmail())) {
+            verifyChangeToken(request.emailVerificationToken(), VerificationChannel.EMAIL, email, VerificationPurpose.EMAIL_CHANGE);
+        }
+        if (phone != null && !phone.isBlank() && !Objects.equals(phone, member.getPhone())) {
+            verifyChangeToken(request.phoneVerificationToken(), VerificationChannel.PHONE, phone, VerificationPurpose.PHONE_CHANGE);
+        }
 
         member.updateProfile(name, email, phone);
 
@@ -109,6 +126,16 @@ public class DashboardServiceImpl implements DashboardService {
                 .orElseThrow(() -> new CustomException(JobNoticeErrorCode.BOOKMARK_NOT_FOUND));
 
         bookmarkRepository.delete(bookmark);
+    }
+
+    private void verifyChangeToken(String token, VerificationChannel channel, String target, VerificationPurpose purpose) {
+        if (token == null || token.isBlank()) {
+            throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
+        }
+        MemberVerification verification = verificationRepository.findByVerificationToken(token)
+                .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
+        UserVerificationServiceImpl.validateVerificationToken(verification, channel, target, purpose);
+        verification.markConsumed();
     }
 
     private DashboardDTO.ProfileResponse toProfileResponse(Member member) {

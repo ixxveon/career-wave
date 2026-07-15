@@ -703,6 +703,45 @@ Empty UI
   line-height: 1.4;
 }
 
+.cw-verify-inline {
+  display: flex;
+  gap: 8px;
+}
+
+.cw-verify-inline input {
+  flex: 1;
+  min-width: 0;
+}
+
+.cw-verify-send-button {
+  flex-shrink: 0;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #d7deea;
+  border-radius: 12px;
+  background: #fff;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cw-verify-send-button:disabled {
+  color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.cw-verify-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  color: #247251;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 @media (max-width: 1180px) {
 
   .cw-dashboard-summary,
