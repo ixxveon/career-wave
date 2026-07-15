@@ -135,6 +135,7 @@ public class DashboardServiceImpl implements DashboardService {
         MemberVerification verification = verificationRepository.findByVerificationToken(token)
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
         UserVerificationServiceImpl.validateVerificationToken(verification, channel, target, purpose);
+        verification.markConsumed();
     }
 
     private DashboardDTO.ProfileResponse toProfileResponse(Member member) {
