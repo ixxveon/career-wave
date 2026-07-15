@@ -73,6 +73,17 @@ public class AdminPaymentController implements AdminPaymentControllerDocs {
         return ResponseEntity.ok(ApiResponse.ok(adminPaymentService.approveRefund(paymentId, adminId, principal.getAdminRole())));
     }
 
+    @PostMapping("/{paymentId}/refund-manual-confirm")
+    public ResponseEntity<ApiResponse<RefundDTO.ResponseApprove>> manualConfirmRefund(
+        @PathVariable UUID paymentId,
+        @AuthenticationPrincipal AuthPrincipal principal
+    ) {
+        Long adminId = resolveAdminId(principal);
+        return ResponseEntity.ok(ApiResponse.ok(
+            adminPaymentService.manualConfirmRefund(paymentId, adminId, principal.getAdminRole())
+        ));
+    }
+
     @PostMapping("/{paymentId}/refund-reject")
     public ResponseEntity<ApiResponse<RefundDTO.ResponseReject>> rejectRefund(
         @PathVariable UUID paymentId,

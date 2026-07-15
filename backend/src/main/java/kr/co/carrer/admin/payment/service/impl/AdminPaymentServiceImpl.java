@@ -129,6 +129,16 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
         return refundApprovalTxService.finalizeApproval(paymentId, adminId);
     }
 
+    // Toss 취소 API 연동 장애(#1193)로 인한 임시 대응 — 관리자가 Toss 상점관리자에서
+    // 이미 수동으로 취소 처리한 결제 건을, Toss API를 다시 호출하지 않고 우리 시스템의
+    // 상태(결제/환불/구독)에만 확정 반영한다. 정산·통계는 payment_status만 보고 계산하므로
+    // 별도 반영 없이 자동으로 정상 집계된다.
+    @Override
+    public RefundDTO.ResponseApprove manualConfirmRefund(UUID paymentId, Long adminId, String adminRole) {
+        validateMasterRole(adminRole);
+        return refundApprovalTxService.finalizeApproval(paymentId, adminId);
+    }
+
     @Override
     @Transactional
     public RefundDTO.ResponseReject rejectRefund(UUID paymentId, String rejectReason, Long adminId, String adminRole) {

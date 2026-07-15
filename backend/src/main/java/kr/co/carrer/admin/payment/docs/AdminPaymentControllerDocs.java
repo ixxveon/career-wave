@@ -49,6 +49,12 @@ public interface AdminPaymentControllerDocs {
         @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
     );
 
+    @Operation(summary = "환불 수동 확정 처리 (Toss 취소 API 미호출 — 이미 Toss에서 수동 취소된 건 반영용)")
+    ResponseEntity<ApiResponse<RefundDTO.ResponseApprove>> manualConfirmRefund(
+        @Parameter(description = "결제 ID (UUID)") @PathVariable UUID paymentId,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
+    );
+
     @Operation(summary = "환불 불가 처리")
     ResponseEntity<ApiResponse<RefundDTO.ResponseReject>> rejectRefund(
         @Parameter(description = "결제 ID (UUID)") @PathVariable UUID paymentId,
