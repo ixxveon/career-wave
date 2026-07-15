@@ -36,7 +36,7 @@ function InterviewHomePage() {
 
   const docUsed  = docSubscribed ? (docItem?.usage?.used ?? 0) : (hasDocEntitlement === true ? 0 : 1);
   const docLimit = docSubscribed ? (docItem?.usage?.limit ?? DEFAULT_DOC_LIMIT) : 1;
-  const docPct   = Math.min((docUsed / docLimit) * 100, 100);
+  const docPct   = docLimit > 0 ? Math.min((docUsed / docLimit) * 100, 100) : 100;
 
   // 미구독: 무료 체험 1회 기준 / 구독 중: API 사용량 기준
   const ivUsed  = ivSubscribed ? (ivItem?.usage?.used ?? 0) : (hasIvEntitlement === true ? 0 : 1);
