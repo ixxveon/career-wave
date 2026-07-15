@@ -268,31 +268,6 @@
   font-weight: 700;
 }
 
-.cm-post__bookmark {
-  margin-left: auto;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: all 0.12s;
-}
-
-.cm-post__bookmark:hover {
-  border-color: #f59e0b;
-  color: #f59e0b;
-}
-
-.cm-post__bookmark--on {
-  border-color: #f59e0b;
-  color: #f59e0b;
-  background: #fef3c7;
-}
-
 .cm-post__title {
   margin: 0 0 8px;
   font-size: 16px;
@@ -372,7 +347,6 @@
 .cm-write:focus-visible,
 .cm-categories button:focus-visible,
 .cm-post:focus-visible,
-.cm-post__bookmark:focus-visible,
 .cm-load-more:focus-visible {
   outline: 3px solid rgba(37, 99, 235, 0.35);
   outline-offset: 3px;

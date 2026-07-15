@@ -25,3 +25,24 @@ export interface CreateCommunityCommentRequest {
   parentId: number | null;
   content: string;
 }
+
+export interface CreateCommunityBoardRequest {
+  category: string;
+  title: string;
+  content: string;
+}
+
+export type CommunityReportTargetType = "BOARD" | "COMMENT";
+
+export type CommunityReportReason =
+  | "SPAM"
+  | "ABUSE"
+  | "AD"
+  | "INAPPROPRIATE"
+  | "OTHER";
+
+export interface CreateCommunityReportRequest {
+  targetType: CommunityReportTargetType;
+  targetId: number;
+  reason: CommunityReportReason;
+}

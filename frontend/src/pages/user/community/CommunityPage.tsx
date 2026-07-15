@@ -6,7 +6,6 @@ import {
   Search,
   ThumbsUp,
   MessageCircle,
-  Bookmark,
   Flame,
   Star,
   Clock,
@@ -34,7 +33,6 @@ type CommunityPost = {
   views: number;
   likes: number;
   comments: number;
-  bookmarked: boolean;
   hot: boolean;
   reportCount: number;
 };
@@ -75,7 +73,6 @@ function toPosts(response: BoardResponse[]): CommunityPost[] {
     views: board.viewCount,
     likes: 0,
     comments: board.commentCount,
-    bookmarked: false,
     hot: board.viewCount >= 100,
     reportCount: 0,
   }));
@@ -135,7 +132,6 @@ function PostCard({
   post: CommunityPost;
   onClick: () => void;
 }) {
-  const [bookmarked, setBookmarked] = useState(post.bookmarked);
 
   function handleCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.target !== event.currentTarget) return;
@@ -167,17 +163,6 @@ function PostCard({
           <span className="cm-post__report">신고 {post.reportCount}</span>
         )}
 
-        <button
-          aria-label="게시글 북마크"
-          className={`cm-post__bookmark${bookmarked ? " cm-post__bookmark--on" : ""}`}
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            setBookmarked((current) => !current);
-          }}
-        >
-          <Bookmark size={14} fill={bookmarked ? "currentColor" : "none"} />
-        </button>
       </div>
 
       <p className="cm-post__title">{post.title}</p>
@@ -358,7 +343,12 @@ export default function CommunityPage() {
         {!isChecking && !isLoggedIn && (
           <div className="cm-empty">
             커뮤니티 게시글은 로그인 후 열람할 수 있습니다.
-            <button type="button" onClick={() => navigate("/auth/login")}>
+            <button
+              type="button"
+              onClick={() =>
+                navigate(`/auth/login?next=${encodeURIComponent("/community")}`)
+              }
+            >
               로그인하러 가기
             </button>
           </div>
