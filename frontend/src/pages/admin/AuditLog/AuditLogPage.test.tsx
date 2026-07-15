@@ -35,7 +35,7 @@ function renderPage() {
 
 function resolveList(content = [listItem], page = 1, totalPages = 1) {
   auditLogApiMock.getLogs.mockResolvedValue({
-    data: { success: true, data: { content, page, size: 20, totalElements: 1248, totalPages } },
+    data: { success: true, data: { content, page, size: 9, totalElements: 1248, totalPages } },
   });
 }
 
@@ -56,6 +56,8 @@ describe('AuditLogPage', () => {
     expect(screen.getAllByText('회원 상세 조회').length).toBeGreaterThan(0);
     expect(screen.getAllByText('MEMBER #1842').length).toBeGreaterThan(0);
     expect(screen.getAllByText('admin-1').length).toBeGreaterThan(0);
+    expect(screen.getByText('페이지당 9건')).toBeTruthy();
+    await waitFor(() => expect(auditLogApiMock.getLogs).toHaveBeenCalledWith(expect.objectContaining({ page: 1, size: 9 })));
     await waitFor(() => expect(auditLogApiMock.getLogDetail).toHaveBeenCalledWith('1001'));
   });
 
@@ -70,12 +72,13 @@ describe('AuditLogPage', () => {
     await waitFor(() => expect(auditLogApiMock.getLogs).toHaveBeenLastCalledWith(expect.not.objectContaining({ adminId: expect.anything() })));
   });
 
-  it('passes the target type filter', async () => {
+  it('does not render the target type filter', async () => {
     renderPage();
-    const targetTypeSelect = await screen.findByLabelText('대상 유형');
-    fireEvent.change(targetTypeSelect, { target: { value: 'MEMBER' } });
 
-    await waitFor(() => expect(auditLogApiMock.getLogs).toHaveBeenLastCalledWith(expect.objectContaining({ targetType: 'MEMBER' })));
+    await screen.findByText('총 1,248건');
+
+    expect(screen.queryByLabelText('대상 유형')).toBeNull();
+    await waitFor(() => expect(auditLogApiMock.getLogs).toHaveBeenLastCalledWith(expect.not.objectContaining({ targetType: expect.anything() })));
   });
 
   it('moves to the selected page', async () => {
@@ -85,6 +88,23 @@ describe('AuditLogPage', () => {
     await screen.findByText('총 1,248건');
     fireEvent.click(screen.getByRole('button', { name: '2' }));
 
-    await waitFor(() => expect(auditLogApiMock.getLogs).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 })));
+    await waitFor(() => expect(auditLogApiMock.getLogs).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, size: 9 })));
+  });
+
+  it('keeps the list height when the page has fewer than nine logs', async () => {
+    const { container } = renderPage();
+
+    await screen.findByText('총 1,248건');
+
+    expect(container.querySelectorAll('.auditOpsTableRow.placeholder')).toHaveLength(8);
+  });
+
+  it('reserves the detail notice space after detail loading finishes', async () => {
+    const { container } = renderPage();
+
+    await screen.findByText('총 1,248건');
+    await waitFor(() => expect(auditLogApiMock.getLogDetail).toHaveBeenCalledWith('1001'));
+
+    expect(container.querySelector('.auditOpsDetailNoticeSlot.placeholder')).toBeTruthy();
   });
 });

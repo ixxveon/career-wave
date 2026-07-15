@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import ScrapingPage from './ScrapingPage';
 
@@ -88,6 +88,7 @@ describe('ScrapingPage action guards', () => {
     const { container } = renderPage();
 
     await waitFor(() => expect(scrapingApiMock.getSources).toHaveBeenCalled());
+    await waitFor(() => expect(scrapingApiMock.getLogs).toHaveBeenCalledWith({ page: 1, size: 5, sourceName: undefined }));
     await waitFor(() =>
       expect(container.querySelectorAll<HTMLButtonElement>('.scrapeOpsActionGroup button')).toHaveLength(4),
     );
@@ -99,5 +100,7 @@ describe('ScrapingPage action guards', () => {
     expect(actionButtons[1].disabled).toBe(true);
     expect(actionButtons[2].disabled).toBe(true);
     expect(actionButtons[0].getAttribute('title')).toBeTruthy();
+    expect(screen.getByText('발생 시각')).toBeTruthy();
+    expect(screen.queryByRole('navigation', { name: '로그 페이지 이동' })).toBeNull();
   });
 });
