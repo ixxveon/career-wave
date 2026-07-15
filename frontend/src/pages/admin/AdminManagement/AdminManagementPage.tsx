@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ADMIN_ROLE, ADMIN_AUDIT_LOG_TYPE, ADMIN_MANAGEMENT_ERROR_CODE, createAdminAccount as createAdminAccountRequest, createAdminAclRule, deleteAdminAccount, deleteAdminAclRule, getAdminAccounts, getAdminAclRules, getAdminAuditLogs, getAdminManagementAuthErrorMessage, getAdminManagementSummary, toAdminManagementApiError, updateAdminAclEnabled, updateAdminRole, updateAdminStatus, type AdminRole } from '../../../api/admin/adminManagementApi';
 import { adminSession } from '../../../api/admin/adminAuthApi';
 import '../../../styles/admin/admin.css';
+import '../../../styles/admin/audit-log.css';
 import '../../../styles/admin/AdminManagement.css';
 import AdminManagementSummarySection from './AdminManagementSummarySection';
 import AdminAccountsSection from './AdminAccountsSection';

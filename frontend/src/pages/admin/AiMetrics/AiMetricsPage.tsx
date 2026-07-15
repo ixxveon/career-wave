@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../../styles/admin/admin.css';
+import '../../../styles/admin/audit-log.css';
 import '../../../styles/admin/ai-metrics.css';
 import {
   AI_METRIC_INTERVAL,

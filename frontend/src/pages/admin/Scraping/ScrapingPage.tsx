@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import '../../../styles/admin/admin.css';
+import '../../../styles/admin/audit-log.css';
 import '../../../styles/admin/scraping.css';
 import MiniPagination from '../../../components/admin/MiniPagination';
 import {
@@ -23,7 +24,6 @@ const LOG_PAGE_SIZE = 5;
 const FILTER_ALL = 'ALL' as const;
 
 type PipelineStatusFilter = typeof FILTER_ALL | PipelineStatus;
-type LogStatusFilter = typeof FILTER_ALL | ScrapingStatus;
 
 const statusTone: Record<PipelineStatus, Tone> = {
   [PIPELINE_STATUS.IDLE]: 'info',
@@ -39,8 +39,8 @@ const statusLabel: Record<PipelineStatus, string> = {
   [PIPELINE_STATUS.FAILED]: 'FAILED',
 };
 
-const logStatusTone: Record<ScrapingStatus, Tone> = {
-  [SCRAPING_STATUS.SUCCESS]: 'normal',
+const auditToneForLogStatus: Record<ScrapingStatus, 'success' | 'danger'> = {
+  [SCRAPING_STATUS.SUCCESS]: 'success',
   [SCRAPING_STATUS.FAILED]: 'danger',
 };
 
@@ -49,18 +49,24 @@ const toPipelineStatusFilter = (value: string): PipelineStatusFilter =>
     ? value as PipelineStatus
     : FILTER_ALL;
 
-const toLogStatusFilter = (value: string): LogStatusFilter =>
-  value === SCRAPING_STATUS.SUCCESS || value === SCRAPING_STATUS.FAILED
-    ? value
-    : FILTER_ALL;
-
 const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 const formatDuration = (ms: number) => `${ms.toLocaleString()}ms`;
 const formatVolume = (value: number) => value.toLocaleString();
-const formatLogTime = (value: string) =>
-  Number.isNaN(new Date(value).getTime())
-    ? value
-    : new Date(value).toLocaleTimeString('ko-KR', { hour12: false });
+const formatLogTime = (value: string) => {
+  const [date = '', time = ''] = value.split(' ');
+  const [, sourceMonth = '', sourceDay = ''] = date.split('-');
+  if (sourceMonth && sourceDay && time) return `${sourceMonth}/${sourceDay} ${time}`;
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) return value;
+
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+  const day = String(parsedDate.getDate()).padStart(2, '0');
+  const hours = String(parsedDate.getHours()).padStart(2, '0');
+  const minutes = String(parsedDate.getMinutes()).padStart(2, '0');
+  const seconds = String(parsedDate.getSeconds()).padStart(2, '0');
+  return `${month}/${day} ${hours}:${minutes}:${seconds}`;
+};
 const getRecentErrorText = (source: ScrapingSource) =>
   source.recentErrorCode ?? source.recentErrorMessage ?? '-';
 const sanitizeLogDetail = (detail: string) => {
@@ -78,6 +84,7 @@ const getLogMessage = (log: ScrapingLog) =>
   log.detail
     ? `${log.sourceName} ${sanitizeLogDetail(log.message)} ${sanitizeLogDetail(log.detail)}`
     : `${log.sourceName} ${sanitizeLogDetail(log.message)}`;
+const getLogTarget = (log: ScrapingLog) => log.runId ? `${log.sourceName} #${log.runId}` : log.sourceName;
 const getActionErrorMessage = (error: unknown) =>
   error instanceof Error && error.message
     ? error.message
@@ -100,12 +107,10 @@ export default function ScrapingPage() {
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null);
   const [pendingSourceNames, setPendingSourceNames] = useState<Set<string>>(new Set());
   const pendingSourceNamesRef = useRef<Set<string>>(new Set());
-  const [logStatusFilter, setLogStatusFilter] = useState<LogStatusFilter>(FILTER_ALL);
   const [logSourceFilter, setLogSourceFilter] = useState<string | null>(null);
-  const [logPage, setLogPage] = useState(1);
   const pipelineKeyword = pipelineQuery.trim();
   const sourceListQueryKey = ['admin', 'scraping', 'sources', pipelineKeyword, statusFilter, pipelinePage] as const;
-  const logListQueryKey = ['admin', 'scraping', 'logs', logStatusFilter, logSourceFilter, logPage] as const;
+  const logListQueryKey = ['admin', 'scraping', 'logs', logSourceFilter] as const;
 
   const {
     data: sourceListData,
@@ -133,7 +138,6 @@ export default function ScrapingPage() {
   const {
     data: logListData,
     isError: isLogListError,
-    isFetching: isLogListFetching,
     isLoading: isLogListLoading,
     refetch: refetchLogList,
   } = useQuery({
@@ -141,8 +145,7 @@ export default function ScrapingPage() {
     queryFn: async () => {
       const response = await scrapingApi.getLogs({
         sourceName: logSourceFilter ?? undefined,
-        status: logStatusFilter === FILTER_ALL ? undefined : logStatusFilter,
-        page: logPage,
+        page: 1,
         size: LOG_PAGE_SIZE,
       });
       if (!response.data.success) {
@@ -187,7 +190,6 @@ export default function ScrapingPage() {
   const pagedPipelines = sourceListData?.content ?? [];
   const logs = logListData?.content ?? [];
   const pipelineTotalPages = Math.max(1, sourceListData?.totalPages ?? 1);
-  const logTotalPages = Math.max(1, logListData?.totalPages ?? 1);
   const isSourceListInitialLoading = isSourceListLoading && !sourceListData;
   const showSourceStateRow = isSourceListInitialLoading || isSourceListError || pagedPipelines.length === 0;
   const pipelinePlaceholderCount = showSourceStateRow ? PIPELINE_PAGE_SIZE - 1 : Math.max(0, PIPELINE_PAGE_SIZE - pagedPipelines.length);
@@ -197,17 +199,13 @@ export default function ScrapingPage() {
       ? '조건에 맞는 스크래핑 source가 없습니다.'
       : '등록된 스크래핑 source가 없습니다.';
   const logEmptyMessage =
-    logStatusFilter !== 'ALL' || logSourceFilter
+    logSourceFilter
       ? '조건에 맞는 운영 로그가 없습니다.'
       : '표시할 운영 로그가 없습니다.';
 
   useEffect(() => {
     setPipelinePage((prev) => Math.min(prev, pipelineTotalPages));
   }, [pipelineTotalPages]);
-
-  useEffect(() => {
-    setLogPage((prev) => Math.min(prev, logTotalPages));
-  }, [logTotalPages]);
 
   const allVisibleSelected =
     pagedPipelines.length > 0 && pagedPipelines.every((item) => selectedPipelineIds.includes(item.sourceName));
@@ -235,14 +233,10 @@ export default function ScrapingPage() {
 
   const handleRecentErrorClick = (source: ScrapingSource) => {
     setLogSourceFilter(source.sourceName);
-    setLogStatusFilter(SCRAPING_STATUS.FAILED);
-    setLogPage(1);
   };
 
   const clearLogSourceFilter = () => {
     setLogSourceFilter(null);
-    setLogStatusFilter(FILTER_ALL);
-    setLogPage(1);
   };
 
   return (
@@ -258,7 +252,7 @@ export default function ScrapingPage() {
             <span className="scrapeOpsPulse" />
             <strong>실시간 파이프라인 모니터링</strong>
           </div>
-          <span className="scrapeOpsUpdatedAt">Updated {updatedSeconds}s ago</span>
+          <span className="scrapeOpsUpdatedAt">최근 갱신 {updatedSeconds}초 전</span>
         </div>
       </header>
 
@@ -466,22 +460,8 @@ export default function ScrapingPage() {
         <section className="admin-card scrapeOpsPanel">
           <div className="scrapeOpsPanelHeader compact">
             <div>
-              <span className="scrapeOpsEyebrow">LOG</span>
+              <span className="scrapeOpsEyebrow">운영 로그</span>
               <h3>실시간 로그</h3>
-            </div>
-
-            <div className="scrapeOpsFilters">
-              <select
-                value={logStatusFilter}
-                onChange={(event) => {
-                  setLogStatusFilter(toLogStatusFilter(event.target.value));
-                  setLogPage(1);
-                }}
-              >
-                <option value={FILTER_ALL}>전체 로그</option>
-                <option value={SCRAPING_STATUS.SUCCESS}>SUCCESS</option>
-                <option value={SCRAPING_STATUS.FAILED}>FAILED</option>
-              </select>
             </div>
           </div>
 
@@ -494,49 +474,40 @@ export default function ScrapingPage() {
             </div>
           ) : null}
 
-          <div className="scrapeOpsLogConsole">
-            <div className="scrapeOpsLogHead">
-              <span>TIMESTAMP</span>
-              <span>TYPE</span>
-              <span>MESSAGE</span>
+          <div className="auditOpsTableWrap auditOpsTableWrapFlat">
+            <div className="auditOpsTableHead"><span>발생 시각</span><span>도메인</span><span>상태</span><span>행동</span><span>대상</span><span>관리자</span></div>
+            <div className="auditOpsTableBody">
+              {isLogListLoading ? (
+                <div className="auditOpsEmpty">로그를 불러오는 중입니다.</div>
+              ) : null}
+
+              {isLogListError ? (
+                <div className="auditOpsEmpty error">
+                  <span>운영 로그 조회에 실패했습니다.</span>
+                  <button type="button" onClick={() => refetchLogList()}>
+                    다시 시도
+                  </button>
+                </div>
+              ) : null}
+
+              {!isLogListLoading && !isLogListError && logs.length === 0 ? (
+                <div className="auditOpsEmpty">{logEmptyMessage}</div>
+              ) : null}
+
+              {!isLogListLoading && !isLogListError
+                ? logs.map((log) => (
+                  <article key={log.logId} className="auditOpsTableRow">
+                    <span className="timestamp">{formatLogTime(log.occurredAt)}</span>
+                    <span className="domain">스크래핑</span>
+                    <span className={`auditOpsTag ${auditToneForLogStatus[log.status]}`}>{log.status}</span>
+                    <strong className="summary">{getLogMessage(log)}</strong>
+                    <span className="target">{getLogTarget(log)}</span>
+                    <span className="actor">-</span>
+                  </article>
+                ))
+                : null}
             </div>
-            {isLogListLoading ? (
-              <div className="scrapeOpsConsoleState">로그를 불러오는 중입니다.</div>
-            ) : null}
-
-            {isLogListError ? (
-              <div className="scrapeOpsConsoleState danger">
-                <span>운영 로그 조회에 실패했습니다.</span>
-                <button type="button" onClick={() => refetchLogList()}>
-                  다시 시도
-                </button>
-              </div>
-            ) : null}
-
-            {!isLogListLoading && !isLogListError && logs.length === 0 ? (
-              <div className="scrapeOpsConsoleState">{logEmptyMessage}</div>
-            ) : null}
-
-            {!isLogListLoading && !isLogListError
-              ? logs.map((log) => (
-                <article key={log.logId} className="scrapeOpsConsoleRow">
-                  <span className="time">[{formatLogTime(log.occurredAt)}]</span>
-                  <span className={`scrapeOpsConsoleTag ${logStatusTone[log.status]}`}>[{log.status}]</span>
-                  <strong>{getLogMessage(log)}</strong>
-                </article>
-              ))
-              : null}
           </div>
-
-          <MiniPagination
-            page={logPage}
-            totalPages={logTotalPages}
-            onChange={(nextPage) => {
-              if (!isLogListFetching) setLogPage(nextPage);
-            }}
-            className="pagination scrapeOpsPagination"
-            activeClassName="activePage"
-          />
         </section>
       </div>
     </section>

@@ -12,6 +12,9 @@ const navigateMock = vi.hoisted(() => vi.fn());
 const dashboardApiMock = vi.hoisted(() => ({
   getSummary: vi.fn(),
 }));
+const auditLogApiMock = vi.hoisted(() => ({
+  getLogs: vi.fn(),
+}));
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => navigateMock,
@@ -25,6 +28,17 @@ vi.mock('../../../api/admin/dashboardApi', async () => {
   return {
     ...actual,
     dashboardApi: dashboardApiMock,
+  };
+});
+
+vi.mock('../../../api/admin/auditLogApi', async () => {
+  const actual = await vi.importActual<typeof import('../../../api/admin/auditLogApi')>(
+    '../../../api/admin/auditLogApi',
+  );
+
+  return {
+    ...actual,
+    auditLogApi: auditLogApiMock,
   };
 });
 
@@ -52,6 +66,39 @@ function apiResponse(data: AdminDashboardSummary) {
       message: 'OK',
       data,
     },
+  };
+}
+
+function auditLogListResponse(content = [createAuditLogItem()]) {
+  return {
+    data: {
+      success: true,
+      message: 'OK',
+      data: {
+        content,
+        page: 1,
+        size: 12,
+        totalElements: content.length,
+        totalPages: 1,
+      },
+    },
+  };
+}
+
+function createAuditLogItem(overrides = {}) {
+  return {
+    id: '100',
+    logType: 'ADMIN_ACTIVITY',
+    logTypeLabel: '관리자 활동',
+    severity: 'INFO',
+    summary: 'recent-admin-activity',
+    detailSummary: '관리자 권한 변경',
+    actorId: 'admin-100',
+    targetType: 'ADMIN',
+    targetId: '100',
+    ipAddressMasked: '10.0.0.*',
+    occurredAt: '2026-06-28 17:50:00',
+    ...overrides,
   };
 }
 
@@ -172,6 +219,7 @@ beforeEach(() => {
   adminSession.setId('super_admin');
   adminSession.setName('Super Admin');
   dashboardApiMock.getSummary.mockResolvedValue(apiResponse(createSummary()));
+  auditLogApiMock.getLogs.mockResolvedValue(auditLogListResponse());
 });
 
 afterEach(() => {
@@ -194,27 +242,23 @@ describe('AdminDashboardPage contract rendering', () => {
     expect(screen.getByText('배치 스크래핑 실패')).toBeTruthy();
     expect(screen.getByText('Toss Payments')).toBeTruthy();
     expect(screen.getAllByText('Toss Payments 100%')).toHaveLength(2);
-    expect(screen.getByText('관리자 활동 - 권한 변경')).toBeTruthy();
+    expect(await screen.findByText('recent-admin-activity')).toBeTruthy();
   });
 
-  it('renders only the five most recent admin activities', async () => {
-    dashboardApiMock.getSummary.mockResolvedValueOnce(
-      apiResponse(
-        createSummary({
-          recentActivities: Array.from({ length: 6 }, (_, index) => ({
-            id: index + 1,
-            occurredAt: `2026-06-28T08:5${index}:00Z`,
-            adminId: `admin-${index + 1}`,
-            message: `activity-${index + 1}`,
-            targetPath: ADMIN_ROUTE_PATHS.log,
-          })),
-        }),
+  it('renders only the twelve most recent admin activities', async () => {
+    auditLogApiMock.getLogs.mockResolvedValueOnce(
+      auditLogListResponse(
+        Array.from({ length: 12 }, (_, index) => createAuditLogItem({
+          id: `${index + 1}`,
+          summary: `activity-${index + 1}`,
+          occurredAt: `2026-06-28 17:${String(index).padStart(2, '0')}:00`,
+        })),
       ),
     );
     const { container } = renderPage();
 
     await waitFor(() => {
-      expect(container.querySelectorAll('.logRow')).toHaveLength(5);
+      expect(container.querySelectorAll('.logCard .auditOpsTableRow')).toHaveLength(12);
     });
   });
 
@@ -236,8 +280,8 @@ describe('AdminDashboardPage contract rendering', () => {
     expect(screen.getByRole('button', { name: '전체 보기' })).toHaveProperty('disabled', false);
   });
 
-  it('navigates through valid alert, service card, and recent activity target paths', async () => {
-    const { container } = renderPage();
+  it('navigates through valid alert and service card target paths', async () => {
+    renderPage();
 
     expect(await screen.findByText('권한 변경 경고')).toBeTruthy();
     fireEvent.click(screen.getAllByRole('button', { name: '상세 보기' })[0]);
@@ -249,10 +293,7 @@ describe('AdminDashboardPage contract rendering', () => {
     fireEvent.click(scrapingButton as HTMLButtonElement);
     expect(navigateMock).toHaveBeenCalledWith(ADMIN_ROUTE_PATHS.scraping);
 
-    const activityRow = container.querySelector('.logRow');
-    expect(activityRow).toBeTruthy();
-    fireEvent.click(activityRow as HTMLElement);
-    expect(navigateMock).toHaveBeenCalledWith(ADMIN_ROUTE_PATHS.log);
+    expect(navigateMock).toHaveBeenCalledTimes(2);
   });
 
   it('filters restricted alert and service card domains for CS admins', async () => {
@@ -282,6 +323,7 @@ describe('AdminDashboardPage contract rendering', () => {
         }),
       ),
     );
+    auditLogApiMock.getLogs.mockResolvedValueOnce(auditLogListResponse([]));
 
     renderPage();
 
