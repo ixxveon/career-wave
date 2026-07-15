@@ -24,6 +24,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -345,7 +346,7 @@ class AdminPaymentServiceImplTest {
     // ── 헬퍼 ──────────────────────────────────────────────────────────────────
 
     private Subscription newActiveSubscription() {
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
         return Subscription.create(UUID.randomUUID(), 1L, now, now.plusMonths(1));
     }
 
