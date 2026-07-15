@@ -143,7 +143,7 @@ export default function AiMetricsPage() {
   const discordAlertEnabled = isBudgetLoaded ? budgetSetting.discordAlertEnabled : false;
   const budgetUsed = isBudgetLoaded && monthlyBudget > 0 && typeof currentSpend === 'number' ? (currentSpend / monthlyBudget) * 100 : 0;
   const budgetProgress = isBudgetLoaded ? Math.min(100, Math.max(0, budgetSetting.usagePercent ?? budgetUsed)) : 0;
-  const isBudgetRisk = isBudgetLoaded && budgetProgress >= thresholdPercent;
+  const isBudgetRisk = isBudgetLoaded && thresholdPercent > 0 && budgetProgress >= thresholdPercent;
   const budgetMutationDisabled = !isBudgetLoaded || budgetLoading || budgetIsError;
   const heavyUsers = heavyUsersData ?? [];
   const heavyUsersEmpty = !heavyUsersLoading && !heavyUsersIsError && heavyUsers.length === 0;

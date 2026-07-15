@@ -2,7 +2,7 @@ import asyncio
 import logging
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from fastapi import Path as FastApiPath
 from fastapi.responses import JSONResponse
 
@@ -177,7 +177,7 @@ async def sync_settings(request: OpsSettingSyncRequest):
 
 
 @router.post("/ops/budget-status")
-async def budget_status() -> BudgetStatusResponse:
+def budget_status() -> BudgetStatusResponse:
     try:
         with get_session() as session:
             service = BudgetStatusService(
@@ -231,7 +231,10 @@ async def delete_rag_document_index(
 
 
 @router.post("/usage/log")
-async def create_usage_log(request: UsageLogCreateRequest):
+def create_usage_log(
+    request: UsageLogCreateRequest,
+    background_tasks: BackgroundTasks,
+):
     try:
         with get_session() as session:
             service = UsageLogService(
@@ -242,11 +245,10 @@ async def create_usage_log(request: UsageLogCreateRequest):
             saved_record, alert_candidate = service.create_usage_log_with_budget_alert(request)
             session.commit()
         if alert_candidate is not None:
-            task = asyncio.create_task(
-                DiscordBudgetAlertService().send_threshold_alert(alert_candidate)
+            background_tasks.add_task(
+                DiscordBudgetAlertService().send_threshold_alert,
+                alert_candidate,
             )
-            _bg_tasks.add(task)
-            task.add_done_callback(_on_bg_task_done)
         return UsageLogCreateResponse(
             aiUsageLogId=saved_record.ai_usage_log_id,
             recorded=True,
