@@ -6,8 +6,6 @@ import { useResumeHistory } from '../../../hooks/user/resume/useResumeHistory';
 import type { FileType } from '../../../types/user/resume';
 import '@/styles/user/resume/ResumeHistoryPage.css';
 
-const PAGE_SIZE = 10;
-
 const TYPE_TABS: { label: string; value: FileType | 'ALL'; Icon: typeof FileText }[] = [
   { label: '전체',       value: 'ALL',          Icon: FileSearch },
   { label: '이력서',     value: 'RESUME',        Icon: FileText   },
