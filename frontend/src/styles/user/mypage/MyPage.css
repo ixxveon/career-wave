@@ -3333,14 +3333,14 @@ Empty UI
 }
 
 .cw-withdrawal-notice__link {
-  padding: 0;
-  border: none;
-  background: none;
-  color: #adb5bd;
+  color: #868e96;
   font-size: 12px;
   font-weight: 600;
   text-decoration: underline;
-  cursor: not-allowed;
+}
+
+.cw-withdrawal-notice__link:hover {
+  color: #495057;
 }
 
 /*
