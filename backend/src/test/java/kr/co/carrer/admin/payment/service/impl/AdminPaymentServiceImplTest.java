@@ -13,6 +13,9 @@ import kr.co.carrer.admin.payment.repository.RefundRepository;
 import kr.co.carrer.admin.payment.type.PaymentStatus;
 import kr.co.carrer.admin.payment.type.RefundStatus;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.entity.Subscription;
+import kr.co.carrer.user.billing.repository.SubscriptionRepository;
+import kr.co.carrer.user.billing.type.SubscriptionStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,6 +24,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,9 +45,54 @@ class AdminPaymentServiceImplTest {
     @Mock private PaymentRepository paymentRepository;
     @Mock private PaymentQueryRepository paymentQueryRepository;
     @Mock private RefundRepository refundRepository;
+    @Mock private SubscriptionRepository subscriptionRepository;
     @Mock private PaymentCancelClient paymentCancelClient;
     @Mock private RefundFailureTxService refundFailureTxService;
     @Mock private RefundApprovalTxService refundApprovalTxService;
+
+    // ── createRefundRequest ──────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("환불 요청 등록 - createRefundRequest()")
+    class CreateRefundRequest {
+
+        @Test
+        @DisplayName("연결된 구독 있음 → 구독 상태를 REFUND_PENDING으로 전환")
+        void createRefundRequest_withSubscription_marksRefundPending() throws Exception {
+            UUID paymentId = UUID.randomUUID();
+            UUID subscriptionId = UUID.randomUUID();
+            Payment payment = createPayment(paymentId, PaymentStatus.PAID);
+            setField(payment, "subscriptionId", subscriptionId);
+            setField(payment, "amount", 9900);
+            Subscription subscription = newActiveSubscription();
+
+            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
+            given(refundRepository.existsByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+                .willReturn(false);
+            given(subscriptionRepository.findBySubscriptionIdForUpdate(subscriptionId))
+                .willReturn(Optional.of(subscription));
+
+            adminPaymentService.createRefundRequest(paymentId, "구매 취소", 1L);
+
+            assertThat(subscription.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.REFUND_PENDING);
+        }
+
+        @Test
+        @DisplayName("연결된 구독 없음(subscriptionId null) → 구독 조회 시도하지 않음")
+        void createRefundRequest_withoutSubscription_skipsSubscriptionLookup() throws Exception {
+            UUID paymentId = UUID.randomUUID();
+            Payment payment = createPayment(paymentId, PaymentStatus.PAID);
+            setField(payment, "amount", 9900);
+
+            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
+            given(refundRepository.existsByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+                .willReturn(false);
+
+            adminPaymentService.createRefundRequest(paymentId, "구매 취소", 1L);
+
+            verify(subscriptionRepository, never()).findBySubscriptionIdForUpdate(any());
+        }
+    }
 
     // ── getSummary ────────────────────────────────────────────────────────────
 
@@ -233,6 +282,28 @@ class AdminPaymentServiceImplTest {
         }
 
         @Test
+        @DisplayName("연결된 구독 있음 → REFUND_PENDING이던 구독을 ACTIVE로 복귀")
+        void rejectRefund_withSubscription_revertsToActive() throws Exception {
+            UUID paymentId = UUID.randomUUID();
+            UUID subscriptionId = UUID.randomUUID();
+            Payment payment = createPayment(paymentId, PaymentStatus.PAID);
+            setField(payment, "subscriptionId", subscriptionId);
+            Refund refund = createRefund(paymentId, RefundStatus.PENDING);
+            Subscription subscription = newActiveSubscription();
+            subscription.markRefundPending();
+
+            given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
+            given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+                .willReturn(Optional.of(refund));
+            given(subscriptionRepository.findBySubscriptionIdForUpdate(subscriptionId))
+                .willReturn(Optional.of(subscription));
+
+            adminPaymentService.rejectRefund(paymentId, "정책 위반", 1L, "MASTER");
+
+            assertThat(subscription.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.ACTIVE);
+        }
+
+        @Test
         @DisplayName("존재하지 않는 결제 ID → PAYMENT_NOT_FOUND 예외")
         void rejectRefund_paymentNotFound() {
             UUID paymentId = UUID.randomUUID();
@@ -272,6 +343,11 @@ class AdminPaymentServiceImplTest {
     }
 
     // ── 헬퍼 ──────────────────────────────────────────────────────────────────
+
+    private Subscription newActiveSubscription() {
+        ZonedDateTime now = ZonedDateTime.now();
+        return Subscription.create(UUID.randomUUID(), 1L, now, now.plusMonths(1));
+    }
 
     private Payment createPayment(UUID paymentId, PaymentStatus status) {
         return createPayment(paymentId, status, "test_payment_key");
