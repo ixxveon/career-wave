@@ -79,22 +79,6 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
     }
   };
 
-  const confirmRefund = async () => {
-    setRefundLoading(true);
-    setRefundError('');
-    try {
-      const res = await paymentApi.confirmRefund(selected.paymentId);
-      if (!res.data.success) throw new Error(res.data.message);
-      onRefundSuccess(selected.paymentId, { paymentStatus: res.data.data.paymentStatus, refundStatus: res.data.data.refundStatus });
-      onClose();
-      showToast('환불 처리가 완료되었습니다.');
-    } catch (err: unknown) {
-      setRefundError(resolveErrorMsg(err, '환불 처리에 실패했습니다.', 'refund'));
-    } finally {
-      setRefundLoading(false);
-    }
-  };
-
   const manualConfirmRefundAction = async () => {
     if (!window.confirm('Toss 상점관리자에서 이미 취소 처리된 것이 확인된 건입니까?\nToss API를 다시 호출하지 않고 시스템 상태만 환불 완료로 확정합니다.')) return;
     setRefundLoading(true);
@@ -228,9 +212,6 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
                 </button>
                 <button onClick={() => { setRequestMode(false); setRequestReason(''); }} disabled={refundLoading}>취소</button>
               </>
-            )}
-            {isMaster && selected.refundStatus === 'PENDING' && refundCheck?.eligible === true && (
-              <button onClick={confirmRefund} disabled={refundLoading}>{refundLoading ? '처리 중...' : '환불 처리 확정'}</button>
             )}
             {isMaster && selected.refundStatus === 'PENDING' && refundCheck?.eligible === false && (
               <button className="tableBtn--danger" onClick={rejectRefundAction} disabled={refundLoading || !rejectReason.trim()}>
