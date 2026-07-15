@@ -3244,6 +3244,25 @@ Empty UI
   background: #dfeeff;
 }
 
+.cw-card-edit-button:disabled {
+  background: #f1f3f5;
+  color: #adb5bd;
+  cursor: not-allowed;
+}
+
+.cw-card-notice {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff9ef;
+  color: #92610a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* 
 스크랩 공고 페이지
 */
