@@ -21,8 +21,8 @@ function scoreClass(s: number): string {
 function InterviewHomePage() {
   const navigate = useNavigate();
   const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useInterviewHistory(0, 3);
-  const { subscribedItems, unsubscribedItems } = useSubscriptionStatus();
-  const { data: entitlements, isLoading: entitlementsLoading } = useEntitlements();
+  const { subscribedItems, unsubscribedItems, isLoading: subscriptionLoading } = useSubscriptionStatus();
+  const { data: entitlements, isLoading: entitlementsLoading, isError: entitlementsError } = useEntitlements();
 
   /* 서류 AI 코칭 / AI 모의면접 usage 항목 (구독 여부 무관) */
   const allSubItems = [...subscribedItems, ...unsubscribedItems];
@@ -34,8 +34,8 @@ function InterviewHomePage() {
   const hasDocEntitlement = entitlements?.[PRODUCT_CODE.DOCUMENT_COACHING];
   const hasIvEntitlement  = entitlements?.[PRODUCT_CODE.INTERVIEW];
 
-  const docQuotaLoading = !docSubscribed && entitlementsLoading;
-  const ivQuotaLoading  = !ivSubscribed  && entitlementsLoading;
+  const docQuotaLoading = subscriptionLoading || (!docSubscribed && (entitlementsLoading || entitlementsError));
+  const ivQuotaLoading  = subscriptionLoading || (!ivSubscribed  && (entitlementsLoading || entitlementsError));
 
   const docLimit    = docSubscribed ? (docItem?.usage?.limit ?? DEFAULT_DOC_LIMIT) : 1;
   const docRemaining = docSubscribed ? (docItem?.usage?.remaining ?? docLimit) : (hasDocEntitlement === true ? 1 : 0);
