@@ -13,7 +13,7 @@ const PAY_STATUS_CLS: Record<string, string> = {
   PENDING: 'pending', DONE: 'normal', PAID: 'normal', CANCELED: 'dismissed', FAILED: 'blinded', REFUNDED: 'dismissed',
 };
 const REFUND_STATUS_CLS: Record<string, string> = {
-  PENDING: 'pending', COMPLETED: 'dismissed', FAILED: 'blinded', REJECTED: 'blinded',
+  PENDING: 'pending', COMPLETED: 'normal', FAILED: 'blinded', REJECTED: 'blinded',
 };
 
 function daysSincePaid(approvedAt: string): number {
@@ -103,7 +103,6 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
       const res = await paymentApi.manualConfirmRefund(selected.paymentId);
       if (!res.data.success) throw new Error(res.data.message);
       onRefundSuccess(selected.paymentId, { paymentStatus: res.data.data.paymentStatus, refundStatus: res.data.data.refundStatus });
-      onClose();
       showToast('환불 상태를 수동으로 확정했습니다.');
     } catch (err: unknown) {
       setRefundError(resolveErrorMsg(err, '수동 확정 처리에 실패했습니다.', 'refund'));

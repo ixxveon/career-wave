@@ -18,7 +18,7 @@ const PAY_STATUS_CLS: Record<string, string> = {
   PENDING: 'pending', DONE: 'normal', PAID: 'normal', CANCELED: 'dismissed', FAILED: 'blinded', REFUNDED: 'dismissed',
 };
 const REFUND_STATUS_CLS: Record<string, string> = {
-  PENDING: 'pending', COMPLETED: 'dismissed', FAILED: 'blinded', REJECTED: 'blinded',
+  PENDING: 'pending', COMPLETED: 'normal', FAILED: 'blinded', REJECTED: 'blinded',
 };
 
 const isRefundPending = (p: Payment) => p.refundStatus === 'PENDING';
