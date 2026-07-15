@@ -300,7 +300,7 @@ function UserMyPage() {
 
     const trimmedName = editForm.name.trim();
     const trimmedEmail = editForm.email.trim();
-    const normalizedPhone = (editForm.phone ?? "").replace(/-/g, "").trim();
+    const normalizedPhone = normalizePhone(editForm.phone);
     const normalizedGithubUrl = normalizeGithubUrl(editForm.githubUrl);
     if (!hasEditFormChanges) {
       setIsEditModalOpen(false);

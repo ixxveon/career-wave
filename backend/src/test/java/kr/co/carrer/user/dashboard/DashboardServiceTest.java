@@ -252,13 +252,9 @@ class DashboardServiceTest {
                 "email-token",
                 null);
 
-        MemberVerification verification = MemberVerification.issue(
-                VerificationChannel.EMAIL, "new-email@test.com", VerificationPurpose.EMAIL_CHANGE,
-                "hash", Instant.now().plusSeconds(300), Instant.now().plusSeconds(60));
-        verification.markVerified("email-token");
-
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
-        when(verificationRepository.findByVerificationToken("email-token")).thenReturn(Optional.of(verification));
+        when(verificationRepository.findByVerificationToken("email-token"))
+                .thenReturn(Optional.of(verifiedEmailChange("new-email@test.com", "email-token")));
 
         DashboardDTO.ProfileResponse response = dashboardService.updateProfile(memberId, request);
 
@@ -279,14 +275,10 @@ class DashboardServiceTest {
                 "email-token",
                 null);
 
-        // 토큰은 다른 이메일(other@test.com)에 대해 발급된 것 — target 불일치
-        MemberVerification verification = MemberVerification.issue(
-                VerificationChannel.EMAIL, "other@test.com", VerificationPurpose.EMAIL_CHANGE,
-                "hash", Instant.now().plusSeconds(300), Instant.now().plusSeconds(60));
-        verification.markVerified("email-token");
-
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
-        when(verificationRepository.findByVerificationToken("email-token")).thenReturn(Optional.of(verification));
+        // 토큰은 다른 이메일(other@test.com)에 대해 발급된 것 — target 불일치
+        when(verificationRepository.findByVerificationToken("email-token"))
+                .thenReturn(Optional.of(verifiedEmailChange("other@test.com", "email-token")));
 
         assertThatThrownBy(() -> dashboardService.updateProfile(memberId, request))
                 .isInstanceOf(CustomException.class);
@@ -313,6 +305,14 @@ class DashboardServiceTest {
         assertThat(response.name()).isEqualTo("새이름");
         assertThat(response.email()).isEqualTo("user01@test.com");
         assertThat(response.phone()).isEqualTo("010-1234-5678");
+    }
+
+    private MemberVerification verifiedEmailChange(String email, String token) {
+        MemberVerification verification = MemberVerification.issue(
+                VerificationChannel.EMAIL, email, VerificationPurpose.EMAIL_CHANGE,
+                "hash", Instant.now().plusSeconds(300), Instant.now().plusSeconds(60));
+        verification.markVerified(token);
+        return verification;
     }
 
     private MemberVerification verifiedPhoneChange(String phone, String token) {
