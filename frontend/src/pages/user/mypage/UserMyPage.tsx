@@ -305,7 +305,7 @@ function UserMyPage() {
       return;
     }
 
-    if (!isValidName(trimmedName)) {
+    if (trimmedName !== userProfile.name && !isValidName(trimmedName)) {
       setEditErrorMessage("이름은 2~20자의 한글 또는 영문으로 입력해 주세요.");
       isSavingProfileRef.current = false;
       return;
