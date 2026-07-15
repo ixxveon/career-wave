@@ -72,6 +72,17 @@ class AiMetricsServiceImplTest {
     @Mock
     private S3Uploader s3Uploader;
 
+    private void stubBudgetStatus() {
+        given(aiMetricsFastApiGateway.getBudgetStatus()).willReturn(
+                new AiMetricsFastApiGateway.BudgetStatusResponse(
+                        new BigDecimal("125000.00"),
+                        new BigDecimal("800000.00"),
+                        new BigDecimal("12.50"),
+                        new BigDecimal("875000.00")
+                )
+        );
+    }
+
     @Nested
     @DisplayName("AI 사용량 요약 조회 - getSummary()")
     class GetSummary {
@@ -402,6 +413,8 @@ class AiMetricsServiceImplTest {
             ReflectionTestUtils.setField(setting, "rateLimitEnabled", true);
             ReflectionTestUtils.setField(setting, "updatedAt", updatedAt);
             given(aiOpsSettingRepository.findSingleton()).willReturn(Optional.of(setting));
+            given(aiMetricsFastApiGatewayProvider.getIfAvailable()).willReturn(aiMetricsFastApiGateway);
+            stubBudgetStatus();
 
             AiMetricsService.ResponseBudget result = aiMetricsService.getBudget();
 
@@ -412,6 +425,7 @@ class AiMetricsServiceImplTest {
             assertThat(result.alertChannel()).isEqualTo(AlertChannelType.DISCORD);
             assertThat(result.alertThreshold()).isEqualTo(80);
             assertThat(result.rateLimitEnabled()).isTrue();
+            assertThat(result.currentSpend()).isEqualByComparingTo("125000.00");
             assertThat(result.updatedAt()).isEqualTo(updatedAt);
             verify(aiOpsSettingRepository).findSingleton();
         }
@@ -436,6 +450,7 @@ class AiMetricsServiceImplTest {
             given(aiModelRepository.existsById(4L)).willReturn(true);
             given(aiOpsSettingRepository.findSingleton()).willReturn(Optional.of(setting));
             given(aiMetricsFastApiGatewayProvider.getIfAvailable()).willReturn(aiMetricsFastApiGateway);
+            stubBudgetStatus();
             given(aiMetricsFastApiGateway.syncOpsSetting(new AiMetricsFastApiGateway.OpsSettingSyncRequest(
                     1L,
                     4L,
@@ -502,6 +517,7 @@ class AiMetricsServiceImplTest {
             ReflectionTestUtils.setField(setting, "updatedAt", ZonedDateTime.parse("2026-06-17T12:00:00Z"));
             given(aiOpsSettingRepository.findSingleton()).willReturn(Optional.of(setting));
             given(aiMetricsFastApiGatewayProvider.getIfAvailable()).willReturn(aiMetricsFastApiGateway);
+            stubBudgetStatus();
             given(aiMetricsFastApiGateway.syncOpsSetting(new AiMetricsFastApiGateway.OpsSettingSyncRequest(
                     1L,
                     3L,
@@ -563,6 +579,7 @@ class AiMetricsServiceImplTest {
             ReflectionTestUtils.setField(setting, "updatedAt", ZonedDateTime.parse("2026-06-17T12:00:00Z"));
             given(aiOpsSettingRepository.findSingleton()).willReturn(Optional.of(setting));
             given(aiMetricsFastApiGatewayProvider.getIfAvailable()).willReturn(aiMetricsFastApiGateway);
+            stubBudgetStatus();
             given(aiMetricsFastApiGateway.syncOpsSetting(new AiMetricsFastApiGateway.OpsSettingSyncRequest(
                     1L,
                     3L,
@@ -1214,6 +1231,7 @@ class AiMetricsServiceImplTest {
                     Optional.of(rateLimitSetting)
             );
             given(aiMetricsFastApiGatewayProvider.getIfAvailable()).willReturn(aiMetricsFastApiGateway);
+            stubBudgetStatus();
             given(aiMetricsFastApiGateway.syncOpsSetting(org.mockito.ArgumentMatchers.any(
                     AiMetricsFastApiGateway.OpsSettingSyncRequest.class
             ))).willReturn(new AiMetricsFastApiGateway.OpsSettingSyncResponse(true));

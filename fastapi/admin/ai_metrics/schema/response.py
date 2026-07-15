@@ -93,6 +93,13 @@ class OpsSettingSyncResponse(AiMetricsResponseBase):
     synced_at: datetime = Field(alias="syncedAt")
 
 
+class BudgetStatusResponse(AiMetricsResponseBase):
+    current_spend: Decimal = Field(alias="currentSpend")
+    threshold_amount: Decimal = Field(alias="thresholdAmount")
+    usage_percent: Decimal = Field(alias="usagePercent")
+    remaining_budget: Decimal = Field(alias="remainingBudget")
+
+
 class RagIndexStartResponse(AiMetricsResponseBase):
     accepted: bool
     rag_document_id: int = Field(alias="ragDocumentId")

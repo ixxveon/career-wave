@@ -128,16 +128,6 @@ export default function AiMetricsPage() {
     onSuccess: (nextBudgetSetting) => queryClient.setQueryData(BUDGET_QUERY_KEY, nextBudgetSetting),
     onError: (error) => setBudgetMutationErrorMessage(getApiStateMessage(error, '디스코드 알림 설정 수정에 실패했습니다.')),
   });
-  const updateRateLimitMutation = useMutation<AiBudgetSetting, Error, boolean>({
-    mutationFn: async (enabled) => {
-      const response = await aiMetricsApi.updateRateLimit({ enabled, reason: enabled ? '관리자 AI Metrics 예산 영역에서 사용량 제한을 활성화했습니다.' : '관리자 AI Metrics 예산 영역에서 사용량 제한을 해제했습니다.' });
-      if (!response.data.success) throw new Error(response.data.message ?? '사용량 제한 설정 수정에 실패했습니다.');
-      return response.data.data;
-    },
-    onMutate: () => setBudgetMutationErrorMessage(''),
-    onSuccess: (nextBudgetSetting) => queryClient.setQueryData(BUDGET_QUERY_KEY, nextBudgetSetting),
-    onError: (error) => setBudgetMutationErrorMessage(getApiStateMessage(error, '사용량 제한 설정 수정에 실패했습니다.')),
-  });
 
   const domainUsageByDomain = useMemo(() => new Map((domainUsageData ?? []).map((usage) => [usage.domain, usage])), [domainUsageData]);
   const domainUsageEmpty = !domainUsageLoading && !domainUsageIsError && (domainUsageData?.length ?? 0) === 0;
@@ -147,13 +137,13 @@ export default function AiMetricsPage() {
   const isBudgetLoaded = budgetSetting != null;
   const monthlyBudget = isBudgetLoaded ? budgetSetting.monthlyBudget : 0;
   const currentSpend = isBudgetLoaded ? budgetSetting.currentSpend : null;
-  const forecastSpend = isBudgetLoaded ? budgetSetting.forecastSpend : null;
+  const thresholdAmount = isBudgetLoaded ? budgetSetting.thresholdAmount : null;
+  const remainingBudget = isBudgetLoaded ? budgetSetting.remainingBudget : null;
   const thresholdPercent = isBudgetLoaded ? budgetSetting.thresholdPercent : 0;
   const discordAlertEnabled = isBudgetLoaded ? budgetSetting.discordAlertEnabled : false;
-  const rateLimitEnabled = isBudgetLoaded ? budgetSetting.rateLimitEnabled : false;
   const budgetUsed = isBudgetLoaded && monthlyBudget > 0 && typeof currentSpend === 'number' ? (currentSpend / monthlyBudget) * 100 : 0;
-  const budgetProgress = isBudgetLoaded ? Math.min(100, Math.max(0, budgetUsed)) : 0;
-  const isBudgetRisk = isBudgetLoaded && thresholdPercent > 0 && budgetUsed >= thresholdPercent;
+  const budgetProgress = isBudgetLoaded ? Math.min(100, Math.max(0, budgetSetting.usagePercent ?? budgetUsed)) : 0;
+  const isBudgetRisk = isBudgetLoaded && budgetProgress >= thresholdPercent;
   const budgetMutationDisabled = !isBudgetLoaded || budgetLoading || budgetIsError;
   const heavyUsers = heavyUsersData ?? [];
   const heavyUsersEmpty = !heavyUsersLoading && !heavyUsersIsError && heavyUsers.length === 0;
@@ -175,8 +165,9 @@ export default function AiMetricsPage() {
   function handleBudgetSave() {
     if (!isBudgetLoaded) return setBudgetMutationErrorMessage('예산 정보를 불러온 뒤 다시 시도해 주세요.');
     const nextBudget = Number(budgetDraft.trim());
+    if (!Number.isFinite(nextBudget) || nextBudget <= 0) return;
     const nextThreshold = Number(thresholdDraft.trim());
-    if (!Number.isFinite(nextBudget) || nextBudget <= 0 || !Number.isFinite(nextThreshold) || nextThreshold < 1 || nextThreshold > 100) return;
+    if (!Number.isFinite(nextThreshold) || nextThreshold < 1 || nextThreshold > 100) return;
     updateBudgetMutation.mutate({ monthlyBudget: nextBudget, thresholdPercent: nextThreshold });
   }
 
@@ -219,6 +210,8 @@ export default function AiMetricsPage() {
             updateBudgetPending={updateBudgetMutation.isPending}
             monthlyBudget={monthlyBudget}
             thresholdPercent={thresholdPercent}
+            thresholdAmount={thresholdAmount}
+            remainingBudget={remainingBudget}
             tokenTrendLoading={tokenTrendLoading}
             tokenTrendIsError={tokenTrendIsError}
             tokenTrendError={tokenTrendError}
@@ -237,15 +230,11 @@ export default function AiMetricsPage() {
             budgetProgress={budgetProgress}
             budgetMutationErrorMessage={budgetMutationErrorMessage}
             isBudgetRisk={isBudgetRisk}
-            forecastSpend={forecastSpend}
             totalTokensLabel={typeof totalTokens === 'number' ? totalTokens.toLocaleString() : '-'}
             totalTokensValue={totalTokens}
             discordAlertEnabled={discordAlertEnabled}
             handleDiscordAlertToggle={() => updateDiscordAlertMutation.mutate(!discordAlertEnabled)}
             updateDiscordAlertPending={updateDiscordAlertMutation.isPending}
-            rateLimitEnabled={rateLimitEnabled}
-            handleRateLimitToggle={() => updateRateLimitMutation.mutate(!rateLimitEnabled)}
-            updateRateLimitPending={updateRateLimitMutation.isPending}
           />
           <AiMetricsHeavyUsersSection heavyUsers={heavyUsers} heavyUsersLoading={heavyUsersLoading} heavyUsersIsError={heavyUsersIsError} heavyUsersError={heavyUsersError} heavyUsersEmpty={heavyUsersEmpty} />
         </div>

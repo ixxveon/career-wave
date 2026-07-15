@@ -49,6 +49,10 @@ public class AiOpsSettingDTO {
             @Schema(description = "알림 채널", allowableValues = {"DISCORD", "SLACK", "EMAIL"}) AlertChannelType alertChannel,
             @Schema(description = "알림 임계치") int alertThreshold,
             @Schema(description = "rate limit 활성 여부") boolean rateLimitEnabled,
+            @Schema(description = "이번 달 실제 사용 비용 (USD)") BigDecimal currentSpend,
+            @Schema(description = "알림 임계 금액 (USD)") BigDecimal thresholdAmount,
+            @Schema(description = "예산 사용률") BigDecimal usagePercent,
+            @Schema(description = "월 예산 잔여 금액 (USD)") BigDecimal remainingBudget,
             @Schema(description = "수정 시각") ZonedDateTime updatedAt
     ) {
     }

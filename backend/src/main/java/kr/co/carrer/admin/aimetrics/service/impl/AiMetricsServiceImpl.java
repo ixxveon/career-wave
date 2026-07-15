@@ -108,7 +108,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     @Transactional(readOnly = true)
     public ResponseBudget getBudget() {
         return aiOpsSettingRepository.findSingleton()
-                .map(AiMetricsServiceMapper::toBudget)
+                .map(setting -> toBudget(setting))
                 .orElseThrow(() -> new CustomException(AiMetricsErrorCode.AI_OPS_SETTING_NOT_FOUND));
     }
 
@@ -123,7 +123,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
         setting.updateBudget(command.selectedModelId(), command.monthlyBudget(), command.alertThreshold());
         runAfterCommit(() -> syncOpsSetting(setting));
         saveAuditLog(actorAdminId, "UPDATE_AI_BUDGET", TARGET_TYPE_AI_OPS_SETTING, setting.getAiOpsSettingId(), ipAddress);
-        return AiMetricsServiceMapper.toBudget(setting);
+        return toBudget(setting);
     }
 
     @Override
@@ -133,7 +133,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
         setting.updateDiscordAlert(command.alertEnabled());
         runAfterCommit(() -> syncOpsSetting(setting));
         saveAuditLog(actorAdminId, "UPDATE_DISCORD_ALERT", TARGET_TYPE_AI_OPS_SETTING, setting.getAiOpsSettingId(), ipAddress);
-        return AiMetricsServiceMapper.toBudget(setting);
+        return toBudget(setting);
     }
 
     @Override
@@ -143,7 +143,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
         setting.updateRateLimit(command.rateLimitEnabled());
         runAfterCommit(() -> syncOpsSetting(setting));
         saveAuditLog(actorAdminId, "UPDATE_RATE_LIMIT", TARGET_TYPE_AI_OPS_SETTING, setting.getAiOpsSettingId(), ipAddress);
-        return AiMetricsServiceMapper.toBudget(setting);
+        return toBudget(setting);
     }
 
     @Override
@@ -224,6 +224,13 @@ public class AiMetricsServiceImpl implements AiMetricsService {
             throw new CustomException(AiMetricsErrorCode.FASTAPI_GATEWAY_UNAVAILABLE);
         }
         return gateway;
+    }
+
+    private ResponseBudget toBudget(AiOpsSetting setting) {
+        return AiMetricsServiceMapper.toBudget(
+                setting,
+                getFastApiGateway().getBudgetStatus()
+        );
     }
 
     private AiOpsSetting getSingletonSetting() {

@@ -7,6 +7,8 @@ from admin.ai_metrics.service.embedding_service import (
     EmbeddingResult,
     EmbeddingService,
 )
+from admin.ai_metrics.service.budget_status_service import BudgetStatusService
+from admin.ai_metrics.service.discord_alert_service import DiscordBudgetAlertService
 from admin.ai_metrics.service.ops_settings_service import (
     AiOpsRuntimeContext,
     OpsSettingsService,
@@ -28,6 +30,8 @@ __all__ = [
     "ChunkingService",
     "EmbeddingResult",
     "EmbeddingService",
+    "BudgetStatusService",
+    "DiscordBudgetAlertService",
     "RagTextChunk",
     "RagChunkEmbedding",
     "RagEmbeddingVector",

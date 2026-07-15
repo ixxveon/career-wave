@@ -120,6 +120,15 @@ final class AiMetricsFastApiMapper {
         );
     }
 
+    static AiMetricsFastApiGateway.BudgetStatusResponse toBudgetStatusResponse(AiMetricsFastApiResponse.BudgetStatus response) {
+        return new AiMetricsFastApiGateway.BudgetStatusResponse(
+                response.currentSpend(),
+                response.thresholdAmount(),
+                response.usagePercent(),
+                response.remainingBudget()
+        );
+    }
+
     static AiMetricsFastApiRequest.RagIndexStart toRagIndexStartRequest(RagDocument document) {
         return new AiMetricsFastApiRequest.RagIndexStart(
                 document.getRagDocumentId(),

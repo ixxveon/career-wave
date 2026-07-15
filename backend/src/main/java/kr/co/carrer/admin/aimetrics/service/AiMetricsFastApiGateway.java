@@ -21,6 +21,8 @@ public interface AiMetricsFastApiGateway {
 
     OpsSettingSyncResponse syncOpsSetting(OpsSettingSyncRequest request);
 
+    BudgetStatusResponse getBudgetStatus();
+
     RagIndexStartResponse startRagIndexing(RagIndexStartRequest request);
 
     RagIndexDeleteResponse deleteRagIndex(RagIndexDeleteRequest request);
@@ -173,6 +175,14 @@ public interface AiMetricsFastApiGateway {
 
     record OpsSettingSyncResponse(
             boolean synced
+    ) {
+    }
+
+    record BudgetStatusResponse(
+            BigDecimal currentSpend,
+            BigDecimal thresholdAmount,
+            BigDecimal usagePercent,
+            BigDecimal remainingBudget
     ) {
     }
 
