@@ -38,6 +38,7 @@ export function useJobNoticeList(params: JobNoticeQueryParams, options: UseJobNo
       const nextPage = response.page + 1;
       return nextPage <= response.totalPages ? nextPage : undefined;
     },
+    placeholderData: (previousData) => previousData,
     enabled: options.enabled ?? true,
   });
 }

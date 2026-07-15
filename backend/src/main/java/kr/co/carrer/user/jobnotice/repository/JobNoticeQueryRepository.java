@@ -93,12 +93,32 @@ public class JobNoticeQueryRepository {
                 period
         );
 
-        return queryFactory
-                .selectFrom(jobNotice)
+        OrderSpecifier<?>[] orderSpecifiers = resolveOrderSpecifiers(sort);
+
+        // deep pagination 최적화 (deferred join / 지연 취행)
+        // 1) 페이지 ID만 먼저 조회 — 무필터 ACTIVE 정렬은 커버링 인덱스(idx_jn_active_keyset)로
+        //    Index Only Scan 되어, OFFSET으로 건너뛰는 앞 행 전체(width~872B)를 힙에서 끌어오지 않는다.
+        //    (기존 selectFrom(...).offset()은 앞 N행 전체를 정렬·폐기해 100만 기준 OFFSET 50만에서 ~84s 소요)
+        List<Long> pageIds = queryFactory
+                .select(jobNotice.jobNoticeId)
+                .from(jobNotice)
                 .where(predicate)
-                .orderBy(resolveOrderSpecifiers(sort))
+                .orderBy(orderSpecifiers)
                 .offset(normalizedPageable.getOffset())
                 .limit(normalizedPageable.getPageSize())
+                .fetch();
+        if (pageIds.isEmpty()) {
+            return List.of();
+        }
+
+        // 2) 해당 페이지의 전체 행만 조회 후 동일 정렬 (페이지 크기만큼이라 재정렬 비용 무시 가능)
+        //    predicate를 다시 적용한다: 기본 READ_COMMITTED 격리 수준에서는 1)·2) 쿼리 사이에
+        //    공고 상태(ACTIVE→CLOSED)나 필터 대상 값이 바뀔 수 있어, ID 조건만 쓰면 이미 필터를
+        //    벗어난 공고가 응답에 섞일 수 있다. 페이지 크기만 조회하므로 성능 영향은 무시 가능.
+        return queryFactory
+                .selectFrom(jobNotice)
+                .where(predicate, jobNotice.jobNoticeId.in(pageIds))
+                .orderBy(orderSpecifiers)
                 .fetch();
     }
 
@@ -380,6 +400,13 @@ public class JobNoticeQueryRepository {
                 orderSpecifiers.add(jobNotice.createdAt.desc());
             }
         }
+
+        // 모든 정렬에 jobNoticeId ASC를 마지막 tie-breaker로 추가한다.
+        // - 페이지네이션 결정성 확보: 정렬 키가 동률인 행의 순서가 페이지마다 흔들려
+        //   중복/누락되는 문제를 막는다.
+        // - recommend 정렬은 (deadline ASC NULLS LAST, created_at DESC, job_notice_id)
+        //   커버링 인덱스(idx_jn_active_keyset) 순서와 정확히 일치해 Index Only Scan을 유지한다.
+        orderSpecifiers.add(jobNotice.jobNoticeId.asc());
 
         return orderSpecifiers.toArray(new OrderSpecifier[0]);
     }

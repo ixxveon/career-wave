@@ -106,7 +106,6 @@ function UserMyPage() {
   const {
     data: githubProfile,
     isLoading: isGithubLoading,
-    isError: hasGithubProfileError,
     refetch: refetchGithub,
   } = useDashboardGithub();
 
@@ -173,9 +172,6 @@ function UserMyPage() {
   function closeEditModal() {
     setEditErrorMessage("");
     setIsEditModalOpen(false);
-  }
-  function handleGithubManage() {
-    alert("GitHub OAuth 연동 기능은 v2에서 제공될 예정입니다.");
   }
 
   function handleEditFormChange(field: keyof EditProfileForm, value: string) {
@@ -570,57 +566,16 @@ function UserMyPage() {
             <button
               type="button"
               className="cw-card-edit-button"
-              onClick={handleGithubManage}
+              disabled
+              title="GitHub OAuth 연동 기능은 v2에서 제공될 예정입니다."
             >
               연동 관리
             </button>
           </div>
 
-          {hasGithubProfileError ? (
-            <div className="cw-state-box is-error">
-              GitHub 정보를 불러오지 못했습니다.
-            </div>
-          ) : (
-            <div className="cw-github-simple-grid">
-              <div>
-                <span>GitHub ID</span>
-                <strong>
-                  {githubProfile?.githubId ?? "연동된 GitHub ID가 없습니다."}
-                </strong>
-              </div>
-
-              <div>
-                <span>GitHub URL</span>
-                <strong>
-                  {githubProfile?.githubUrl ?? "연동된 GitHub URL이 없습니다."}
-                </strong>
-              </div>
-
-              <div>
-                <span>연동 상태</span>
-                <strong
-                  className={
-                    githubProfile?.linked ? "cw-connected" : "cw-warning"
-                  }
-                >
-                  {githubProfile?.linked ? "연동 완료" : "미연동"}
-                </strong>
-              </div>
-
-              <button
-                type="button"
-                className="cw-github-profile-button"
-                onClick={() => {
-                  if (githubProfile?.githubUrl) {
-                    window.open(githubProfile.githubUrl, "_blank", "noopener,noreferrer");
-                  }
-                }}
-                disabled={!githubProfile?.linked}
-              >
-                GitHub 프로필 보기
-              </button>
-            </div>
-          )}
+          <p className="cw-card-notice">
+            GitHub 연동 기능은 현재 이용할 수 없습니다.
+          </p>
         </section>
         )}
       </section>
@@ -783,23 +738,6 @@ function UserMyPage() {
                   )}
                 </label>
 
-                {!isCompanyMember && (
-                  <label>
-                    GitHub URL
-                    <input
-                      type="text"
-                      value={editForm.githubUrl ?? ""}
-                      placeholder="https://github.com/username"
-                      onChange={(event) =>
-                        handleEditFormChange("githubUrl", event.target.value)
-                      }
-                    />
-                    <small className="cw-input-help">
-                      github.com/username 형식으로 입력하면 https://는 자동으로
-                      추가됩니다.
-                    </small>
-                  </label>
-                )}
               </div>
 
               {editErrorMessage && (

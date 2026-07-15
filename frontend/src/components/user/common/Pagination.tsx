@@ -10,7 +10,7 @@ interface PaginationProps {
 const WINDOW_SIZE = 5;
 
 export default function Pagination({ page, totalPages, onPageChange }: PaginationProps) {
-  if (totalPages <= 1) return null;
+  if (totalPages < 1) return null;
 
   const pages = Array.from({ length: Math.min(totalPages, WINDOW_SIZE) }, (_, i) => Math.max(1, page - 2) + i)
     .filter(p => p <= totalPages);

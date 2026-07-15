@@ -634,6 +634,13 @@ CREATE INDEX idx_job_notices_active_deadline_created
     ON job_notices (deadline ASC NULLS LAST, created_at DESC)
     WHERE notice_status = 'ACTIVE';
 
+-- 목록 deep pagination(OFFSET) 커버링 인덱스 (Issue #1285)
+-- deferred join의 페이지 ID 조회가 Index Only Scan을 타도록 job_notice_id까지 포함한다.
+-- 기존 DB는 db/patches/20260713_job_notices_keyset_covering_index.sql로 반영.
+CREATE INDEX idx_jn_active_keyset
+    ON job_notices (deadline ASC NULLS LAST, created_at DESC, job_notice_id)
+    WHERE notice_status = 'ACTIVE';
+
 CREATE INDEX idx_job_notices_search_text_trgm
     ON job_notices USING gin (lower(search_text) gin_trgm_ops);
 
