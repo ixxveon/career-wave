@@ -67,7 +67,6 @@ export async function createCommunityBoard(
     {
       method: "POST",
       auth: true,
-      allowRetry: true,
       body: JSON.stringify(request),
     },
   );
@@ -79,7 +78,6 @@ export async function createCommunityReport(
   return memberApiClient<void>("/api/v1/user/community/reports", {
     method: "POST",
     auth: true,
-    allowRetry: true,
     body: JSON.stringify(request),
   });
 }

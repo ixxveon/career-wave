@@ -285,6 +285,7 @@ export default function PostDetailPage() {
 
   const {
     data: board,
+    isLoading: isBoardLoading,
     isError: isBoardError,
   } = useCommunityBoard(validBoardId);
 
@@ -426,6 +427,13 @@ export default function PostDetailPage() {
           );
         },
       },
+    );
+  }
+  if (isBoardLoading) {
+    return (
+      <div className="pd-page">
+        <div className="pd-empty">게시글을 불러오는 중입니다.</div>
+      </div>
     );
   }
   if (isBoardError) {
