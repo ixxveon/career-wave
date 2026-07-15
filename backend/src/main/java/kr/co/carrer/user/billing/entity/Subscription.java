@@ -172,6 +172,19 @@ public class Subscription {
         this.subscriptionStatus = SubscriptionStatus.REFUNDED;
     }
 
+    // 환불 거부 — REFUND_PENDING 진입 전 상태로 복귀. markRefundPending()이
+    // ACTIVE/CANCEL_SCHEDULED에서만 진입을 허용하므로, cancelScheduledAt 존재 여부로
+    // 어느 쪽이었는지 판별한다 (별도 컬럼 없이 기존 필드로 판별 가능).
+    public void revertRefundPending() {
+        if (this.subscriptionStatus != SubscriptionStatus.REFUND_PENDING) {
+            throw new CustomException(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        }
+        this.subscriptionStatus = this.cancelScheduledAt != null
+                ? SubscriptionStatus.CANCEL_SCHEDULED
+                : SubscriptionStatus.ACTIVE;
+        this.autoRenew = this.subscriptionStatus == SubscriptionStatus.ACTIVE;
+    }
+
     public void renewPeriod(ZonedDateTime newPeriodStart, ZonedDateTime newPeriodEnd) {
         if (this.subscriptionStatus != SubscriptionStatus.ACTIVE
                 && this.subscriptionStatus != SubscriptionStatus.PAYMENT_FAILED) {

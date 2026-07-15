@@ -91,6 +91,14 @@ export function formatBillingDate(isoDate: string | null): string {
   return `${date.getUTCFullYear()}.${String(date.getUTCMonth() + 1).padStart(2, '0')}.${String(date.getUTCDate()).padStart(2, '0')}`;
 }
 
+export function formatSubscriptionStatusLabel(item: UsageItem): string {
+  if (item.subscription?.status === SUBSCRIPTION_STATUS.CANCEL_SCHEDULED) {
+    const endDate = formatBillingDate(item.subscription.currentPeriodEnd);
+    return `${item.title} 해지 예정 (${endDate}까지 이용 가능)`;
+  }
+  return `${item.title} 구독중`;
+}
+
 export function buildRecommendationItem(productCode: ProductCode): UsageItem {
   return {
     productCode,

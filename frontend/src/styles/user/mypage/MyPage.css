@@ -1489,6 +1489,28 @@ Empty UI
   color: #5d88f2;
 }
 
+.cw-subscription-usage-card__payment-failed,
+.cw-subscription-usage-card__cancel-scheduled {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cw-subscription-usage-card__payment-failed {
+  color: #b3261e;
+  background: #fdecea;
+}
+
+.cw-subscription-usage-card__cancel-scheduled {
+  color: #92610a;
+  background: #fff9ef;
+}
+
 .cw-subscription-usage-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -10,6 +10,7 @@ import kr.co.carrer.user.member.service.BusinessRegistrationVerificationPort;
 import kr.co.carrer.user.member.service.EmploymentCertificateFilePort;
 import kr.co.carrer.user.member.service.TermsAgreementEvidenceRecorder;
 import kr.co.carrer.user.member.service.UserRegisterService;
+import kr.co.carrer.user.member.service.VerificationTokenValidator;
 import kr.co.carrer.user.member.type.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -63,13 +64,13 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         // 이메일 인증 검증 — purpose=REGISTER
         var emailVerification = verificationRepository.findByVerificationToken(request.getEmailVerificationToken())
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
-        UserVerificationServiceImpl.validateVerificationToken(
+        VerificationTokenValidator.validate(
                 emailVerification, VerificationChannel.EMAIL, request.getEmail(), VerificationPurpose.REGISTER);
 
         // 휴대폰 인증 검증 — purpose=REGISTER
         var phoneVerification = verificationRepository.findByVerificationToken(request.getPhoneVerificationToken())
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
-        UserVerificationServiceImpl.validateVerificationToken(
+        VerificationTokenValidator.validate(
                 phoneVerification, VerificationChannel.PHONE, request.getPhone(), VerificationPurpose.REGISTER);
 
         // loginId 포함 금지 검증
@@ -133,13 +134,13 @@ public class UserRegisterServiceImpl implements UserRegisterService {
         // 담당자 이메일 인증 검증
         var emailVerification = verificationRepository.findByVerificationToken(request.getManagerEmailVerificationToken())
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
-        UserVerificationServiceImpl.validateVerificationToken(
+        VerificationTokenValidator.validate(
                 emailVerification, VerificationChannel.EMAIL, request.getManagerEmail(), VerificationPurpose.REGISTER);
 
         // 담당자 휴대폰 인증 검증
         var phoneVerification = verificationRepository.findByVerificationToken(request.getManagerPhoneVerificationToken())
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
-        UserVerificationServiceImpl.validateVerificationToken(
+        VerificationTokenValidator.validate(
                 phoneVerification, VerificationChannel.PHONE, request.getManagerPhone(), VerificationPurpose.REGISTER);
 
         // loginId 포함 금지 검증

@@ -14,6 +14,8 @@ import kr.co.carrer.admin.payment.type.PaymentStatus;
 import kr.co.carrer.admin.payment.type.RefundStatus;
 import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.global.response.PaginationResponse;
+import kr.co.carrer.user.billing.entity.Subscription;
+import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentQueryRepository paymentQueryRepository;
     private final RefundRepository refundRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final PaymentCancelClient paymentCancelClient;
     // Toss 취소 API 실패 시 호출 (REQUIRES_NEW로 실패 이력 별도 커밋)
     private final RefundFailureTxService refundFailureTxService;
@@ -93,6 +96,11 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
             throw new CustomException(AdminPaymentErrorCode.REFUND_ALREADY_PENDING);
         }
 
+        if (payment.getSubscriptionId() != null) {
+            subscriptionRepository.findBySubscriptionIdForUpdate(payment.getSubscriptionId())
+                    .ifPresent(Subscription::markRefundPending);
+        }
+
         return new RefundDTO.ResponseCreate(paymentId.toString(), refund.getRefundStatus());
     }
 
@@ -133,6 +141,11 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
 
         refund.reject(adminId, rejectReason);
         refundRepository.save(refund);
+
+        if (payment.getSubscriptionId() != null) {
+            subscriptionRepository.findBySubscriptionIdForUpdate(payment.getSubscriptionId())
+                    .ifPresent(Subscription::revertRefundPending);
+        }
 
         return new RefundDTO.ResponseReject(
             paymentId.toString(),

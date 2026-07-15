@@ -1,4 +1,12 @@
 import type { AuditLog } from './adminManagementModel';
+import { formatLogTime } from '../../../utils/admin/logView';
+
+const severityToneMap: Record<AuditLog['severity'], 'info' | 'success' | 'warning' | 'danger'> = {
+  INFO: 'info',
+  WARN: 'warning',
+  ERROR: 'danger',
+  SUCCESS: 'success',
+};
 
 export default function AdminAuditLogsSection(props: {
   isAdminAuditLogsLoading: boolean;
@@ -21,17 +29,23 @@ export default function AdminAuditLogsSection(props: {
         <div className="amLogLights" aria-hidden="true"><i className="red" /><i className="amber" /><i className="green" /></div>
       </div>
 
-      <div className="amSecurityConsole">
-        <div className="amSecurityConsoleHead"><span>발생 시각</span><span>유형</span><span>관리자</span><span>활동</span><span>IP</span></div>
-        {isAdminAuditLogsLoading ? <div className="amDarkEmptyState">관리자 관리 활동 로그를 불러오는 중입니다.</div> : isAdminAuditLogsError ? <div className="amDarkEmptyState"><strong>{isAuditLogAccessDenied ? '활동 로그 조회 권한이 없습니다.' : '활동 로그를 불러오지 못했습니다.'}</strong><span>{isAuditLogAccessDenied ? '권한이 있는 관리자 계정으로 다시 로그인해 주세요.' : auditLogsErrorMessage}</span>{!isAuditLogAccessDenied && <button type="button" onClick={onRetry}>다시 시도</button>}</div> : filteredLogs.length === 0 ? <div className="amDarkEmptyState">표시할 관리자 관리 활동 로그가 없습니다.</div> : filteredLogs.map((log) => (
-          <article className="amSecurityRow" key={log.id}>
-            <span className="amSecurityTime">[{log.time.split(' ')[1] ?? log.time}]</span>
-            <span className={`amSecurityType ${log.severity.toLowerCase()}`}>[{log.severity}]</span>
-            <span className="amSecurityUser">{log.actor}</span>
-            <strong className={`amSecurityMessage ${log.severity.toLowerCase()}`}>{log.action}</strong>
-            <span className="amSecurityIp">{log.ip}</span>
-          </article>
-        ))}
+      <div className="auditOpsTableWrap auditOpsTableWrapFlat">
+        <div className="auditOpsTableHead"><span>발생 시각</span><span>도메인</span><span>상태</span><span>행동</span><span>대상</span><span>관리자</span></div>
+        <div className="auditOpsTableBody">
+          {isAdminAuditLogsLoading ? <div className="auditOpsEmpty">관리자 관리 활동 로그를 불러오는 중입니다.</div> : null}
+          {isAdminAuditLogsError ? <div className="auditOpsEmpty error"><span>{isAuditLogAccessDenied ? '활동 로그 조회 권한이 없습니다.' : '활동 로그를 불러오지 못했습니다.'}</span><span>{isAuditLogAccessDenied ? '권한이 있는 관리자 계정으로 다시 로그인해 주세요.' : auditLogsErrorMessage}</span>{!isAuditLogAccessDenied && <button type="button" onClick={onRetry}>다시 시도</button>}</div> : null}
+          {!isAdminAuditLogsLoading && !isAdminAuditLogsError && filteredLogs.length === 0 ? <div className="auditOpsEmpty">표시할 관리자 관리 활동 로그가 없습니다.</div> : null}
+          {!isAdminAuditLogsLoading && !isAdminAuditLogsError ? filteredLogs.map((log) => (
+            <article className="auditOpsTableRow" key={log.id}>
+              <span className="timestamp">{formatLogTime(log.time)}</span>
+              <span className="domain">관리자 관리</span>
+              <span className={`auditOpsTag ${severityToneMap[log.severity]}`}>{log.severity}</span>
+              <strong className="summary">{log.action}</strong>
+              <span className="target">{log.target || log.ip || '-'}</span>
+              <span className="actor">{log.actor || '-'}</span>
+            </article>
+          )) : null}
+        </div>
       </div>
     </section>
   );

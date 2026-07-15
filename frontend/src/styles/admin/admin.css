@@ -559,18 +559,19 @@ button {
 .layoutGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
-  gap: 22px;
+  column-gap: 22px;
+  row-gap: 18px;
   align-items: stretch;
 }
 
 .leftColumn {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+  display: contents;
 }
 
 .rightColumn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -581,6 +582,7 @@ button {
 /* alert */
 
 .alertPanel {
+  grid-column: 1;
   padding: 22px;
 }
 
@@ -770,6 +772,7 @@ button {
 /* charts */
 
 .chartGrid {
+  grid-column: 1;
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.95fr);
   gap: 18px;
@@ -919,6 +922,7 @@ button {
 }
 
 .serviceListCard {
+  grid-column: 1 / -1;
   padding: 20px 20px 10px;
 }
 
@@ -1078,6 +1082,8 @@ button {
 .adminIcon.blue   { background: #e7eef7; color: #4f6b8a; }
 .adminIcon.red    { background: #f4e8e8; color: #9a6767; }
 .adminIcon.orange { background: #f5ede3; color: #9b7553; }
+.adminIcon.green  { background: #e7f3ed; color: #4f7a64; }
+.adminIcon.teal   { background: #e1f4f5; color: #25717a; }
 .adminIcon.purple { background: #efeaf6; color: #75658d; }
 
 /* status */
@@ -1126,12 +1132,12 @@ button {
 /* logs */
 
 .logCard {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: 18px 20px 10px;
+  padding: 18px 20px 20px;
 }
 
 .logCard .sectionHead {
@@ -1149,6 +1155,83 @@ button {
   padding-right: 4px;
 }
 
+.logCard .logList.auditOpsTableWrapFlat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-right: 0;
+  border-radius: 8px;
+}
+
+.logCard .logListHead {
+  display: none;
+}
+
+.logCard .dashboardRecentLogList .auditOpsTableHead,
+.logCard .dashboardRecentLogList .auditOpsTableRow {
+  grid-template-columns: 86px 86px minmax(0, 1fr);
+  column-gap: 8px;
+  padding-inline: 10px;
+}
+
+.logCard .auditOpsTableHead {
+  min-height: 34px;
+}
+
+.logCard .auditOpsTableBody {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--audit-bg);
+}
+
+.logCard .auditOpsTableRow {
+  min-height: 34px;
+}
+
+.logCard .dashboardRecentLogList .auditOpsTableRow {
+  width: 100%;
+  height: auto;
+  border: 0;
+  border-bottom: 1px solid #203142;
+  border-radius: 0;
+  background: var(--audit-bg);
+  color: var(--audit-text);
+  text-align: left;
+  cursor: default;
+}
+
+.logCard .dashboardRecentLogList .auditOpsTableRow:hover {
+  background: var(--audit-bg);
+}
+
+.logCard .dashboardRecentLogList .auditOpsTableRow.selected {
+  background: #172b3e;
+  box-shadow: inset 3px 0 0 var(--audit-accent);
+}
+
+.logCard .dashboardRecentLogList .auditOpsTableRow .timestamp,
+.logCard .dashboardRecentLogList .auditOpsTableRow .domain {
+  color: #a6b8ca;
+}
+
+.logCard .dashboardRecentLogList .auditOpsTableRow .summary {
+  color: var(--audit-text);
+}
+
+.logCard .auditOpsTableRow.inactive {
+  cursor: default;
+}
+
+.logCard .auditOpsTableRow.inactive:hover {
+  background: var(--audit-bg);
+}
+
+.logCard .auditOpsTableRow .auditOpsTag {
+  transform: none;
+}
+
 .logRow {
   min-height: 42px;
   border-bottom: 1px solid #e5edf6;
@@ -1158,6 +1241,27 @@ button {
   gap: 10px;
   padding: 8px 2px;
   cursor: pointer;
+}
+
+.logListHead {
+  min-height: 30px;
+  border-bottom-color: #d7e4f2;
+  color: #71869a;
+  cursor: default;
+  display: grid;
+  grid-template-columns: 108px 92px minmax(0, 1fr);
+  align-items: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.logListHead span,
+.logListHead strong,
+.logListHead p {
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 .logRow:hover {
@@ -1718,14 +1822,25 @@ button {
   }
 
   .rightColumn {
+    grid-column: 1;
+    grid-row: auto;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     height: auto;
     position: static;
   }
 
+  .logCard {
+    flex: 0 0 auto;
+  }
+
   .chartGrid {
+    grid-column: 1;
     grid-template-columns: 1fr;
+  }
+
+  .serviceListCard {
+    grid-column: 1;
   }
 }
 
@@ -1870,6 +1985,10 @@ button {
 
   .logRow {
     grid-template-columns: 108px minmax(0, 1fr);
+  }
+
+  .logListHead {
+    display: none;
   }
 
   .logRow__adminId,

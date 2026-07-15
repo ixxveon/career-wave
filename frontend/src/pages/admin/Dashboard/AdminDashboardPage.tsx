@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Activity, Bot, CreditCard, Users, type LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { adminSession } from '../../../api/admin/adminAuthApi';
+import { AUDIT_LOG_TYPE, auditLogApi } from '../../../api/admin/auditLogApi';
 import {
   DASHBOARD_KPI_KEY,
   type DashboardKpiKey,
@@ -17,9 +18,11 @@ import {
 } from '../../../constants/admin/adminRouteConstants';
 import { ADMIN_DETAIL_ROLE, type AdminDetailRole } from '../../../constants/admin/adminRoleConstants';
 import '../../../styles/admin/admin.css';
+import '../../../styles/admin/audit-log.css';
 
 const DASHBOARD_SUMMARY_QUERY_KEY = ['admin', 'dashboard', 'summary'] as const;
-const RECENT_ACTIVITY_DISPLAY_LIMIT = 5;
+const DASHBOARD_RECENT_ADMIN_ACTIVITY_QUERY_KEY = ['admin', 'dashboard', 'recent-admin-activities'] as const;
+const RECENT_ACTIVITY_DISPLAY_LIMIT = 12;
 
 const KST_DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
   timeZone: 'Asia/Seoul',
@@ -29,6 +32,16 @@ const KST_DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
   day: '2-digit',
   hour: '2-digit',
   minute: '2-digit',
+});
+
+const KST_LOG_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Asia/Seoul',
+  hourCycle: 'h23',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
 });
 
 const KPI_PRESENTATION = {
@@ -56,7 +69,7 @@ const SERVICE_CARD_PRESENTATION = {
   PAYMENT: { icon: 'PAY', cls: 'orange' },
   STATISTICS: { icon: 'STT', cls: 'green' },
   AI_METRICS: { icon: 'AI', cls: 'purple' },
-  SCRAPING: { icon: 'BOT', cls: 'green' },
+  SCRAPING: { icon: 'BOT', cls: 'teal' },
   AUDIT_LOG: { icon: 'LOG', cls: 'red' },
 } as const;
 
@@ -135,6 +148,15 @@ function formatKstDateTime(value?: string | null): string {
   return `${lookup.year}.${lookup.month}.${lookup.day} ${lookup.hour}:${lookup.minute}`;
 }
 
+function formatKstLogDateTime(value?: string | null): string {
+  if (!value) return '-';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+
+  return KST_LOG_DATE_FORMATTER.format(date).replace(',', '');
+}
+
 function getAdminAvatarInitial(name?: string | null, fallbackId?: string | null): string {
   const source = name?.trim() || fallbackId?.trim() || '';
   if (!source) {
@@ -178,24 +200,32 @@ export default function AdminDashboardPage() {
       return unwrapDashboardSummaryResponse(response.data);
     },
   });
+  const {
+    data: recentAdminActivityLogs,
+    isLoading: isRecentAdminActivityLoading,
+    isError: isRecentAdminActivityError,
+  } = useQuery({
+    queryKey: DASHBOARD_RECENT_ADMIN_ACTIVITY_QUERY_KEY,
+    queryFn: async () => {
+      const response = await auditLogApi.getLogs({
+        logType: AUDIT_LOG_TYPE.ADMIN_ACTIVITY,
+        page: 1,
+        size: RECENT_ACTIVITY_DISPLAY_LIMIT,
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || '최근 관리자 활동을 불러오지 못했습니다.');
+      }
+
+      return response.data.data.content;
+    },
+  });
 
   const isDashboardInitialLoading = isDashboardLoading && !dashboardSummary;
   const dashboardErrorMessage =
     dashboardError instanceof Error
       ? dashboardError.message
       : '대시보드 요약 조회에 실패했습니다.';
-
-  const isDashboardCompletelyEmpty =
-    !isDashboardInitialLoading &&
-    !isDashboardError &&
-    !!dashboardSummary &&
-    dashboardSummary.kpis.length === 0 &&
-    dashboardSummary.alerts.length === 0 &&
-    dashboardSummary.weeklySignups.length === 0 &&
-    dashboardSummary.paymentRatio.length === 0 &&
-    dashboardSummary.serviceCards.length === 0 &&
-    dashboardSummary.systemStatus.length === 0 &&
-    dashboardSummary.recentActivities.length === 0;
 
   const dashboardBaseDateTimeLabel = formatKstDateTime(dashboardSummary?.baseDateTime);
 
@@ -370,23 +400,37 @@ export default function AdminDashboardPage() {
 
   const { recentActivities, hasRecentActivitySectionError } = useMemo(() => {
     try {
-      const items = (dashboardSummary?.recentActivities ?? []).slice(0, RECENT_ACTIVITY_DISPLAY_LIMIT).map((item) => ({
-        ...item,
-        occurredAtLabel: formatKstDateTime(item.occurredAt),
-        hasAccessibleTarget: hasAccessibleAdminTarget(currentAdminRole, item.targetPath),
+      const items = (recentAdminActivityLogs ?? []).map((item) => ({
+        id: item.id,
+        occurredAtLabel: formatKstLogDateTime(item.occurredAt),
+        actorId: item.actorId,
+        message: item.summary,
       }));
 
       return {
         recentActivities: items,
-        hasRecentActivitySectionError: false,
+        hasRecentActivitySectionError: isRecentAdminActivityError,
       };
     } catch {
       return {
         recentActivities: [],
-        hasRecentActivitySectionError: !!dashboardSummary,
+        hasRecentActivitySectionError: true,
       };
     }
-  }, [currentAdminRole, dashboardSummary]);
+  }, [isRecentAdminActivityError, recentAdminActivityLogs]);
+
+  const isDashboardCompletelyEmpty =
+    !isDashboardInitialLoading &&
+    !isRecentAdminActivityLoading &&
+    !isDashboardError &&
+    !!dashboardSummary &&
+    dashboardSummary.kpis.length === 0 &&
+    dashboardSummary.alerts.length === 0 &&
+    dashboardSummary.weeklySignups.length === 0 &&
+    dashboardSummary.paymentRatio.length === 0 &&
+    dashboardSummary.serviceCards.length === 0 &&
+    dashboardSummary.systemStatus.length === 0 &&
+    recentActivities.length === 0;
 
   return (
     <>
@@ -667,8 +711,9 @@ export default function AdminDashboardPage() {
                     전체 보기
                   </button>
                 </div>
-                <div className="logList">
-                  {isDashboardInitialLoading ? (
+                <div className="logList auditOpsTableWrap auditOpsTableWrapFlat dashboardRecentLogList">
+                  <div className="auditOpsTableHead" aria-hidden="true"><span>발생 시각</span><span>관리자</span><span>행동</span></div>
+                  {isRecentAdminActivityLoading ? (
                     <div className="dashboardStateBox dashboardStateBox--inline">
                       최근 관리자 활동을 불러오는 중입니다.
                     </div>
@@ -677,21 +722,18 @@ export default function AdminDashboardPage() {
                       최근 관리자 활동을 표시하지 못했습니다.
                     </div>
                   ) : (
-                    recentActivities.map((activity) => (
-                      <div
-                        className="logRow"
-                        key={activity.id}
-                        style={{ cursor: activity.hasAccessibleTarget ? 'pointer' : 'default' }}
-                        onClick={() => {
-                          if (!activity.hasAccessibleTarget) return;
-                          navigate(activity.targetPath);
-                        }}
-                      >
-                        <span className="logRow__time">{activity.occurredAtLabel}</span>
-                        <strong className="logRow__adminId" title={activity.adminId}>{activity.adminId}</strong>
-                        <p className="logRow__message" title={activity.message}>{activity.message}</p>
-                      </div>
-                    ))
+                    <div className="auditOpsTableBody">
+                      {recentActivities.map((activity) => (
+                        <div
+                          className="auditOpsTableRow"
+                          key={activity.id}
+                        >
+                          <span className="timestamp">{activity.occurredAtLabel}</span>
+                          <span className="domain" title={activity.actorId}>{activity.actorId}</span>
+                          <strong className="summary" title={activity.message}>{activity.message}</strong>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </section>

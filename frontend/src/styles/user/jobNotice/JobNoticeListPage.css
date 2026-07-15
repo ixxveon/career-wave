@@ -249,6 +249,85 @@
   min-width: 0;
 }
 
+.jn-filter-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+  padding: 0 2px;
+  border-bottom: 1px solid #dfe6ef;
+  color: #26344a;
+}
+
+.jn-filter-panel__head strong {
+  font-size: 17px;
+}
+
+.jn-filter-panel__head span,
+.jn-filter-panel__summary em {
+  color: #758296;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 750;
+}
+
+.jn-filter-panel__summary {
+  border-bottom: 1px solid #dfe6ef;
+}
+
+.jn-filter-panel__summary button {
+  width: 100%;
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  border: 0;
+  border-bottom: 1px solid #edf1f5;
+  background: transparent;
+  color: #34465d;
+  cursor: pointer;
+  text-align: left;
+}
+
+.jn-filter-panel__summary button:last-child {
+  border-bottom: 0;
+}
+
+.jn-filter-panel__summary button:hover {
+  color: #1f75cd;
+}
+
+.jn-filter-panel__summary button > span {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.jn-filter-panel__summary em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jn-filter-panel__summary button > strong {
+  color: #7f8997;
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.jn-filter-panel__open {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 14px;
+  border: 1px solid #267de0;
+  border-radius: 7px;
+  background: #267de0;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .jn-filter-actions {
   display: grid;
   grid-template-columns: 1fr 1.3fr;
@@ -285,6 +364,7 @@
   color: #31445e;
   font-size: 13px;
   font-weight: 800;
+  display: none;
 }
 
 .jn-filter-dialog {
@@ -958,10 +1038,9 @@
     grid-template-columns: 1fr;
   }
 
-  .jn-filter-panel {
+  .jn-layout > .jn-filter-panel {
     position: static;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 18px;
+    display: block;
   }
 }
 
@@ -990,6 +1069,15 @@
 
   .jn-job-grid {
     grid-template-columns: 1fr;
+  }
+
+  .jn-layout > .jn-filter-panel {
+    display: none;
+  }
+
+  .jn-filter-trigger {
+    display: inline-flex;
+    margin-bottom: 12px;
   }
 
   .jn-filter-dialog {

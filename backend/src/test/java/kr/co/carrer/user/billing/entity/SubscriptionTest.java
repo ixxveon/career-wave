@@ -368,5 +368,38 @@ class SubscriptionTest {
                     .extracting(ex -> ((CustomException) ex).getErrorCode())
                     .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
         }
+
+        @Test
+        @DisplayName("revertRefundPending() — 해지 예약 이력 없으면 ACTIVE로 복귀, autoRenew=true")
+        void revertRefundPending_withoutCancelScheduled_returnsToActive() {
+            Subscription s = newActive();
+            s.markRefundPending();
+            s.revertRefundPending();
+
+            assertThat(s.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.ACTIVE);
+            assertThat(s.isAutoRenew()).isTrue();
+        }
+
+        @Test
+        @DisplayName("revertRefundPending() — 해지 예약 상태에서 환불 대기 진입했으면 CANCEL_SCHEDULED로 복귀")
+        void revertRefundPending_withCancelScheduled_returnsToCancelScheduled() {
+            Subscription s = newActive();
+            s.scheduleCancel();
+            s.markRefundPending();
+            s.revertRefundPending();
+
+            assertThat(s.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.CANCEL_SCHEDULED);
+            assertThat(s.isAutoRenew()).isFalse();
+        }
+
+        @Test
+        @DisplayName("ACTIVE 상태에서 revertRefundPending() 호출 시 SUBSCRIPTION_INVALID_TRANSITION 예외")
+        void revertRefundPending_fromActive_throws() {
+            Subscription s = newActive();
+            assertThatThrownBy(s::revertRefundPending)
+                    .isInstanceOf(CustomException.class)
+                    .extracting(ex -> ((CustomException) ex).getErrorCode())
+                    .isEqualTo(BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        }
     }
 }
