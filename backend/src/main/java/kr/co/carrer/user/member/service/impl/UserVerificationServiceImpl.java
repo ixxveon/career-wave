@@ -181,27 +181,4 @@ public class UserVerificationServiceImpl implements UserVerificationService {
             throw new IllegalStateException("SHA-256 unavailable", e);
         }
     }
-
-    // verificationToken purpose/target/channel/expiry/status 복합 검증 — 가입/복구 service에서 호출
-    public static void validateVerificationToken(
-            MemberVerification verification,
-            VerificationChannel expectedChannel,
-            String expectedTarget,
-            VerificationPurpose expectedPurpose) {
-        if (verification.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
-        }
-        if (!Instant.now().isBefore(verification.getExpiresAt())) {
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
-        }
-        if (verification.getChannel() != expectedChannel) {
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
-        }
-        if (!verification.getTarget().equals(expectedTarget)) {
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
-        }
-        if (verification.getPurpose() != expectedPurpose) {
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
-        }
-    }
 }

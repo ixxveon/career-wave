@@ -23,6 +23,7 @@ import kr.co.carrer.user.member.repository.*;
 import kr.co.carrer.user.member.service.SocialSignupTokenStore;
 import kr.co.carrer.user.member.service.TermsAgreementEvidenceRecorder;
 import kr.co.carrer.user.member.service.UserSocialAuthService;
+import kr.co.carrer.user.member.service.VerificationTokenValidator;
 import kr.co.carrer.user.member.type.MemberStatus;
 import kr.co.carrer.user.member.type.RoleType;
 import kr.co.carrer.user.member.type.SocialProvider;
@@ -194,7 +195,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         // 휴대폰 인증 검증 — purpose=SOCIAL_SIGNUP
         var phoneVerification = verificationRepository.findByVerificationToken(request.getPhoneVerificationToken())
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
-        UserVerificationServiceImpl.validateVerificationToken(
+        VerificationTokenValidator.validate(
                 phoneVerification, VerificationChannel.PHONE, request.getPhone(), VerificationPurpose.SOCIAL_SIGNUP);
 
         // 중복 검증 — 탈퇴 회원 번호는 재사용 가능(resolve()/일반 가입과 동일 기준)
@@ -255,7 +256,7 @@ public class UserSocialAuthServiceImpl implements UserSocialAuthService {
         // 휴대폰 인증 검증 — purpose=SOCIAL_SIGNUP (consume은 연동/가입 확정 시점에만)
         var phoneVerification = verificationRepository.findByVerificationToken(request.getPhoneVerificationToken())
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
-        UserVerificationServiceImpl.validateVerificationToken(
+        VerificationTokenValidator.validate(
                 phoneVerification, VerificationChannel.PHONE, request.getPhone(), VerificationPurpose.SOCIAL_SIGNUP);
 
         // 인증한 번호의 기존 회원(탈퇴 제외) 조회

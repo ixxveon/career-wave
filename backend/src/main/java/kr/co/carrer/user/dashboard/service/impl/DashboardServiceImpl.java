@@ -16,7 +16,7 @@ import kr.co.carrer.user.member.entity.MemberVerification;
 import kr.co.carrer.user.member.exception.UserAuthErrorCode;
 import kr.co.carrer.user.member.repository.MemberVerificationRepository;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
-import kr.co.carrer.user.member.service.impl.UserVerificationServiceImpl;
+import kr.co.carrer.user.member.service.VerificationTokenValidator;
 import kr.co.carrer.user.member.type.VerificationChannel;
 import kr.co.carrer.user.member.type.VerificationPurpose;
 import lombok.RequiredArgsConstructor;
@@ -134,7 +134,7 @@ public class DashboardServiceImpl implements DashboardService {
         }
         MemberVerification verification = verificationRepository.findByVerificationToken(token)
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
-        UserVerificationServiceImpl.validateVerificationToken(verification, channel, target, purpose);
+        VerificationTokenValidator.validate(verification, channel, target, purpose);
         verification.markConsumed();
     }
 
