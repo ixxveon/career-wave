@@ -292,6 +292,10 @@ function AppRoutes() {
         <Route path="community">
           <Route index element={lazyRoute(<CommunityPage />)} />
           <Route path="posts/create" element={lazyRoute(<PostCreatePage />)} />
+          <Route
+            path="posts/:postId/edit"
+            element={lazyRoute(<PostCreatePage />)}
+          />
           <Route path="posts/:postId" element={lazyRoute(<PostDetailPage />)} />
           <Route path="mentor" element={lazyRoute(<MentorPage />)} />
         </Route>
@@ -314,7 +318,10 @@ function AppRoutes() {
         <Route path="privacy" element={lazyRoute(<PrivacyPage />)} />
 
         {/* Toss 결제 콜백 — 외부 리디렉트이므로 세션 만료 시에도 렌더링 가능해야 함 (#854) */}
-        <Route path="billing/success" element={lazyRoute(<PaymentSuccessPage />)} />
+        <Route
+          path="billing/success"
+          element={lazyRoute(<PaymentSuccessPage />)}
+        />
         <Route path="billing/fail" element={lazyRoute(<PaymentFailPage />)} />
 
         <Route element={<ProtectedRoute />}>
@@ -394,7 +401,10 @@ function AppRoutes() {
               element={lazyRoute(<LearningRoadmapPage />)}
             />
             <Route path="report" element={lazyRoute(<InterviewReportPage />)} />
-            <Route path="sessions" element={lazyRoute(<InterviewHistoryPage />)} />
+            <Route
+              path="sessions"
+              element={lazyRoute(<InterviewHistoryPage />)}
+            />
             <Route
               path="report-export"
               element={lazyRoute(<ComprehensiveReportPage />)}
@@ -446,7 +456,10 @@ function AppRoutes() {
       </Route>
 
       <Route path={ADMIN_ROUTE_BASE}>
-        <Route index element={<Navigate to={ADMIN_ROUTE_PATHS.dashboard} replace />} />
+        <Route
+          index
+          element={<Navigate to={ADMIN_ROUTE_PATHS.dashboard} replace />}
+        />
         <Route path="login" element={lazyRoute(<AdminLoginPage />)} />
 
         <Route element={<AdminProtectedRoute />}>

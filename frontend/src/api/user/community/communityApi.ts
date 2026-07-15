@@ -81,3 +81,18 @@ export async function createCommunityReport(
     body: JSON.stringify(request),
   });
 }
+
+export async function updateCommunityBoard(
+  boardId: number,
+  request: CreateCommunityBoardRequest,
+) {
+  return memberApiClient<CommunityBoard>(
+    `/api/v1/user/community/boards/${boardId}`,
+    {
+      method: "PUT",
+      auth: true,
+      allowRetry: true,
+      body: JSON.stringify(request),
+    },
+  );
+}

@@ -492,6 +492,13 @@ export default function PostDetailPage() {
           <div className="pd-owner-actions">
             <button
               type="button"
+              onClick={() => navigate(`/community/posts/${postId}/edit`)}
+            >
+              수정
+            </button>
+
+            <button
+              type="button"
               onClick={handleDeleteBoard}
               disabled={isDeletingBoard}
             >

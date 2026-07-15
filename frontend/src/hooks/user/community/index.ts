@@ -6,3 +6,4 @@ export { useDeleteCommunityBoard } from "./useDeleteCommunityBoard";
 export { useDeleteCommunityComment } from "./useDeleteCommunityComment";
 export * from "./useCreateCommunityBoard";
 export { useCreateCommunityReport } from "./useCreateCommunityReport";
+export { useUpdateCommunityBoard } from "./useUpdateCommunityBoard";
