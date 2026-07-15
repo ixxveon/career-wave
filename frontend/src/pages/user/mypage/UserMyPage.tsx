@@ -306,6 +306,23 @@ function UserMyPage() {
       isSavingProfileRef.current = false;
       return;
     }
+    if (!trimmedName) {
+      setEditErrorMessage("이름을 입력해 주세요.");
+      isSavingProfileRef.current = false;
+      return;
+    }
+
+    if (!trimmedEmail) {
+      setEditErrorMessage("이메일을 입력해 주세요.");
+      isSavingProfileRef.current = false;
+      return;
+    }
+
+    if (!normalizedPhone) {
+      setEditErrorMessage("휴대폰 번호를 입력해 주세요.");
+      isSavingProfileRef.current = false;
+      return;
+    }
 
     if (trimmedName !== userProfile.name && !isValidName(trimmedName)) {
       setEditErrorMessage("이름은 2~20자의 한글 또는 영문으로 입력해 주세요.");
@@ -313,13 +330,13 @@ function UserMyPage() {
       return;
     }
 
-    if (trimmedEmail && !isValidEmail(trimmedEmail)) {
+    if (!isValidEmail(trimmedEmail)) {
       setEditErrorMessage("이메일 형식이 올바르지 않습니다.");
       isSavingProfileRef.current = false;
       return;
     }
 
-    if (normalizedPhone && !/^010[0-9]{8}$/.test(normalizedPhone)) {
+    if (!/^010[0-9]{8}$/.test(normalizedPhone)) {
       setEditErrorMessage("휴대폰 번호는 01012345678 형식으로 입력해 주세요.");
       isSavingProfileRef.current = false;
       return;
@@ -355,7 +372,7 @@ function UserMyPage() {
         name: trimmedName,
         email: trimmedEmail,
         phone: normalizedPhone,
-        githubUrl: normalizedGithubUrl,
+        ...(normalizedGithubUrl && { githubUrl: normalizedGithubUrl }),
         emailVerificationToken: emailChanged ? emailVerification.verificationToken : undefined,
         phoneVerificationToken: phoneChanged ? phoneVerification.verificationToken : undefined,
       });
@@ -412,7 +429,7 @@ function UserMyPage() {
   const hasEditFormChanges =
     editForm.name.trim() !== userProfile.name ||
     editForm.email.trim() !== (userProfile.email ?? "") ||
-    editForm.phone.replace(/-/g, "").trim() !== userProfile.phone ||
+    editForm.phone.replace(/-/g, "").trim() !== (userProfile.phone ?? "") ||
     normalizeGithubUrl(editForm.githubUrl) !== (githubProfile?.githubUrl ?? "");
 
   const trimmedEditEmail = editForm.email.trim();
@@ -495,7 +512,9 @@ function UserMyPage() {
                 <span>휴대폰 번호</span>
                 <strong>
                   <Phone size={15} />
-                  {userProfile.phone ? formatPhoneNumber(userProfile.phone) : "등록된 휴대폰 번호가 없습니다."}
+                  {userProfile.phone
+                    ? formatPhoneNumber(userProfile.phone)
+                    : "등록된 휴대폰 번호가 없습니다."}
                 </strong>
               </div>
               <div className="cw-info-row">

@@ -10,7 +10,7 @@ export interface UpdateDashboardProfileRequest {
   name: string;
   email: string;
   phone: string;
-  githubUrl: string;
+  githubUrl?: string;
   emailVerificationToken?: string;
   phoneVerificationToken?: string;
 }
