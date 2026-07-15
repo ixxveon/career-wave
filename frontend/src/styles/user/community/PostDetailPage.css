@@ -89,7 +89,6 @@
 }
 .pd-action-btn:hover      { border-color: var(--color-primary); color: var(--color-primary-dark); background: var(--color-sky); }
 .pd-action-btn--liked     { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-sky); }
-.pd-action-btn--saved     { border-color: #f59e0b; color: #b45309; background: #fef3c7; }
 .pd-action-btn--report    { margin-left: auto; color: #dc2626; border-color: #fecaca; }
 .pd-action-btn--report:hover { background: #fee2e2; border-color: #dc2626; }
 

@@ -3,7 +3,9 @@ import { memberApiClient } from "@/api/user/member/memberApiClient";
 import type {
   CommunityBoard,
   CommunityComment,
+  CreateCommunityBoardRequest,
   CreateCommunityCommentRequest,
+  CreateCommunityReportRequest,
 } from "@/types/user/community";
 
 export async function getCommunityBoard(boardId: number) {
@@ -54,5 +56,30 @@ export async function deleteCommunityBoard(boardId: number) {
     method: "DELETE",
     auth: true,
     allowRetry: true,
+  });
+}
+
+export async function createCommunityBoard(
+  request: CreateCommunityBoardRequest,
+) {
+  return memberApiClient<CommunityBoard>(
+    "/api/v1/user/community/boards",
+    {
+      method: "POST",
+      auth: true,
+      allowRetry: true,
+      body: JSON.stringify(request),
+    },
+  );
+}
+
+export async function createCommunityReport(
+  request: CreateCommunityReportRequest,
+) {
+  return memberApiClient<void>("/api/v1/user/community/reports", {
+    method: "POST",
+    auth: true,
+    allowRetry: true,
+    body: JSON.stringify(request),
   });
 }

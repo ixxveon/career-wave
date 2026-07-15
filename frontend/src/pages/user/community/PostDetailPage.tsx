@@ -4,7 +4,6 @@ import { useDashboardProfile } from "@/hooks/user/dashboard";
 import {
   ChevronLeft,
   ThumbsUp,
-  Bookmark,
   MessageCircle,
   Flag,
   Send,
@@ -15,6 +14,7 @@ import {
   useCommunityBoard,
   useCommunityComments,
   useCreateCommunityComment,
+  useCreateCommunityReport,
   useDeleteCommunityBoard,
   useDeleteCommunityComment,
 } from "@/hooks/user/community";
@@ -23,13 +23,11 @@ import type { CommunityBoard, CommunityComment } from "@/types/user/community";
 const REPORT_TYPE = {
   BOARD: "BOARD",
   COMMENT: "COMMENT",
-  MEMBER: "MEMBER",
 } as const;
 
 const REPORT_LABELS = {
   [REPORT_TYPE.BOARD]: "게시글",
   [REPORT_TYPE.COMMENT]: "댓글",
-  [REPORT_TYPE.MEMBER]: "회원",
 };
 
 const REPORT_REASON_LABELS = {
@@ -37,8 +35,6 @@ const REPORT_REASON_LABELS = {
   ABUSE: "욕설/비방",
   AD: "광고/홍보성 콘텐츠",
   INAPPROPRIATE: "부적절한 내용",
-  PRIVACY: "개인정보 노출",
-  COPYRIGHT: "저작권 침해",
   OTHER: "기타",
 };
 
@@ -289,7 +285,6 @@ export default function PostDetailPage() {
 
   const {
     data: board,
-    isLoading: isBoardLoading,
     isError: isBoardError,
   } = useCommunityBoard(validBoardId);
 
@@ -297,6 +292,9 @@ export default function PostDetailPage() {
 
   const { mutate: createComment, isPending: isCreatingComment } =
     useCreateCommunityComment(validBoardId ?? 0);
+
+  const { mutate: createReport, isPending: isCreatingReport } =
+    useCreateCommunityReport();
 
   const { mutate: deleteBoard, isPending: isDeletingBoard } =
     useDeleteCommunityBoard();
@@ -314,7 +312,6 @@ export default function PostDetailPage() {
   const isPostOwner = post?.memberId === currentMemberId;
 
   const [liked, setLiked] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
   const [likeCount, setLikeCount] = useState(post?.likes ?? 0);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
@@ -326,7 +323,6 @@ export default function PostDetailPage() {
 
   useEffect(() => {
     setLiked(false);
-    setBookmarked(false);
     setLikeCount(post?.likes ?? 0);
     setPostReportCount(post?.reportCount ?? 0);
     setReportTarget(null);
@@ -394,57 +390,44 @@ export default function PostDetailPage() {
   }
 
   function submitReport() {
-    if (!reportTarget) return;
+    if (!reportTarget || isCreatingReport) return;
 
-    if (reportTarget.type === REPORT_TYPE.BOARD) {
-      setPostReportCount((count) => count + 1);
-    }
+    const targetLabel = REPORT_LABELS[reportTarget.type];
+    const reasonLabel = REPORT_REASON_LABELS[reportReason];
 
-    if (reportTarget.type === REPORT_TYPE.COMMENT) {
-      setComments((current) =>
-        current.map((item) => {
-          if (item.id === reportTarget.id) {
-            return {
-              ...item,
-              reportCount: item.reportCount + 1,
-            };
+    createReport(
+      {
+        targetType: reportTarget.type,
+        targetId: reportTarget.id,
+        reason: reportReason,
+      },
+      {
+        onSuccess: () => {
+          window.alert(
+            `${targetLabel} 신고가 접수되었습니다. 사유: ${reasonLabel}`,
+          );
+          setReportTarget(null);
+          setReportReason("AD");
+        },
+        onError: (error) => {
+          if (error.serverCode === "DUPLICATE_REPORT") {
+            window.alert("이미 신고한 대상입니다.");
+            return;
           }
 
-          if (!item.replies.some((reply) => reply.id === reportTarget.id)) {
-            return item;
+          if (error.serverCode === "INVALID_REPORT_TARGET") {
+            window.alert("본인이 작성한 콘텐츠는 신고할 수 없습니다.");
+            return;
           }
 
-          return {
-            ...item,
-            replies: item.replies.map((reply) =>
-              reply.id === reportTarget.id
-                ? {
-                    ...reply,
-                    reportCount: reply.reportCount + 1,
-                  }
-                : reply,
-            ),
-          };
-        }),
-      );
-    }
-
-    const targetLabel = REPORT_LABELS[reportTarget.type] || "대상";
-    const reasonLabel = REPORT_REASON_LABELS[reportReason] || "기타";
-
-    window.alert(`${targetLabel} 신고가 접수되었습니다. 사유: ${reasonLabel}`);
-    setReportTarget(null);
-    setReportReason("AD");
-  }
-
-  if (isBoardLoading) {
-    return (
-      <div className="pd-page">
-        <div className="pd-empty">게시글을 불러오는 중입니다.</div>
-      </div>
+          window.alert(
+            error.message ||
+              "신고 접수에 실패했습니다. 잠시 후 다시 시도해주세요.",
+          );
+        },
+      },
     );
   }
-
   if (isBoardError) {
     return (
       <div className="pd-page">
@@ -536,15 +519,6 @@ export default function PostDetailPage() {
           </button>
 
           <button
-            className={`pd-action-btn${bookmarked ? " pd-action-btn--saved" : ""}`}
-            type="button"
-            onClick={() => setBookmarked((current) => !current)}
-          >
-            <Bookmark size={15} fill={bookmarked ? "currentColor" : "none"} />{" "}
-            저장
-          </button>
-
-          <button
             className="pd-action-btn pd-action-btn--report"
             type="button"
             onClick={() =>
@@ -630,8 +604,12 @@ export default function PostDetailPage() {
                 취소
               </button>
 
-              <button type="button" onClick={submitReport}>
-                신고 접수
+              <button
+                type="button"
+                onClick={submitReport}
+                disabled={isCreatingReport}
+              >
+                {isCreatingReport ? "접수 중..." : "신고 접수"}
               </button>
             </div>
           </div>
