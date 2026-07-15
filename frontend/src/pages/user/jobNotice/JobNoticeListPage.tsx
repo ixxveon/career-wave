@@ -19,7 +19,13 @@ import {
   type Period,
   type SortOption,
 } from './jobNoticeListConfig';
-import { mapJobNoticeApiToViewModel, type JobNotice, type JobNoticeBookmarkResponse, type JobNoticeListStats } from '../../../types/user/jobNotice';
+import {
+  mapJobNoticeApiToViewModel,
+  type JobNotice,
+  type JobNoticeBookmarkResponse,
+  type JobNoticeFilterOptions,
+  type JobNoticeListStats,
+} from '../../../types/user/jobNotice';
 import { jobApi } from '../../../api/user/jobApi';
 import { useJobNoticeDetail } from '../../../hooks/user/jobNotice/useJobNoticeDetail';
 import { useJobNoticeList } from '../../../hooks/user/jobNotice/useJobNoticeList';
@@ -46,6 +52,7 @@ export default function JobNoticeListPage() {
   const [bookmarks, setBookmarks] = useState<Bookmarks>({});
   const [bookmarkErrorMessage, setBookmarkErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [lastFilterOptions, setLastFilterOptions] = useState<JobNoticeFilterOptions>();
 
   const jobNoticeIdParam = searchParams.get('jobNoticeId');
   const parsedJobNoticeId = jobNoticeIdParam ? Number(jobNoticeIdParam) : null;
@@ -73,9 +80,11 @@ export default function JobNoticeListPage() {
     [jobNoticeListApiResponse?.pages]
   );
   const jobNoticeListResponse = jobNoticeListPages[0];
+  const currentFilterOptions = jobNoticeListResponse?.filterOptions;
+  const availableFilterOptions = currentFilterOptions ?? lastFilterOptions;
   const filterGroups = useMemo(
-    () => createFilterGroups(jobNoticeListResponse?.filterOptions),
-    [jobNoticeListResponse?.filterOptions]
+    () => createFilterGroups(availableFilterOptions),
+    [availableFilterOptions]
   );
   const filteredJobs = useMemo(
     () => jobNoticeListPages.flatMap((page) => page.content.map(mapJobNoticeApiToViewModel)),
@@ -185,6 +194,12 @@ export default function JobNoticeListPage() {
   }
 
   useEffect(() => {
+    if (!currentFilterOptions) return;
+    setLastFilterOptions(currentFilterOptions);
+  }, [currentFilterOptions]);
+
+  useEffect(() => {
+    if (!availableFilterOptions) return;
     setFilters((current) => {
       const next = normalizeFilters(current, filterGroups);
       return Object.keys(current).every((key) => current[key as FilterLabel] === next[key as FilterLabel]) ? current : next;
