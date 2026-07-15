@@ -214,12 +214,14 @@ export function JobNoticeFilters({
   filterGroups,
   onApply,
   className,
+  isDialog = false,
   onApplied,
 }: {
   filters: Filters;
   filterGroups: FilterGroup[];
   onApply: (filters: Filters) => void;
   className?: string;
+  isDialog?: boolean;
   onApplied?: () => void;
 }) {
   const [draftFilters, setDraftFilters] = useState<Filters>(filters);
@@ -247,7 +249,7 @@ export function JobNoticeFilters({
 
   return (
     <aside className={`jn-filter-panel${className ? ` ${className}` : ''}`}>
-      {className?.includes('dialog') ? (
+      {isDialog ? (
         <div className="jn-filter-dialog__body">
           <nav className="jn-filter-dialog__menu" aria-label="필터 항목">
             {filterGroups.map((group) => (

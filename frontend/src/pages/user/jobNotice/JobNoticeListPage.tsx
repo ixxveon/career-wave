@@ -365,6 +365,7 @@ export default function JobNoticeListPage() {
               filterGroups={filterGroups}
               onApply={applyFilters}
               className="jn-filter-panel--dialog"
+              isDialog
               onApplied={() => setIsFilterOpen(false)}
             />
           </section>
