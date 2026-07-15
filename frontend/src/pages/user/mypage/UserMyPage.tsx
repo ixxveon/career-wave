@@ -13,6 +13,7 @@ import { useSubscriptionStatus } from "@/hooks/user/subscription";
 import { updateDashboardProfile } from "@/api/user/dashboard";
 import { memberVerificationApi } from "@/api/user/member";
 import { formatPhoneNumber, isValidVerificationCode, normalizePhone, PHONE_MAX_LENGTH } from "@/utils/user/member/registerSchema";
+import { formatSubscriptionStatusLabel } from "@/utils/user/subscription/subscriptionView";
 import { formatRemaining, getRecoveryErrorMessage, getRemainingSeconds } from "@/utils/user/member/recoveryView";
 import { useVerificationNow } from "@/hooks/user/member";
 import {
@@ -533,7 +534,7 @@ function UserMyPage() {
                         ? "구독 상태 확인 불가"
                         : subscribedItems.length > 0
                           ? subscribedItems
-                              .map((item) => `${item.title} 구독중`)
+                              .map(formatSubscriptionStatusLabel)
                               .join(" · ")
                           : "미구독"}
                   </strong>
