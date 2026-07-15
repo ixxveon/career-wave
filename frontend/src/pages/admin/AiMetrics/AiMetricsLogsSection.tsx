@@ -49,7 +49,7 @@ export default function AiMetricsLogsSection(props: {
               <span className="domain">{event.domainLabel}</span>
               <span className={`auditOpsTag ${auditToneForStatus(toneForStatus(event.severity))}`}>{event.severity}</span>
               <strong className="summary">{sanitizeLogMessage(event.message)}</strong>
-              <span className="target">{event.domainLabel}</span>
+              <span className="target">-</span>
               <span className="actor">-</span>
             </article>
           ))}

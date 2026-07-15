@@ -1,5 +1,6 @@
 import { AI_DOMAIN, AI_EVENT_SEVERITY, AI_HEALTH_STATUS, AI_USAGE_RISK_LEVEL, DOMAIN_LABELS } from '../../../api/admin/aiMetricsApi';
 import type { AiDomain, AiEventSeverity, AiHealthStatus, AiHeavyUser, AiUsageRiskLevel } from '../../../api/admin/aiMetricsApi';
+import { formatLogTime } from '../../../utils/admin/logView';
 
 export type Tone = 'normal' | 'warning' | 'danger';
 export type EventSeverity = AiEventSeverity;
@@ -42,14 +43,7 @@ export function formatTrendBucket(bucket: string) {
 }
 
 export function formatDateTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${month}/${day} ${hours}:${minutes}:${seconds}`;
+  return formatLogTime(value);
 }
 
 export function formatLastSyncedLabel(value?: string) {

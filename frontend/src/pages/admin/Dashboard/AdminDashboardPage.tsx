@@ -227,18 +227,6 @@ export default function AdminDashboardPage() {
       ? dashboardError.message
       : '대시보드 요약 조회에 실패했습니다.';
 
-  const isDashboardCompletelyEmpty =
-    !isDashboardInitialLoading &&
-    !isDashboardError &&
-    !!dashboardSummary &&
-    dashboardSummary.kpis.length === 0 &&
-    dashboardSummary.alerts.length === 0 &&
-    dashboardSummary.weeklySignups.length === 0 &&
-    dashboardSummary.paymentRatio.length === 0 &&
-    dashboardSummary.serviceCards.length === 0 &&
-    dashboardSummary.systemStatus.length === 0 &&
-    dashboardSummary.recentActivities.length === 0;
-
   const dashboardBaseDateTimeLabel = formatKstDateTime(dashboardSummary?.baseDateTime);
 
   const { kpis, hasKpiSectionError } = useMemo(() => {
@@ -431,6 +419,19 @@ export default function AdminDashboardPage() {
     }
   }, [isRecentAdminActivityError, recentAdminActivityLogs]);
 
+  const isDashboardCompletelyEmpty =
+    !isDashboardInitialLoading &&
+    !isRecentAdminActivityLoading &&
+    !isDashboardError &&
+    !!dashboardSummary &&
+    dashboardSummary.kpis.length === 0 &&
+    dashboardSummary.alerts.length === 0 &&
+    dashboardSummary.weeklySignups.length === 0 &&
+    dashboardSummary.paymentRatio.length === 0 &&
+    dashboardSummary.serviceCards.length === 0 &&
+    dashboardSummary.systemStatus.length === 0 &&
+    recentActivities.length === 0;
+
   return (
     <>
       <header className="admin-header">
@@ -543,7 +544,7 @@ export default function AdminDashboardPage() {
               <section className="chartGrid">
                 <article className="admin-card chartCard">
                   <h3>주간 가입자 추이</h3>
-                  {isDashboardInitialLoading || isRecentAdminActivityLoading ? (
+                  {isDashboardInitialLoading ? (
                     <div className="dashboardStateBox dashboardStateBox--chart">
                       주간 가입자 차트를 불러오는 중입니다.
                     </div>
@@ -712,12 +713,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="logList auditOpsTableWrap auditOpsTableWrapFlat dashboardRecentLogList">
                   <div className="auditOpsTableHead" aria-hidden="true"><span>발생 시각</span><span>관리자</span><span>행동</span></div>
-                  <div className="logListHead" aria-hidden="true">
-                    <span>발생 시각</span>
-                    <strong>관리자</strong>
-                    <p>활동</p>
-                  </div>
-                  {isDashboardInitialLoading ? (
+                  {isRecentAdminActivityLoading ? (
                     <div className="dashboardStateBox dashboardStateBox--inline">
                       최근 관리자 활동을 불러오는 중입니다.
                     </div>

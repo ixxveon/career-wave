@@ -1,4 +1,5 @@
 import type { AuditLog } from './adminManagementModel';
+import { formatLogTime } from '../../../utils/admin/logView';
 
 const severityToneMap: Record<AuditLog['severity'], 'info' | 'success' | 'warning' | 'danger'> = {
   INFO: 'info',
@@ -6,22 +7,6 @@ const severityToneMap: Record<AuditLog['severity'], 'info' | 'success' | 'warnin
   ERROR: 'danger',
   SUCCESS: 'success',
 };
-
-function formatLogTime(value: string) {
-  const [date = '', time = ''] = value.split(' ');
-  const [, sourceMonth = '', sourceDay = ''] = date.split('-');
-  if (sourceMonth && sourceDay && time) return `${sourceMonth}/${sourceDay} ${time}`;
-
-  const parsedDate = new Date(value);
-  if (Number.isNaN(parsedDate.getTime())) return value;
-
-  const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
-  const day = String(parsedDate.getDate()).padStart(2, '0');
-  const hours = String(parsedDate.getHours()).padStart(2, '0');
-  const minutes = String(parsedDate.getMinutes()).padStart(2, '0');
-  const seconds = String(parsedDate.getSeconds()).padStart(2, '0');
-  return `${month}/${day} ${hours}:${minutes}:${seconds}`;
-}
 
 export default function AdminAuditLogsSection(props: {
   isAdminAuditLogsLoading: boolean;

@@ -15,6 +15,7 @@ import {
   type PipelineStatus,
   type ScrapingStatus,
 } from '../../../api/admin/scrapingApi';
+import { formatLogTime } from '../../../utils/admin/logView';
 
 type Tone = 'normal' | 'warning' | 'danger' | 'info';
 
@@ -52,21 +53,6 @@ const toPipelineStatusFilter = (value: string): PipelineStatusFilter =>
 const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 const formatDuration = (ms: number) => `${ms.toLocaleString()}ms`;
 const formatVolume = (value: number) => value.toLocaleString();
-const formatLogTime = (value: string) => {
-  const [date = '', time = ''] = value.split(' ');
-  const [, sourceMonth = '', sourceDay = ''] = date.split('-');
-  if (sourceMonth && sourceDay && time) return `${sourceMonth}/${sourceDay} ${time}`;
-
-  const parsedDate = new Date(value);
-  if (Number.isNaN(parsedDate.getTime())) return value;
-
-  const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
-  const day = String(parsedDate.getDate()).padStart(2, '0');
-  const hours = String(parsedDate.getHours()).padStart(2, '0');
-  const minutes = String(parsedDate.getMinutes()).padStart(2, '0');
-  const seconds = String(parsedDate.getSeconds()).padStart(2, '0');
-  return `${month}/${day} ${hours}:${minutes}:${seconds}`;
-};
 const getRecentErrorText = (source: ScrapingSource) =>
   source.recentErrorCode ?? source.recentErrorMessage ?? '-';
 const sanitizeLogDetail = (detail: string) => {
