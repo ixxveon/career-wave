@@ -75,6 +75,12 @@ public class JobNotice {
     @Column(name = "career_level", length = 20)
     private CareerLevel careerLevel;
 
+    @Column(name = "career_min_years")
+    private Integer careerMinYears;
+
+    @Column(name = "career_max_years")
+    private Integer careerMaxYears;
+
     @Column(name = "location", length = 100)
     private String location;
 

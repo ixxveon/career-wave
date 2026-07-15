@@ -9,7 +9,7 @@ import { memberApiClient } from './member/memberApiClient';
 
 const JOB_NOTICE_BASE_PATH = '/api/v1/user/job-notices';
 
-type QueryValue = string | number | boolean | null | undefined;
+type QueryValue = string | string[] | number | boolean | null | undefined;
 type QueryParams = Partial<Record<keyof JobNoticeQueryParams, QueryValue>>;
 
 function createQueryString(params: QueryParams = {}) {
@@ -17,6 +17,10 @@ function createQueryString(params: QueryParams = {}) {
 
     Object.entries(params).forEach(([key, value]) => {
         if (value === undefined || value === null || value === '') return;
+        if (Array.isArray(value)) {
+            value.filter(Boolean).forEach((item) => query.append(key, item));
+            return;
+        }
         query.set(key, String(value));
     });
 

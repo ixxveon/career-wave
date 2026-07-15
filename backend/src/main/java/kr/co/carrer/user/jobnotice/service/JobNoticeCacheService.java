@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class JobNoticeCacheService {
@@ -30,15 +31,18 @@ public class JobNoticeCacheService {
         this.self = self;
     }
 
-    @Cacheable(value = CacheConfig.JOB_NOTICE_LIST)
+    @Cacheable(
+            value = CacheConfig.JOB_NOTICE_LIST,
+            key = "{#keyword, T(kr.co.carrer.user.jobnotice.service.JobNoticeCacheService).normalizeFilterValues(#jobTypes), T(kr.co.carrer.user.jobnotice.service.JobNoticeCacheService).normalizeFilterValues(#jobCategories), T(kr.co.carrer.user.jobnotice.service.JobNoticeCacheService).normalizeFilterValues(#careerLevels), T(kr.co.carrer.user.jobnotice.service.JobNoticeCacheService).normalizeFilterValues(#locations), T(kr.co.carrer.user.jobnotice.service.JobNoticeCacheService).normalizeFilterValues(#companySizes), #period, #sort, #page, #size}"
+    )
     @Transactional(readOnly = true)
     public JobNoticeDTO.ResponseList getAnonymousJobNoticeList(
             String keyword,
-            JobType jobType,
-            String jobCategory,
-            CareerLevel careerLevel,
-            String location,
-            CompanySize companySize,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
             String period,
             String sort,
             int page,
@@ -47,11 +51,11 @@ public class JobNoticeCacheService {
         PageRequest pageRequest = PageRequest.of(page - 1, size);
 
         List<JobNotice> jobNotices = jobNoticeQueryRepository.findActiveJobNoticeContent(
-                keyword, jobType, jobCategory, careerLevel, location, companySize,
+                keyword, jobTypes, jobCategories, careerLevels, locations, companySizes,
                 period, sort, pageRequest
         );
         long totalElements = self.getActiveJobNoticeCount(
-                keyword, jobType, jobCategory, careerLevel, location, companySize, period
+                keyword, jobTypes, jobCategories, careerLevels, locations, companySizes, period
         );
         int totalPages = (int) Math.ceil((double) totalElements / size);
 
@@ -101,20 +105,20 @@ public class JobNoticeCacheService {
 
     @Cacheable(
             value = CacheConfig.JOB_NOTICE_LIST_COUNT,
-            key = "{#keyword, #jobType, #jobCategory, #careerLevel, #location, #companySize, #period}"
+            key = "{#keyword, T(kr.co.carrer.user.jobnotice.service.JobNoticeCacheService).normalizeFilterValues(#jobTypes), T(kr.co.carrer.user.jobnotice.service.JobNoticeCacheService).normalizeFilterValues(#jobCategories), T(kr.co.carrer.user.jobnotice.service.JobNoticeCacheService).normalizeFilterValues(#careerLevels), T(kr.co.carrer.user.jobnotice.service.JobNoticeCacheService).normalizeFilterValues(#locations), T(kr.co.carrer.user.jobnotice.service.JobNoticeCacheService).normalizeFilterValues(#companySizes), #period}"
     )
     @Transactional(readOnly = true)
     public long getActiveJobNoticeCount(
             String keyword,
-            JobType jobType,
-            String jobCategory,
-            CareerLevel careerLevel,
-            String location,
-            CompanySize companySize,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
             String period
     ) {
         return jobNoticeQueryRepository.countActiveJobNotices(
-                keyword, jobType, jobCategory, careerLevel, location, companySize, period
+                keyword, jobTypes, jobCategories, careerLevels, locations, companySizes, period
         );
     }
 
@@ -145,5 +149,19 @@ public class JobNoticeCacheService {
             return null;
         }
         return Arrays.asList(values);
+    }
+
+    public static List<String> normalizeFilterValues(List<?> values) {
+        if (values == null) {
+            return List.of();
+        }
+
+        return values.stream()
+                .filter(Objects::nonNull)
+                .map(value -> value instanceof Enum<?> enumValue ? enumValue.name() : value.toString().trim())
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .sorted()
+                .toList();
     }
 }

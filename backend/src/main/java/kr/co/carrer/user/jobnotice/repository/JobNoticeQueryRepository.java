@@ -34,7 +34,7 @@ public class JobNoticeQueryRepository {
     private static final ZoneId SERVICE_ZONE_ID = ZoneId.of("Asia/Seoul");
     // FastAPI JobNoticeNormalizer가 DB에 저장하는 카테고리/지역 표준값과 반드시 함께 변경한다.
     private static final List<String> STANDARD_JOB_CATEGORIES = List.of(
-            "BACKEND", "FRONTEND", "DATA", "DEVOPS"
+            "BACKEND", "FRONTEND", "DATA", "DEVOPS", "MOBILE", "SECURITY", "QA", "GAME", "EMBEDDED"
     );
     private static final List<String> STANDARD_LOCATIONS = List.of(
             "\uC11C\uC6B8", "\uACBD\uAE30", "\uC778\uCC9C", "\uBD80\uC0B0", "\uB300\uAD6C", "\uAD11\uC8FC", "\uB300\uC804", "\uC6B8\uC0B0", "\uC138\uC885",
@@ -51,21 +51,21 @@ public class JobNoticeQueryRepository {
 
     public Page<JobNotice> findActiveJobNotices(
             String keyword,
-            JobType jobType,
-            String jobCategory,
-            CareerLevel careerLevel,
-            String location,
-            CompanySize companySize,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
             String period,
             String sort,
             Pageable pageable
     ) {
         Pageable normalizedPageable = normalizePageable(pageable);
         List<JobNotice> content = findActiveJobNoticeContent(
-                keyword, jobType, jobCategory, careerLevel, location, companySize, period, sort, normalizedPageable
+                keyword, jobTypes, jobCategories, careerLevels, locations, companySizes, period, sort, normalizedPageable
         );
         long total = countActiveJobNotices(
-                keyword, jobType, jobCategory, careerLevel, location, companySize, period
+                keyword, jobTypes, jobCategories, careerLevels, locations, companySizes, period
         );
 
         return new PageImpl<>(content, normalizedPageable, total);
@@ -73,11 +73,11 @@ public class JobNoticeQueryRepository {
 
     public List<JobNotice> findActiveJobNoticeContent(
             String keyword,
-            JobType jobType,
-            String jobCategory,
-            CareerLevel careerLevel,
-            String location,
-            CompanySize companySize,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
             String period,
             String sort,
             Pageable pageable
@@ -85,11 +85,11 @@ public class JobNoticeQueryRepository {
         Pageable normalizedPageable = normalizePageable(pageable);
         BooleanBuilder predicate = buildActiveJobNoticePredicate(
                 keyword,
-                jobType,
-                jobCategory,
-                careerLevel,
-                location,
-                companySize,
+                jobTypes,
+                jobCategories,
+                careerLevels,
+                locations,
+                companySizes,
                 period
         );
 
@@ -124,20 +124,20 @@ public class JobNoticeQueryRepository {
 
     public long countActiveJobNotices(
             String keyword,
-            JobType jobType,
-            String jobCategory,
-            CareerLevel careerLevel,
-            String location,
-            CompanySize companySize,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
             String period
     ) {
         BooleanBuilder predicate = buildActiveJobNoticePredicate(
                 keyword,
-                jobType,
-                jobCategory,
-                careerLevel,
-                location,
-                companySize,
+                jobTypes,
+                jobCategories,
+                careerLevels,
+                locations,
+                companySizes,
                 period
         );
 
@@ -152,11 +152,11 @@ public class JobNoticeQueryRepository {
 
     public Page<JobNotice> findActiveJobNotices(
             String keyword,
-            JobType jobType,
-            String jobCategory,
-            CareerLevel careerLevel,
-            String location,
-            CompanySize companySize,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
             String period,
             String sort,
             int page,
@@ -166,11 +166,11 @@ public class JobNoticeQueryRepository {
         int normalizedSize = Math.max(size, 1);
         return findActiveJobNotices(
                 keyword,
-                jobType,
-                jobCategory,
-                careerLevel,
-                location,
-                companySize,
+                jobTypes,
+                jobCategories,
+                careerLevels,
+                locations,
+                companySizes,
                 period,
                 sort,
                 PageRequest.of(normalizedPage, normalizedSize)
@@ -300,11 +300,11 @@ public class JobNoticeQueryRepository {
 
     private BooleanBuilder buildActiveJobNoticePredicate(
             String keyword,
-            JobType jobType,
-            String jobCategory,
-            CareerLevel careerLevel,
-            String location,
-            CompanySize companySize,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
             String period
     ) {
         BooleanBuilder builder = new BooleanBuilder();
@@ -315,20 +315,30 @@ public class JobNoticeQueryRepository {
             builder.and(keywordCondition);
         }
 
-        if (jobType != null) {
-            builder.and(jobNotice.jobType.eq(jobType));
+        if (jobTypes != null && !jobTypes.isEmpty()) {
+            builder.and(jobNotice.jobType.in(jobTypes));
         }
-        if (jobCategory != null && !jobCategory.isBlank()) {
-            builder.and(arrayContains(jobNotice.jobCategory, jobCategory.trim()));
+        if (jobCategories != null && !jobCategories.isEmpty()) {
+            BooleanBuilder categoryPredicate = new BooleanBuilder();
+            jobCategories.stream().filter(category -> category != null && !category.isBlank())
+                    .forEach(category -> categoryPredicate.or(arrayContains(jobNotice.jobCategory, category.trim())));
+            if (categoryPredicate.hasValue()) builder.and(categoryPredicate);
         }
-        if (careerLevel != null) {
-            builder.and(jobNotice.careerLevel.eq(careerLevel));
+        if (careerLevels != null && !careerLevels.isEmpty()) {
+            builder.and(jobNotice.careerLevel.in(careerLevels));
         }
-        if (location != null && !location.isBlank()) {
-            builder.and(jobNotice.location.equalsIgnoreCase(location.trim()));
+        List<String> normalizedLocations = locations == null
+                ? List.of()
+                : locations.stream()
+                        .filter(value -> value != null && !value.isBlank())
+                        .map(String::trim)
+                        .distinct()
+                        .toList();
+        if (!normalizedLocations.isEmpty()) {
+            builder.and(jobNotice.location.in(normalizedLocations));
         }
-        if (companySize != null) {
-            builder.and(jobNotice.companySize.eq(companySize));
+        if (companySizes != null && !companySizes.isEmpty()) {
+            builder.and(jobNotice.companySize.in(companySizes));
         }
 
         BooleanExpression periodCondition = periodCondition(period);

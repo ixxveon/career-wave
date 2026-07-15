@@ -6,17 +6,18 @@ import kr.co.carrer.user.jobnotice.type.CareerLevel;
 import kr.co.carrer.user.jobnotice.type.CompanySize;
 import kr.co.carrer.user.jobnotice.type.JobType;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface UserJobNoticeService {
 
     JobNoticeDTO.ResponseList getJobNotices(
             String keyword,
-            JobType jobType,
-            String jobCategory,
-            CareerLevel careerLevel,
-            String location,
-            CompanySize companySize,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
             String period,
             String sort,
             int page,

@@ -62,4 +62,10 @@ class JobNoticeCacheServiceTest {
         assertThat(result.jobType()).containsExactly("FULLTIME", "CONTRACT");
         assertThat(result.jobCategory()).containsExactly("BACKEND");
     }
+
+    @Test
+    void normalizeFilterValues_sortsAndDeduplicatesValues() {
+        assertThat(JobNoticeCacheService.normalizeFilterValues(List.of("SECURITY", "BACKEND", "SECURITY", " ")))
+                .containsExactly("BACKEND", "SECURITY");
+    }
 }

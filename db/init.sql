@@ -586,6 +586,8 @@ CREATE TABLE job_notices (
     company_size  VARCHAR(20)  NULL,
     job_category  TEXT[]       NULL,
     career_level  VARCHAR(10)  NULL,
+    career_min_years INTEGER   NULL,
+    career_max_years INTEGER   NULL,
     location      VARCHAR(100) NULL,
     salary        VARCHAR(50)  NULL,
     notice_status VARCHAR(10)  NOT NULL DEFAULT 'ACTIVE',
@@ -601,6 +603,12 @@ CREATE TABLE job_notices (
     CONSTRAINT chk_job_type                       CHECK (job_type      IN ('FULLTIME', 'INTERN', 'CONTRACT')),
     CONSTRAINT chk_company_size  CHECK (company_size  IN ('STARTUP', 'SME', 'MID_MARKET', 'LARGE')),
     CONSTRAINT chk_career_level  CHECK (career_level  IN ('JUNIOR', 'SENIOR', 'ANY')),
+    CONSTRAINT chk_career_year_range CHECK (
+        career_min_years IS NULL OR career_min_years >= 0
+    ),
+    CONSTRAINT chk_career_year_bounds CHECK (
+        career_max_years IS NULL OR career_max_years >= career_min_years
+    ),
     CONSTRAINT chk_notice_status CHECK (notice_status IN ('ACTIVE', 'CLOSED')),
     CONSTRAINT chk_view_count    CHECK (view_count >= 0)
 );
@@ -616,6 +624,8 @@ COMMENT ON COLUMN job_notices.job_type      IS '채용 유형 (FULLTIME / INTERN
 COMMENT ON COLUMN job_notices.company_size  IS '기업 규모 (STARTUP / SME / MID_MARKET / LARGE)';
 COMMENT ON COLUMN job_notices.job_category  IS '직무 카테고리 (다중 선택, TEXT[])';
 COMMENT ON COLUMN job_notices.career_level  IS '경력 조건 (JUNIOR / SENIOR / ANY)';
+COMMENT ON COLUMN job_notices.career_min_years IS '경력 최소 연차 (NULL이면 명시되지 않음)';
+COMMENT ON COLUMN job_notices.career_max_years IS '경력 최대 연차 (NULL이면 상한 없음 또는 명시되지 않음)';
 COMMENT ON COLUMN job_notices.location      IS '근무지';
 COMMENT ON COLUMN job_notices.salary        IS '급여 정보';
 COMMENT ON COLUMN job_notices.notice_status IS '공고 상태 (ACTIVE / CLOSED)';

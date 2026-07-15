@@ -19,15 +19,15 @@ describe('job notice dynamic filters', () => {
   it('builds filter groups from the API filter options', () => {
     const groups = createFilterGroups(filterOptions);
 
-    expect(groups.find((group) => group.label === '직무')?.options).toEqual(['전체', 'BACKEND', 'SECURITY']);
-    expect(groups.find((group) => group.label === '기업 규모')?.options).toEqual(['전체', 'STARTUP', 'MID_MARKET']);
+    expect(groups.find((group) => group.label === '직무')?.options).toEqual(['BACKEND', 'SECURITY']);
+    expect(groups.find((group) => group.label === '기업 규모')?.options).toEqual(['STARTUP', 'MID_MARKET']);
   });
 
   it('keeps API codes unchanged when creating the list query', () => {
     const filters = {
       ...createInitialFilters(),
-      직무: 'SECURITY',
-      '기업 규모': 'MID_MARKET',
+      직무: ['SECURITY'],
+      '기업 규모': ['MID_MARKET'],
     };
 
     expect(createJobNoticeQueryParams({
@@ -37,17 +37,17 @@ describe('job notice dynamic filters', () => {
       sort: '추천순',
     })).toMatchObject({
       keyword: '보안',
-      jobCategory: 'SECURITY',
-      companySize: 'MID_MARKET',
+      jobCategory: ['SECURITY'],
+      companySize: ['MID_MARKET'],
     });
   });
 
   it('resets a selected value that is no longer active', () => {
     const filters = {
       ...createInitialFilters(),
-      직무: 'DATA',
+      직무: ['DATA'],
     };
 
-    expect(normalizeFilters(filters, createFilterGroups(filterOptions)).직무).toBe('전체');
+    expect(normalizeFilters(filters, createFilterGroups(filterOptions)).직무).toEqual([]);
   });
 });

@@ -83,11 +83,11 @@ class UserJobNoticeServiceImplTest {
             );
             given(jobNoticeCacheService.getAnonymousJobNoticeList(
                     eq("backend"),
-                    eq(JobType.FULLTIME),
-                    eq("BACKEND"),
-                    eq(CareerLevel.JUNIOR),
-                    eq("Seoul"),
-                    eq(CompanySize.STARTUP),
+                    eq(List.of(JobType.FULLTIME)),
+                    eq(List.of("BACKEND")),
+                    eq(List.of(CareerLevel.JUNIOR)),
+                    eq(List.of("Seoul")),
+                    eq(List.of(CompanySize.STARTUP)),
                     eq("7d"),
                     eq("latest"),
                     eq(1),
@@ -125,11 +125,11 @@ class UserJobNoticeServiceImplTest {
 
             JobNoticeDTO.ResponseList response = userJobNoticeService.getJobNotices(
                     "backend",
-                    JobType.FULLTIME,
-                    "BACKEND",
-                    CareerLevel.JUNIOR,
-                    "Seoul",
-                    CompanySize.STARTUP,
+                    List.of(JobType.FULLTIME),
+                    List.of("BACKEND"),
+                    List.of(CareerLevel.JUNIOR),
+                    List.of("Seoul"),
+                    List.of(CompanySize.STARTUP),
                     "7d",
                     "latest",
                     1,
