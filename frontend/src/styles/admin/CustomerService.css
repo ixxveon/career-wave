@@ -176,8 +176,13 @@
 .csNoticeTable th:nth-child(2),
 .csNoticeTable td:nth-child(2) { width: 14%; }   /* 카테고리 */
 
-.csNoticeTable th:nth-child(3),
-.csNoticeTable td:nth-child(3) { width: 42%; }   /* 제목 */
+.csNoticeTable th:nth-child(3) { width: 42%; }   /* 제목 */
+.csNoticeTable td:nth-child(3) {
+  width: 42%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 
 .csNoticeTable th:nth-child(4),
 .csNoticeTable td:nth-child(4) { width: 14%; }   /* 등록일 */

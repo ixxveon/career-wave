@@ -252,7 +252,7 @@ export default function NoticeTab({ onMutate }: NoticeTabProps) {
                 <div className="csFormRow">
                   <label>제목</label>
                   <input className="csFormInput" type="text" placeholder="공지 제목을 입력하세요" maxLength={NOTICE_TITLE_MAX_LENGTH}
-                    value={noticeForm.title} onChange={(e) => setNoticeForm((p) => ({ ...p, title: e.target.value }))} />
+                    value={noticeForm.title} onChange={(e) => setNoticeForm((p) => ({ ...p, title: e.target.value.slice(0, NOTICE_TITLE_MAX_LENGTH) }))} />
                   <span className="csFormCharCount">{noticeForm.title.length}/{NOTICE_TITLE_MAX_LENGTH}</span>
                 </div>
                 <div className="csFormRow">
