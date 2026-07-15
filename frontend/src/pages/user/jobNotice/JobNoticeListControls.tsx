@@ -209,6 +209,17 @@ export function JobNoticeBanner({ searchQuery, onSearch, stats }: { searchQuery:
   );
 }
 
+type JobNoticeFiltersProps = {
+  filters: Filters;
+  filterGroups: FilterGroup[];
+  onApply: (filters: Filters) => void;
+  className?: string;
+  onApplied?: () => void;
+} & (
+  | { isDialog: true; onOpen?: never }
+  | { isDialog?: false; onOpen: () => void }
+);
+
 export function JobNoticeFilters({
   filters,
   filterGroups,
@@ -217,15 +228,7 @@ export function JobNoticeFilters({
   isDialog = false,
   onApplied,
   onOpen,
-}: {
-  filters: Filters;
-  filterGroups: FilterGroup[];
-  onApply: (filters: Filters) => void;
-  className?: string;
-  isDialog?: boolean;
-  onApplied?: () => void;
-  onOpen?: () => void;
-}) {
+}: JobNoticeFiltersProps) {
   const [draftFilters, setDraftFilters] = useState<Filters>(filters);
   const [activeLabel, setActiveLabel] = useState<FilterLabel>(() => filterGroups[0]?.label ?? '직무');
 
