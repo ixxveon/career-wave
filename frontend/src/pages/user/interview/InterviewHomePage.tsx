@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { useInterviewHistory } from '../../../hooks/user/interview/useInterviewReport';
 import { useSubscriptionStatus } from '../../../hooks/user/subscription';
-import { useResumeQuota } from '../../../hooks/user/resume/useResumeQuota';
 import { useEntitlements } from '../../../hooks/user/subscription/useEntitlements';
 import { PRODUCT_CODE } from '../../../types/user/subscription';
 import { SESSION_TYPE_LABEL } from '../../../constants/user/interview';
@@ -23,8 +22,7 @@ function InterviewHomePage() {
   const navigate = useNavigate();
   const { data: historyData, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useInterviewHistory(0, 3);
   const { subscribedItems, unsubscribedItems } = useSubscriptionStatus();
-  const { data: resumeQuota } = useResumeQuota();
-  const { data: entitlements } = useEntitlements();
+  const { data: entitlements, isLoading: entitlementsLoading } = useEntitlements();
 
   /* 서류 AI 코칭 / AI 모의면접 usage 항목 (구독 여부 무관) */
   const allSubItems = [...subscribedItems, ...unsubscribedItems];
@@ -33,14 +31,18 @@ function InterviewHomePage() {
 
   const docSubscribed = docItem?.isSubscribed ?? false;
   const ivSubscribed  = ivItem?.isSubscribed  ?? false;
-  const hasIvEntitlement = entitlements ? entitlements[PRODUCT_CODE.INTERVIEW] : true;
+  const hasDocEntitlement = entitlements?.[PRODUCT_CODE.DOCUMENT_COACHING];
+  const hasIvEntitlement  = entitlements?.[PRODUCT_CODE.INTERVIEW];
 
-  const docUsed  = resumeQuota?.usedCount  ?? 0;
-  const docLimit = resumeQuota?.limitCount ?? DEFAULT_DOC_LIMIT;
-  const docPct   = Math.min((docUsed / docLimit) * 100, 100);
+  const docQuotaLoading = !docSubscribed && entitlementsLoading;
+  const ivQuotaLoading  = !ivSubscribed  && entitlementsLoading;
+
+  const docUsed  = docSubscribed ? (docItem?.usage?.used ?? 0) : (hasDocEntitlement === true ? 0 : 1);
+  const docLimit = docSubscribed ? (docItem?.usage?.limit ?? DEFAULT_DOC_LIMIT) : 1;
+  const docPct   = docLimit > 0 ? Math.min((docUsed / docLimit) * 100, 100) : 100;
 
   // 미구독: 무료 체험 1회 기준 / 구독 중: API 사용량 기준
-  const ivUsed  = ivSubscribed ? (ivItem?.usage?.used ?? 0) : (hasIvEntitlement ? 0 : 1);
+  const ivUsed  = ivSubscribed ? (ivItem?.usage?.used ?? 0) : (hasIvEntitlement === true ? 0 : 1);
   const ivLimit = ivSubscribed ? (ivItem?.usage?.limit ?? DEFAULT_IV_LIMIT) : 1;
   const ivPct   = ivLimit > 0 ? Math.min((ivUsed / ivLimit) * 100, 100) : 100;
 
@@ -109,33 +111,41 @@ function InterviewHomePage() {
             {/* ── 이번 달 서류 분석 사용량 ── */}
             <li className="iv-status-item iv-status-item--usage">
               <span className="iv-status-item__label">이번 달 서류 분석</span>
-              <div className="iv-quota-wrap">
-                <div className="iv-quota-bar">
-                  <div
-                    className={`iv-quota-bar__fill${docPct >= 90 ? ' iv-quota-bar__fill--warn' : ''}`}
-                    style={{ width: `${docPct}%` }}
-                  />
+              {docQuotaLoading ? (
+                <span className="iv-quota-count">— / —회</span>
+              ) : (
+                <div className="iv-quota-wrap">
+                  <div className="iv-quota-bar">
+                    <div
+                      className={`iv-quota-bar__fill${docPct >= 90 ? ' iv-quota-bar__fill--warn' : ''}`}
+                      style={{ width: `${docPct}%` }}
+                    />
+                  </div>
+                  <span className={`iv-quota-count${docPct >= 90 ? ' iv-quota-count--warn' : ''}`}>
+                    {docUsed} / {docLimit}회
+                  </span>
                 </div>
-                <span className={`iv-quota-count${docPct >= 90 ? ' iv-quota-count--warn' : ''}`}>
-                  {docUsed} / {docLimit}회
-                </span>
-              </div>
+              )}
             </li>
 
             {/* ── 이번 달 AI 면접 사용량 ── */}
             <li className="iv-status-item iv-status-item--usage">
               <span className="iv-status-item__label">이번 달 AI 면접</span>
-              <div className="iv-quota-wrap">
-                <div className="iv-quota-bar">
-                  <div
-                    className={`iv-quota-bar__fill${ivPct >= 90 ? ' iv-quota-bar__fill--warn' : ''}`}
-                    style={{ width: `${ivPct}%` }}
-                  />
+              {ivQuotaLoading ? (
+                <span className="iv-quota-count">— / —회</span>
+              ) : (
+                <div className="iv-quota-wrap">
+                  <div className="iv-quota-bar">
+                    <div
+                      className={`iv-quota-bar__fill${ivPct >= 90 ? ' iv-quota-bar__fill--warn' : ''}`}
+                      style={{ width: `${ivPct}%` }}
+                    />
+                  </div>
+                  <span className={`iv-quota-count${ivPct >= 90 ? ' iv-quota-count--warn' : ''}`}>
+                    {ivUsed} / {ivLimit}회
+                  </span>
                 </div>
-                <span className={`iv-quota-count${ivPct >= 90 ? ' iv-quota-count--warn' : ''}`}>
-                  {ivUsed} / {ivLimit}회
-                </span>
-              </div>
+              )}
             </li>
           </ul>
         </div>
