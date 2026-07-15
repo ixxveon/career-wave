@@ -1,5 +1,6 @@
 package kr.co.carrer.admin.payment.service.impl;
 
+import kr.co.carrer.admin.audit.repository.AuditLogRepository;
 import kr.co.carrer.admin.payment.client.PaymentCancelClient;
 import kr.co.carrer.admin.payment.client.dto.TossCancelResponse;
 import kr.co.carrer.admin.payment.dto.PaymentDTO;
@@ -50,6 +51,7 @@ class AdminPaymentServiceImplTest {
     @Mock private PaymentCancelClient paymentCancelClient;
     @Mock private RefundFailureTxService refundFailureTxService;
     @Mock private RefundApprovalTxService refundApprovalTxService;
+    @Mock private AuditLogRepository auditLogRepository;
 
     // ── createRefundRequest ──────────────────────────────────────────────────────
 
@@ -266,45 +268,49 @@ class AdminPaymentServiceImplTest {
     class ManualConfirmRefund {
 
         @Test
-        @DisplayName("MASTER 역할 → Toss 호출 없이 finalizeApproval만 위임")
+        @DisplayName("MASTER 역할 → Toss 호출 없이 finalizeManualApproval만 위임, 감사 로그 기록")
         void manualConfirmRefund_success_skipsTossCall() {
             UUID paymentId = UUID.randomUUID();
             RefundDTO.ResponseApprove expected =
                 new RefundDTO.ResponseApprove(paymentId.toString(), PaymentStatus.REFUNDED, RefundStatus.COMPLETED);
 
-            given(refundApprovalTxService.finalizeApproval(paymentId, 1L)).willReturn(expected);
+            given(refundApprovalTxService.finalizeManualApproval(paymentId, 1L)).willReturn(expected);
 
-            RefundDTO.ResponseApprove result = adminPaymentService.manualConfirmRefund(paymentId, 1L, "MASTER");
+            RefundDTO.ResponseApprove result =
+                adminPaymentService.manualConfirmRefund(paymentId, 1L, "MASTER", "127.0.0.1");
 
             assertThat(result).isEqualTo(expected);
-            verify(refundApprovalTxService).finalizeApproval(paymentId, 1L);
+            verify(refundApprovalTxService).finalizeManualApproval(paymentId, 1L);
             verify(paymentCancelClient, never()).cancel(any(), any(), anyInt());
             verify(refundApprovalTxService, never()).prepareCancel(any());
+            verify(auditLogRepository).save(any());
         }
 
         @Test
-        @DisplayName("CS 역할 → REFUND_APPROVAL_FORBIDDEN 예외, finalizeApproval 호출 안 됨")
+        @DisplayName("CS 역할 → REFUND_APPROVAL_FORBIDDEN 예외, finalizeManualApproval 호출 안 됨")
         void manualConfirmRefund_csRole_throwsForbidden() {
             UUID paymentId = UUID.randomUUID();
 
-            assertThatThrownBy(() -> adminPaymentService.manualConfirmRefund(paymentId, 1L, "CS"))
+            assertThatThrownBy(() -> adminPaymentService.manualConfirmRefund(paymentId, 1L, "CS", "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminPaymentErrorCode.REFUND_APPROVAL_FORBIDDEN);
-            verify(refundApprovalTxService, never()).finalizeApproval(any(), any());
+            verify(refundApprovalTxService, never()).finalizeManualApproval(any(), any());
+            verify(auditLogRepository, never()).save(any());
         }
 
         @Test
-        @DisplayName("PENDING 환불 없음 → REFUND_NOT_PENDING 예외")
+        @DisplayName("PENDING 환불 없음 → REFUND_NOT_PENDING 예외, 감사 로그 기록 안 됨")
         void manualConfirmRefund_noPendingRefund_throwsRefundNotPending() {
             UUID paymentId = UUID.randomUUID();
-            given(refundApprovalTxService.finalizeApproval(paymentId, 1L))
+            given(refundApprovalTxService.finalizeManualApproval(paymentId, 1L))
                 .willThrow(new CustomException(AdminPaymentErrorCode.REFUND_NOT_PENDING));
 
-            assertThatThrownBy(() -> adminPaymentService.manualConfirmRefund(paymentId, 1L, "MASTER"))
+            assertThatThrownBy(() -> adminPaymentService.manualConfirmRefund(paymentId, 1L, "MASTER", "127.0.0.1"))
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminPaymentErrorCode.REFUND_NOT_PENDING);
+            verify(auditLogRepository, never()).save(any());
         }
     }
 

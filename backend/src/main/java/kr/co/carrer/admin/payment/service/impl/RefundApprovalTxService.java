@@ -9,8 +9,8 @@ import kr.co.carrer.admin.payment.repository.RefundRepository;
 import kr.co.carrer.admin.payment.type.PaymentStatus;
 import kr.co.carrer.admin.payment.type.RefundStatus;
 import kr.co.carrer.global.exception.CustomException;
-import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
+import kr.co.carrer.user.billing.type.SubscriptionStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +51,20 @@ public class RefundApprovalTxService {
 
     @Transactional
     public RefundDTO.ResponseApprove finalizeApproval(UUID paymentId, Long adminId) {
+        return finalize(paymentId, adminId, false);
+    }
+
+    // #1193 수동 확정 — Toss 취소 API를 호출하지 않고 우리 시스템 상태만 확정 반영한다.
+    // 확정 대상에는 #1312(환불 승인/거부 시 구독 상태 동기화) 수정 이전에 생성된 레거시
+    // PENDING 환불이 섞여 있을 수 있는데, 그런 건은 구독이 아직 REFUND_PENDING으로
+    // 전이되지 않아(ACTIVE/CANCEL_SCHEDULED) markRefunded()가 전이 예외를 던지고
+    // 전체 트랜잭션이 롤백된다 — 여기서만 REFUND_PENDING으로 먼저 전이시켜 흡수한다.
+    @Transactional
+    public RefundDTO.ResponseApprove finalizeManualApproval(UUID paymentId, Long adminId) {
+        return finalize(paymentId, adminId, true);
+    }
+
+    private RefundDTO.ResponseApprove finalize(UUID paymentId, Long adminId, boolean healLegacySubscriptionState) {
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_FOUND));
         Refund refund = refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING)
@@ -63,7 +77,14 @@ public class RefundApprovalTxService {
 
         if (payment.getSubscriptionId() != null) {
             subscriptionRepository.findBySubscriptionIdForUpdate(payment.getSubscriptionId())
-                    .ifPresent(Subscription::markRefunded);
+                    .ifPresent(subscription -> {
+                        if (healLegacySubscriptionState
+                                && (subscription.getSubscriptionStatus() == SubscriptionStatus.ACTIVE
+                                        || subscription.getSubscriptionStatus() == SubscriptionStatus.CANCEL_SCHEDULED)) {
+                            subscription.markRefundPending();
+                        }
+                        subscription.markRefunded();
+                    });
         }
 
         return new RefundDTO.ResponseApprove(

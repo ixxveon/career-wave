@@ -5,8 +5,10 @@ import kr.co.carrer.admin.payment.entity.Payment;
 import kr.co.carrer.admin.payment.entity.Refund;
 import kr.co.carrer.admin.payment.repository.PaymentRepository;
 import kr.co.carrer.admin.payment.repository.RefundRepository;
+import kr.co.carrer.admin.payment.exception.AdminPaymentErrorCode;
 import kr.co.carrer.admin.payment.type.PaymentStatus;
 import kr.co.carrer.admin.payment.type.RefundStatus;
+import kr.co.carrer.global.exception.CustomException;
 import kr.co.carrer.user.billing.entity.Subscription;
 import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import kr.co.carrer.user.billing.type.SubscriptionStatus;
@@ -23,6 +25,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
@@ -74,6 +77,71 @@ class RefundApprovalTxServiceTest {
         refundApprovalTxService.finalizeApproval(paymentId, 1L);
 
         verify(subscriptionRepository, never()).findBySubscriptionIdForUpdate(any());
+    }
+
+    @Test
+    @DisplayName("finalizeApproval() — 구독이 REFUND_PENDING이 아니면(레거시 상태) 전이 예외로 롤백 — 정상 경로는 자동 치유하지 않음")
+    void finalizeApproval_subscriptionNotRefundPending_throwsAndDoesNotHeal() {
+        UUID paymentId = UUID.randomUUID();
+        UUID subscriptionId = UUID.randomUUID();
+        Payment payment = createPayment(paymentId, subscriptionId);
+        Refund refund = createRefund(paymentId);
+        Subscription subscription = newActiveSubscription(); // REFUND_PENDING으로 전이 안 된 채 ACTIVE 상태
+
+        given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
+        given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+            .willReturn(Optional.of(refund));
+        given(subscriptionRepository.findBySubscriptionIdForUpdate(subscriptionId))
+            .willReturn(Optional.of(subscription));
+
+        assertThatThrownBy(() -> refundApprovalTxService.finalizeApproval(paymentId, 1L))
+            .isInstanceOf(CustomException.class)
+            .extracting(e -> ((CustomException) e).getErrorCode())
+            .isEqualTo(kr.co.carrer.user.billing.exception.BillingErrorCode.SUBSCRIPTION_INVALID_TRANSITION);
+        assertThat(subscription.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("finalizeManualApproval() — 구독이 REFUND_PENDING 아직 아님(#1312 이전 레거시) → REFUND_PENDING 거쳐 REFUNDED로 자동 치유")
+    void finalizeManualApproval_legacyActiveSubscription_healsThroughRefundPending() {
+        UUID paymentId = UUID.randomUUID();
+        UUID subscriptionId = UUID.randomUUID();
+        Payment payment = createPayment(paymentId, subscriptionId);
+        Refund refund = createRefund(paymentId);
+        Subscription subscription = newActiveSubscription(); // REFUND_PENDING 미전이 상태
+
+        given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
+        given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+            .willReturn(Optional.of(refund));
+        given(subscriptionRepository.findBySubscriptionIdForUpdate(subscriptionId))
+            .willReturn(Optional.of(subscription));
+
+        RefundDTO.ResponseApprove result = refundApprovalTxService.finalizeManualApproval(paymentId, 1L);
+
+        assertThat(result.refundStatus()).isEqualTo(RefundStatus.COMPLETED);
+        assertThat(subscription.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.REFUNDED);
+    }
+
+    @Test
+    @DisplayName("finalizeManualApproval() — 이미 REFUND_PENDING인 구독 → 정상 경로와 동일하게 REFUNDED로 확정")
+    void finalizeManualApproval_alreadyRefundPending_marksRefunded() {
+        UUID paymentId = UUID.randomUUID();
+        UUID subscriptionId = UUID.randomUUID();
+        Payment payment = createPayment(paymentId, subscriptionId);
+        Refund refund = createRefund(paymentId);
+        Subscription subscription = newActiveSubscription();
+        subscription.markRefundPending();
+
+        given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
+        given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+            .willReturn(Optional.of(refund));
+        given(subscriptionRepository.findBySubscriptionIdForUpdate(subscriptionId))
+            .willReturn(Optional.of(subscription));
+
+        RefundDTO.ResponseApprove result = refundApprovalTxService.finalizeManualApproval(paymentId, 1L);
+
+        assertThat(result.refundStatus()).isEqualTo(RefundStatus.COMPLETED);
+        assertThat(subscription.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.REFUNDED);
     }
 
     private Subscription newActiveSubscription() {

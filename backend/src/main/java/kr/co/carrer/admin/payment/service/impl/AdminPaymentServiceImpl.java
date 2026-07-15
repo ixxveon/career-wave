@@ -1,5 +1,9 @@
 package kr.co.carrer.admin.payment.service.impl;
 
+import kr.co.carrer.admin.audit.entity.AuditLog;
+import kr.co.carrer.admin.audit.repository.AuditLogRepository;
+import kr.co.carrer.admin.audit.type.AuditLogSeverity;
+import kr.co.carrer.admin.audit.type.AuditLogType;
 import kr.co.carrer.admin.payment.client.PaymentCancelClient;
 import kr.co.carrer.admin.payment.dto.PaymentDTO;
 import kr.co.carrer.admin.payment.dto.RefundDTO;
@@ -37,6 +41,7 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
     private final RefundFailureTxService refundFailureTxService;
     // Toss 취소 호출 전/후 DB 읽기·쓰기를 별도 트랜잭션으로 분리 (아래 approveRefund 참고)
     private final RefundApprovalTxService refundApprovalTxService;
+    private final AuditLogRepository auditLogRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -133,10 +138,27 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
     // 이미 수동으로 취소 처리한 결제 건을, Toss API를 다시 호출하지 않고 우리 시스템의
     // 상태(결제/환불/구독)에만 확정 반영한다. 정산·통계는 payment_status만 보고 계산하므로
     // 별도 반영 없이 자동으로 정상 집계된다.
+    // 정상 결제 게이트웨이(Toss)를 우회하는 민감한 작업이라 감사 로그를 남긴다.
     @Override
-    public RefundDTO.ResponseApprove manualConfirmRefund(UUID paymentId, Long adminId, String adminRole) {
+    public RefundDTO.ResponseApprove manualConfirmRefund(UUID paymentId, Long adminId, String adminRole, String ipAddress) {
         validateMasterRole(adminRole);
-        return refundApprovalTxService.finalizeApproval(paymentId, adminId);
+        RefundDTO.ResponseApprove result = refundApprovalTxService.finalizeManualApproval(paymentId, adminId);
+        saveManualConfirmAuditLog(adminId, paymentId, ipAddress);
+        return result;
+    }
+
+    private void saveManualConfirmAuditLog(Long adminId, UUID paymentId, String ipAddress) {
+        AuditLog auditLog = AuditLog.create(
+            adminId,
+            AuditLogType.PAYMENT_ACTIVITY,
+            "MANUAL_CONFIRM_REFUND",
+            "PAYMENT",
+            paymentId.toString(),
+            ipAddress,
+            AuditLogSeverity.WARN,
+            "Toss 취소 API 미호출 — 관리자 수동 확정 (#1193 임시 대응)"
+        );
+        auditLogRepository.save(auditLog);
     }
 
     @Override

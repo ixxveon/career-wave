@@ -1,6 +1,8 @@
 package kr.co.carrer.admin.payment.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import kr.co.carrer.admin.audit.util.AdminAuditClientIpExtractor;
 import kr.co.carrer.admin.payment.docs.AdminPaymentControllerDocs;
 import kr.co.carrer.admin.payment.dto.PaymentDTO;
 import kr.co.carrer.admin.payment.dto.RefundDTO;
@@ -76,11 +78,13 @@ public class AdminPaymentController implements AdminPaymentControllerDocs {
     @PostMapping("/{paymentId}/refund-manual-confirm")
     public ResponseEntity<ApiResponse<RefundDTO.ResponseApprove>> manualConfirmRefund(
         @PathVariable UUID paymentId,
-        @AuthenticationPrincipal AuthPrincipal principal
+        @AuthenticationPrincipal AuthPrincipal principal,
+        HttpServletRequest httpServletRequest
     ) {
         Long adminId = resolveAdminId(principal);
         return ResponseEntity.ok(ApiResponse.ok(
-            adminPaymentService.manualConfirmRefund(paymentId, adminId, principal.getAdminRole())
+            adminPaymentService.manualConfirmRefund(
+                paymentId, adminId, principal.getAdminRole(), AdminAuditClientIpExtractor.extract(httpServletRequest))
         ));
     }
 
