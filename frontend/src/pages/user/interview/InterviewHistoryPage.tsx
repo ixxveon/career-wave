@@ -40,8 +40,12 @@ export default function InterviewHistoryPage() {
             <span className="ih-status ih-status--analyzing">분석 중</span>
           ) : row.reportStatus === 'FAILED' ? (
             <span className="ih-status ih-status--failed">생성 실패</span>
+          ) : row.sessionStatus === 'IN_PROGRESS' ? (
+            <span className="ih-status ih-status--incomplete">미완료</span>
+          ) : row.sessionStatus === 'FAILED' ? (
+            <span className="ih-status ih-status--incomplete">오류 종료</span>
           ) : (
-            <span className="ih-status">{row.sessionStatus}</span>
+            <span className="ih-status">—</span>
           )}
         </td>
       </tr>
