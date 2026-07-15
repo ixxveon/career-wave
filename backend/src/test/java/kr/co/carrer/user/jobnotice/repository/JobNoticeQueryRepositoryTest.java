@@ -25,6 +25,7 @@ import org.springframework.test.context.TestPropertySource;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -111,11 +112,11 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
 
         Page<JobNotice> result = jobNoticeQueryRepository.findActiveJobNotices(
                 null,
-                JobType.FULLTIME,
+                List.of(JobType.FULLTIME),
                 null,
-                CareerLevel.JUNIOR,
-                "\uC11C\uC6B8",
-                CompanySize.STARTUP,
+                List.of(CareerLevel.JUNIOR),
+                List.of("\uC11C\uC6B8"),
+                List.of(CompanySize.STARTUP),
                 "all",
                 "latest",
                 PageRequest.of(0, 20)
@@ -126,6 +127,31 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
         assertThat(result.getContent().getFirst().getTitle()).isEqualTo("Backend Developer");
         assertThat(result.getContent().getFirst().getCompanyName()).isEqualTo("CareerWave");
         assertThat(result.getContent().getFirst().getNoticeStatus()).isEqualTo(JobNoticeStatus.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("matches any selected job category")
+    void findActiveJobNotices_matchesAnySelectedJobCategory() {
+        persistJobNotice("Backend Co", "Backend Engineer", new String[]{"Java"}, new String[]{"BACKEND"});
+        persistJobNotice("Security Co", "Security Engineer", new String[]{"SIEM"}, new String[]{"SECURITY"});
+        persistJobNotice("Design Co", "Product Designer", new String[]{"Figma"}, new String[]{"DESIGN"});
+
+        flushAndClear();
+
+        Page<JobNotice> result = jobNoticeQueryRepository.findActiveJobNotices(
+                null,
+                null,
+                List.of("BACKEND", "SECURITY"),
+                null,
+                null,
+                null,
+                "all",
+                "latest",
+                PageRequest.of(0, 20)
+        );
+
+        assertThat(result.getContent()).extracting(JobNotice::getTitle)
+                .containsExactlyInAnyOrder("Backend Engineer", "Security Engineer");
     }
 
     @Test
@@ -163,7 +189,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
                 null,
                 null,
                 null,
-                "\uC11C\uC6B8",
+                List.of("\uC11C\uC6B8"),
                 null,
                 "all",
                 "latest",
@@ -323,7 +349,7 @@ class JobNoticeQueryRepositoryTest extends PostgreSqlTestContainerSupport {
         Page<JobNotice> result = jobNoticeQueryRepository.findActiveJobNotices(
                 null,
                 null,
-                "INFRA",
+                List.of("INFRA"),
                 null,
                 null,
                 null,

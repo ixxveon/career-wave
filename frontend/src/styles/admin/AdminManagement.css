@@ -1035,8 +1035,31 @@
           color: #93aac7;
           min-height: 240px;
           display: flex;
+          flex-direction: column;
+          gap: 8px;
           align-items: center;
           justify-content: center;
+        }
+
+        .amDarkEmptyState strong {
+          color: #d8e6f7;
+        }
+
+        .amDarkEmptyState button {
+          margin-top: 6px;
+          border: 1px solid rgba(126, 166, 212, 0.6);
+          border-radius: 6px;
+          background: transparent;
+          color: #d8e6f7;
+          cursor: pointer;
+          font: inherit;
+          font-size: 12px;
+          font-weight: 700;
+          padding: 7px 12px;
+        }
+
+        .amDarkEmptyState button:hover {
+          background: rgba(126, 166, 212, 0.16);
         }
 
         @media (max-width: 1400px) {

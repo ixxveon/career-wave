@@ -131,6 +131,11 @@ export const JOB_CATEGORY_LABELS = {
   FRONTEND: '프론트엔드',
   DATA: '데이터',
   DEVOPS: 'DevOps',
+  MOBILE: '모바일',
+  SECURITY: '보안',
+  QA: 'QA',
+  GAME: '게임',
+  EMBEDDED: '임베디드',
 } as const;
 
 export const CAREER_LEVEL_LABELS = {
@@ -160,11 +165,11 @@ export type JobNoticeSort = (typeof JOB_NOTICE_SORT_OPTIONS)[number];
 
 export interface JobNoticeQueryParams {
   keyword?: string;
-  jobType?: string;
-  jobCategory?: string;
-  careerLevel?: string;
-  location?: string;
-  companySize?: string;
+  jobType?: string | string[];
+  jobCategory?: string | string[];
+  careerLevel?: string | string[];
+  location?: string | string[];
+  companySize?: string | string[];
   period?: JobNoticePeriod;
   sort?: JobNoticeSort;
   page?: number;

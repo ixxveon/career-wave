@@ -75,6 +75,7 @@
 }
 .nt-item__icon { color: var(--color-text-secondary); flex-shrink: 0; }
 .nt-item__title {
+  min-width: 0;
   font-size: 14px; font-weight: 600; color: var(--color-text-primary);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }

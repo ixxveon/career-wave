@@ -134,27 +134,28 @@ export const jobNoticeHandlers = [
     const page = getPageParam(url, 'page', 1);
     const size = getPageParam(url, 'size', 18);
     const keyword = url.searchParams.get('keyword')?.trim().toLowerCase();
-    const jobType = url.searchParams.get('jobType');
-    const jobCategory = url.searchParams.get('jobCategory');
-    const careerLevel = url.searchParams.get('careerLevel');
-    const location = url.searchParams.get('location');
-    const companySize = url.searchParams.get('companySize');
-    const companySizeLabel = companySize
-      ? COMPANY_SIZE_LABEL_BY_QUERY_VALUE[
+    const jobTypes = url.searchParams.getAll('jobType');
+    const jobCategories = url.searchParams.getAll('jobCategory');
+    const careerLevels = url.searchParams.getAll('careerLevel');
+    const locations = url.searchParams.getAll('location');
+    const companySizes = url.searchParams.getAll('companySize');
+    const companySizeLabels: string[] = companySizes.map((companySize) =>
+      COMPANY_SIZE_LABEL_BY_QUERY_VALUE[
         companySize as keyof typeof COMPANY_SIZE_LABEL_BY_QUERY_VALUE
       ] ?? companySize
-      : null;
+    );
 
     const filtered = jobNotices.filter((jobNotice) => {
       const matchesKeyword = !keyword
         || jobNotice.title.toLowerCase().includes(keyword)
         || jobNotice.companyName.toLowerCase().includes(keyword)
         || (jobNotice.skillTags ?? []).some((tag) => tag.toLowerCase().includes(keyword));
-      const matchesJobType = !jobType || jobNotice.jobType === jobType;
-      const matchesJobCategory = !jobCategory || jobNotice.jobCategory === jobCategory;
-      const matchesCareerLevel = !careerLevel || jobNotice.careerLevel === careerLevel;
-      const matchesLocation = !location || jobNotice.location.includes(location);
-      const matchesCompanySize = !companySizeLabel || jobNotice.companySize === companySizeLabel;
+      const matchesJobType = jobTypes.length === 0 || jobTypes.includes(jobNotice.jobType);
+      const noticeCategories = Array.isArray(jobNotice.jobCategory) ? jobNotice.jobCategory : [jobNotice.jobCategory];
+      const matchesJobCategory = jobCategories.length === 0 || noticeCategories.some((category) => jobCategories.includes(category));
+      const matchesCareerLevel = careerLevels.length === 0 || careerLevels.includes(jobNotice.careerLevel);
+      const matchesLocation = locations.length === 0 || locations.some((location) => jobNotice.location.includes(location));
+      const matchesCompanySize = companySizeLabels.length === 0 || (jobNotice.companySize != null && companySizeLabels.includes(jobNotice.companySize));
 
       return matchesKeyword
         && matchesJobType

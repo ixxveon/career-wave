@@ -171,14 +171,14 @@ CREATE TABLE member_verifications (
     CONSTRAINT pk_member_verifications         PRIMARY KEY (verification_id),
     CONSTRAINT uq_member_verification_token    UNIQUE      (verification_token),
     CONSTRAINT chk_verification_channel        CHECK (channel             IN ('EMAIL', 'PHONE')),
-    CONSTRAINT chk_verification_purpose        CHECK (purpose             IN ('REGISTER', 'FIND_ID', 'RESET_PASSWORD', 'SOCIAL_SIGNUP')),
+    CONSTRAINT chk_verification_purpose        CHECK (purpose             IN ('REGISTER', 'FIND_ID', 'RESET_PASSWORD', 'SOCIAL_SIGNUP', 'EMAIL_CHANGE', 'PHONE_CHANGE')),
     CONSTRAINT chk_verification_status         CHECK (verification_status IN ('SENT', 'VERIFIED', 'CONSUMED', 'EXPIRED', 'FAILED', 'RATE_LIMITED'))
 );
-COMMENT ON TABLE  member_verifications                      IS '이메일/휴대폰 인증 테이블 (회원 FK 없음 - 가입 전 인증)';
+COMMENT ON TABLE  member_verifications                      IS '이메일/휴대폰 인증 테이블 (회원 FK 없음 - 가입 전 인증 및 마이페이지 정보 변경 인증)';
 COMMENT ON COLUMN member_verifications.verification_id     IS '인증 요청 고유 식별자';
 COMMENT ON COLUMN member_verifications.channel             IS '인증 채널 (EMAIL / PHONE)';
 COMMENT ON COLUMN member_verifications.target              IS '인증 대상 (이메일 주소 또는 휴대폰 번호)';
-COMMENT ON COLUMN member_verifications.purpose             IS '인증 목적 (REGISTER / FIND_ID / RESET_PASSWORD / SOCIAL_SIGNUP)';
+COMMENT ON COLUMN member_verifications.purpose             IS '인증 목적 (REGISTER / FIND_ID / RESET_PASSWORD / SOCIAL_SIGNUP / EMAIL_CHANGE / PHONE_CHANGE)';
 COMMENT ON COLUMN member_verifications.code_hash           IS '인증번호 해시값';
 COMMENT ON COLUMN member_verifications.verification_token  IS '인증 완료 후 발급되는 단기 토큰';
 COMMENT ON COLUMN member_verifications.verification_status IS '인증 상태 (SENT / VERIFIED / CONSUMED / EXPIRED / FAILED / RATE_LIMITED)';
@@ -586,6 +586,8 @@ CREATE TABLE job_notices (
     company_size  VARCHAR(20)  NULL,
     job_category  TEXT[]       NULL,
     career_level  VARCHAR(10)  NULL,
+    career_min_years INTEGER   NULL,
+    career_max_years INTEGER   NULL,
     location      VARCHAR(100) NULL,
     salary        VARCHAR(50)  NULL,
     notice_status VARCHAR(10)  NOT NULL DEFAULT 'ACTIVE',
@@ -601,6 +603,12 @@ CREATE TABLE job_notices (
     CONSTRAINT chk_job_type                       CHECK (job_type      IN ('FULLTIME', 'INTERN', 'CONTRACT')),
     CONSTRAINT chk_company_size  CHECK (company_size  IN ('STARTUP', 'SME', 'MID_MARKET', 'LARGE')),
     CONSTRAINT chk_career_level  CHECK (career_level  IN ('JUNIOR', 'SENIOR', 'ANY')),
+    CONSTRAINT chk_career_year_range CHECK (
+        career_min_years IS NULL OR career_min_years >= 0
+    ),
+    CONSTRAINT chk_career_year_bounds CHECK (
+        career_max_years IS NULL OR career_max_years >= career_min_years
+    ),
     CONSTRAINT chk_notice_status CHECK (notice_status IN ('ACTIVE', 'CLOSED')),
     CONSTRAINT chk_view_count    CHECK (view_count >= 0)
 );
@@ -616,6 +624,8 @@ COMMENT ON COLUMN job_notices.job_type      IS '채용 유형 (FULLTIME / INTERN
 COMMENT ON COLUMN job_notices.company_size  IS '기업 규모 (STARTUP / SME / MID_MARKET / LARGE)';
 COMMENT ON COLUMN job_notices.job_category  IS '직무 카테고리 (다중 선택, TEXT[])';
 COMMENT ON COLUMN job_notices.career_level  IS '경력 조건 (JUNIOR / SENIOR / ANY)';
+COMMENT ON COLUMN job_notices.career_min_years IS '경력 최소 연차 (NULL이면 명시되지 않음)';
+COMMENT ON COLUMN job_notices.career_max_years IS '경력 최대 연차 (NULL이면 상한 없음 또는 명시되지 않음)';
 COMMENT ON COLUMN job_notices.location      IS '근무지';
 COMMENT ON COLUMN job_notices.salary        IS '급여 정보';
 COMMENT ON COLUMN job_notices.notice_status IS '공고 상태 (ACTIVE / CLOSED)';
@@ -632,6 +642,13 @@ CREATE INDEX idx_job_notices_active_created
 
 CREATE INDEX idx_job_notices_active_deadline_created
     ON job_notices (deadline ASC NULLS LAST, created_at DESC)
+    WHERE notice_status = 'ACTIVE';
+
+-- 목록 deep pagination(OFFSET) 커버링 인덱스 (Issue #1285)
+-- deferred join의 페이지 ID 조회가 Index Only Scan을 타도록 job_notice_id까지 포함한다.
+-- 기존 DB는 db/patches/20260713_job_notices_keyset_covering_index.sql로 반영.
+CREATE INDEX idx_jn_active_keyset
+    ON job_notices (deadline ASC NULLS LAST, created_at DESC, job_notice_id)
     WHERE notice_status = 'ACTIVE';
 
 CREATE INDEX idx_job_notices_search_text_trgm

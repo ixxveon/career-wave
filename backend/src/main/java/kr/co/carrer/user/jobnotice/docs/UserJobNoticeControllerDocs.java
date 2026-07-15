@@ -18,6 +18,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 @Tag(name = "User JobNotice", description = "Public job notice read APIs and bookmark APIs for signed-in users.")
 public interface UserJobNoticeControllerDocs {
 
@@ -37,16 +39,16 @@ public interface UserJobNoticeControllerDocs {
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<JobNoticeDTO.ResponseList>> getJobNotices(
             @Parameter(description = "Keyword search over title, description, companyName, skillTags, jobCategory, and source.")
             @RequestParam(required = false) String keyword,
-            @Parameter(description = "Job type filter.", schema = @Schema(allowableValues = {"FULLTIME", "INTERN", "CONTRACT"}))
-            @RequestParam(required = false) JobType jobType,
-            @Parameter(description = "Job category filter. Interpreted against the job_category array column.")
-            @RequestParam(required = false) String jobCategory,
-            @Parameter(description = "Career level filter.", schema = @Schema(allowableValues = {"JUNIOR", "SENIOR", "ANY"}))
-            @RequestParam(required = false) CareerLevel careerLevel,
-            @Parameter(description = "Normalized representative location filter.")
-            @RequestParam(required = false) String location,
-            @Parameter(description = "Company size filter.", schema = @Schema(allowableValues = {"STARTUP", "SME", "MID_MARKET", "LARGE"}))
-            @RequestParam(required = false) CompanySize companySize,
+            @Parameter(description = "Job type filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"FULLTIME", "INTERN", "CONTRACT"}))
+            @RequestParam(required = false) List<JobType> jobType,
+            @Parameter(description = "Job category filters. Repeat the query parameter for multiple values.")
+            @RequestParam(required = false) List<String> jobCategory,
+            @Parameter(description = "Career level filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"JUNIOR", "SENIOR", "ANY"}))
+            @RequestParam(required = false) List<CareerLevel> careerLevel,
+            @Parameter(description = "Normalized representative location filters. Repeat the query parameter for multiple values.")
+            @RequestParam(required = false) List<String> location,
+            @Parameter(description = "Company size filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"STARTUP", "SME", "MID_MARKET", "LARGE"}))
+            @RequestParam(required = false) List<CompanySize> companySize,
             @Parameter(description = "Created-at period filter.", schema = @Schema(allowableValues = {"today", "7d", "30d", "all"}))
             @RequestParam(required = false) String period,
             @Parameter(description = "List sort order.", schema = @Schema(allowableValues = {"recommend", "latest", "views"}))

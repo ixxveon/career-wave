@@ -46,11 +46,11 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
     @Transactional(readOnly = true)
     public JobNoticeDTO.ResponseList getJobNotices(
             String keyword,
-            JobType jobType,
-            String jobCategory,
-            CareerLevel careerLevel,
-            String location,
-            CompanySize companySize,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
             String period,
             String sort,
             int page,
@@ -62,8 +62,8 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
 
         if (memberId == null) {
             return jobNoticeCacheService.getAnonymousJobNoticeList(
-                    keyword, jobType, jobCategory, careerLevel, location,
-                    companySize, period, sort, normalizedPage, normalizedSize
+                    keyword, jobTypes, jobCategories, careerLevels, locations,
+                    companySizes, period, sort, normalizedPage, normalizedSize
             );
         }
 
@@ -71,22 +71,22 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
 
         List<JobNotice> jobNotices = jobNoticeQueryRepository.findActiveJobNoticeContent(
                 keyword,
-                jobType,
-                jobCategory,
-                careerLevel,
-                location,
-                companySize,
+                jobTypes,
+                jobCategories,
+                careerLevels,
+                locations,
+                companySizes,
                 period,
                 sort,
                 pageRequest
         );
         long totalElements = jobNoticeCacheService.getActiveJobNoticeCount(
                 keyword,
-                jobType,
-                jobCategory,
-                careerLevel,
-                location,
-                companySize,
+                jobTypes,
+                jobCategories,
+                careerLevels,
+                locations,
+                companySizes,
                 period
         );
         Page<JobNotice> result = new PageImpl<>(jobNotices, pageRequest, totalElements);

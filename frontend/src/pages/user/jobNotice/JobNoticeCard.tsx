@@ -1,4 +1,5 @@
 import { Bookmark, BookmarkCheck, Eye } from 'lucide-react';
+import type { KeyboardEvent } from 'react';
 import JobNoticeCompanyLogo from '../../../components/user/jobNotice/JobNoticeCompanyLogo';
 import { formatJobNoticeDeadlineBadge, type JobNotice } from '../../../types/user/jobNotice';
 
@@ -10,8 +11,23 @@ interface JobNoticeCardProps {
 }
 
 export default function JobNoticeCard({ job, bookmarked, onBookmark, onClick }: JobNoticeCardProps) {
+  function handleCardKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (event.target !== event.currentTarget) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    event.preventDefault();
+    onClick();
+  }
+
   return (
-    <article className={`jn-card${job.recommended ? ' jn-card--featured' : ''}`}>
+    <article
+      className={`jn-card${job.recommended ? ' jn-card--featured' : ''}`}
+      tabIndex={0}
+      role="link"
+      aria-label={`${job.company} ${job.title} 상세 보기`}
+      onClick={onClick}
+      onKeyDown={handleCardKeyDown}
+    >
       <div className="jn-card__top">
         <JobNoticeCompanyLogo
           className="jn-card__logo"

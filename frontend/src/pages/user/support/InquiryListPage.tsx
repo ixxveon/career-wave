@@ -10,6 +10,7 @@ import {
   type InquiryStatus,
   type InquiryItem,
 } from '../../../api/user/supportApi';
+import Pagination from '../../../components/user/common/Pagination';
 import '@/styles/user/support/InquiryListPage.css';
 
 const CATEGORY_FILTERS: { label: string; value: InquiryCategory | '' }[] = [
@@ -164,18 +165,8 @@ export default function InquiryListPage() {
         </div>
       )}
 
-      {!loading && !error && totalPages > 1 && (
-        <div className="iq-pagination">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-            <button
-              key={p}
-              className={`iq-page-btn${page === p ? ' iq-page-btn--on' : ''}`}
-              onClick={() => setPage(p)}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
+      {!loading && !error && (
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       )}
 
       {selected && (

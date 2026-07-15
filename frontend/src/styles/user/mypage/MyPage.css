@@ -556,6 +556,35 @@ a.cw-chart-filter {
   font-size: 15px;
   text-align: center;
 }
+/*
+Empty UI
+*/
+.cw-scrap-empty {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.cw-scrap-empty svg {
+  color: #5f96ee;
+}
+
+.cw-scrap-empty strong {
+  color: #173765;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.cw-scrap-empty p {
+  margin: 0;
+  color: #64748f;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 
 .cw-state-box.is-error {
   border-color: #f0b8b8;
@@ -672,6 +701,45 @@ a.cw-chart-filter {
   color: #718096;
   font-size: 12px;
   line-height: 1.4;
+}
+
+.cw-verify-inline {
+  display: flex;
+  gap: 8px;
+}
+
+.cw-verify-inline input {
+  flex: 1;
+  min-width: 0;
+}
+
+.cw-verify-send-button {
+  flex-shrink: 0;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #d7deea;
+  border-radius: 12px;
+  background: #fff;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cw-verify-send-button:disabled {
+  color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.cw-verify-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  color: #247251;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 @media (max-width: 1180px) {
@@ -1419,6 +1487,28 @@ a.cw-chart-filter {
 
 .cw-subscription-usage-card.is-interview .cw-subscription-usage-track span.is-filled {
   color: #5d88f2;
+}
+
+.cw-subscription-usage-card__payment-failed,
+.cw-subscription-usage-card__cancel-scheduled {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cw-subscription-usage-card__payment-failed {
+  color: #b3261e;
+  background: #fdecea;
+}
+
+.cw-subscription-usage-card__cancel-scheduled {
+  color: #92610a;
+  background: #fff9ef;
 }
 
 .cw-subscription-usage-stats {
@@ -3215,6 +3305,25 @@ a.cw-chart-filter {
   background: #dfeeff;
 }
 
+.cw-card-edit-button:disabled {
+  background: #f1f3f5;
+  color: #adb5bd;
+  cursor: not-allowed;
+}
+
+.cw-card-notice {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff9ef;
+  color: #92610a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* 
 스크랩 공고 페이지
 */
@@ -3224,6 +3333,7 @@ a.cw-chart-filter {
   min-width: 0;
   min-height: 760px;
   display: grid;
+  align-content: start;
   gap: 20px;
 }
 

@@ -62,7 +62,7 @@ const createJobNoticeViewModel = (job: ScrapJob): JobNoticeViewModel => ({
   bookmarked: true,
   stacks: [],
   tags: [],
-  postedAt: job.createdAt,
+  postedAt: job.bookmarkedAt,
   recommended: false,
   recommendScore: 0,
   views: 0,
@@ -95,7 +95,7 @@ function ScrappedJobPage() {
 
   const { data: scrapJobPage } = useDashboardBookmarks({
     keyword,
-    page: currentPage,
+    page: currentPage + 1,
     size: 10,
   });
   const scrappedJobs = scrapJobPage?.items ?? [];
@@ -119,7 +119,7 @@ function ScrappedJobPage() {
   const sortedScrapJobs = useMemo(() => {
     return [...scrappedJobs].sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        new Date(b.bookmarkedAt).getTime() - new Date(a.bookmarkedAt).getTime(),
     );
   }, [scrappedJobs]);
 
@@ -194,7 +194,13 @@ function ScrappedJobPage() {
             </button>
           </div>
         ) : !hasScrapJobs ? (
-          <div className="cw-state-box">아직 스크랩한 채용공고가 없습니다.</div>
+          <div className="cw-state-box cw-scrap-empty">
+            <Bookmark size={28} aria-hidden="true" />
+            <strong>아직 스크랩한 채용공고가 없습니다.</strong>
+            <p>
+              관심 있는 채용공고를 저장하면 이곳에서 한눈에 확인할 수 있어요.
+            </p>
+          </div>
         ) : (
           <>
             <div className="cw-scrap-grid">
@@ -235,7 +241,7 @@ function ScrappedJobPage() {
 
                     <p className="cw-scrap-keywords">
                       등록일{" "}
-                      {new Date(job.createdAt).toLocaleDateString("ko-KR")}
+                      {new Date(job.bookmarkedAt).toLocaleDateString("ko-KR")}
                     </p>
 
                     {isDeleted && (

@@ -344,8 +344,39 @@ describe('AdminManagementPage master-only controls', () => {
     const { findByText, queryByText } = renderPage();
 
     expect(await findByText('Master Admin')).toBeTruthy();
-    expect(await findByText('표시할 보안 로그가 없습니다.')).toBeTruthy();
+    expect(await findByText('표시할 관리자 관리 활동 로그가 없습니다.')).toBeTruthy();
     expect(queryByText('super_admin')).toBeNull();
+  });
+
+  it('shows a retry action when audit log retrieval fails', async () => {
+    adminSession.setRole(ADMIN_ROLE.MASTER);
+    adminManagementApiMock.getAdminAuditLogs.mockRejectedValueOnce({
+      code: 'UNKNOWN',
+      status: 500,
+      message: '감사 로그 조회에 실패했습니다.',
+    });
+
+    const { findByRole, findByText } = renderPage();
+
+    expect(await findByText('활동 로그를 불러오지 못했습니다.')).toBeTruthy();
+    const retryButton = await findByRole('button', { name: '다시 시도' });
+    fireEvent.click(retryButton);
+
+    await waitFor(() => expect(adminManagementApiMock.getAdminAuditLogs).toHaveBeenCalledTimes(2));
+  });
+
+  it('does not show a retry action when audit log access is denied', async () => {
+    adminSession.setRole(ADMIN_ROLE.MASTER);
+    adminManagementApiMock.getAdminAuditLogs.mockRejectedValueOnce({
+      code: 'FORBIDDEN',
+      status: 403,
+      message: '관리자 관리 권한이 없습니다.',
+    });
+
+    const { findByText, queryByRole } = renderPage();
+
+    expect(await findByText('활동 로그 조회 권한이 없습니다.')).toBeTruthy();
+    expect(queryByRole('button', { name: '다시 시도' })).toBeNull();
   });
 
   it('requests only ADMIN_MANAGEMENT audit logs for the security console', async () => {

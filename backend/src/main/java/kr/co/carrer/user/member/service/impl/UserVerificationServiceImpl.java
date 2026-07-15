@@ -142,8 +142,13 @@ public class UserVerificationServiceImpl implements UserVerificationService {
         }
     }
 
+    // REGISTER(신규 가입) 및 EMAIL_CHANGE/PHONE_CHANGE(마이페이지 변경)는 target이
+    // 다른 회원에게 이미 사용 중이면 안 된다 — SOCIAL_SIGNUP은 기존 가입 번호도 허용해야 하므로 제외.
     private void validateRegisterTargetAvailable(UserVerificationDto.RequestSendVerification request) {
-        if (request.getPurpose() != VerificationPurpose.REGISTER) {
+        VerificationPurpose purpose = request.getPurpose();
+        if (purpose != VerificationPurpose.REGISTER
+                && purpose != VerificationPurpose.EMAIL_CHANGE
+                && purpose != VerificationPurpose.PHONE_CHANGE) {
             return;
         }
         if (request.getChannel() == VerificationChannel.EMAIL
@@ -174,29 +179,6 @@ public class UserVerificationServiceImpl implements UserVerificationService {
                     digest.digest(value.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 unavailable", e);
-        }
-    }
-
-    // verificationToken purpose/target/channel/expiry/status 복합 검증 — 가입/복구 service에서 호출
-    public static void validateVerificationToken(
-            MemberVerification verification,
-            VerificationChannel expectedChannel,
-            String expectedTarget,
-            VerificationPurpose expectedPurpose) {
-        if (verification.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
-        }
-        if (!Instant.now().isBefore(verification.getExpiresAt())) {
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
-        }
-        if (verification.getChannel() != expectedChannel) {
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
-        }
-        if (!verification.getTarget().equals(expectedTarget)) {
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
-        }
-        if (verification.getPurpose() != expectedPurpose) {
-            throw new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID);
         }
     }
 }

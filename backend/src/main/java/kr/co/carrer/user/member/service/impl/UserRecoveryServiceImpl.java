@@ -15,6 +15,7 @@ import kr.co.carrer.user.member.repository.PasswordResetTokenRepository;
 import kr.co.carrer.user.member.repository.UserMemberQueryRepository;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
 import kr.co.carrer.user.member.service.UserRecoveryService;
+import kr.co.carrer.user.member.service.VerificationTokenValidator;
 import kr.co.carrer.user.member.type.MemberType;
 import kr.co.carrer.user.member.type.RoleType;
 import kr.co.carrer.user.member.type.VerificationChannel;
@@ -73,7 +74,7 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
                 .findByVerificationToken(request.getVerificationToken())
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
 
-        UserVerificationServiceImpl.validateVerificationToken(
+        VerificationTokenValidator.validate(
                 verification,
                 verification.getChannel(),
                 verification.getTarget(),
@@ -135,7 +136,7 @@ public class UserRecoveryServiceImpl implements UserRecoveryService {
                 .findByVerificationToken(request.getVerificationToken())
                 .orElseThrow(() -> new CustomException(UserAuthErrorCode.VERIFICATION_TOKEN_INVALID));
 
-        UserVerificationServiceImpl.validateVerificationToken(
+        VerificationTokenValidator.validate(
                 verification,
                 verification.getChannel(),
                 verification.getTarget(),

@@ -22,6 +22,8 @@ job_notices_table = Table(
     Column("company_size", String(20), nullable=True),
     Column("job_category", ARRAY(Text), nullable=True),
     Column("career_level", String(10), nullable=True),
+    Column("career_min_years", Integer, nullable=True),
+    Column("career_max_years", Integer, nullable=True),
     Column("location", String(100), nullable=True),
     Column("salary", String(50), nullable=True),
     Column("notice_status", String(10), nullable=False),
@@ -48,6 +50,8 @@ class JobNoticeRecord:
     company_size: str | None
     job_category: list[str] | None
     career_level: str | None
+    career_min_years: int | None
+    career_max_years: int | None
     location: str | None
     salary: str | None
     notice_status: str
@@ -74,6 +78,8 @@ class JobNoticeRepository:
         company_size: str | None,
         job_category: list[str] | None,
         career_level: str | None,
+        career_min_years: int | None,
+        career_max_years: int | None,
         location: str | None,
         salary: str | None,
         notice_status: str,
@@ -103,6 +109,8 @@ class JobNoticeRepository:
                 company_size=company_size,
                 job_category=job_category,
                 career_level=career_level,
+                career_min_years=career_min_years,
+                career_max_years=career_max_years,
                 location=location,
                 salary=salary,
                 notice_status=notice_status,
@@ -156,6 +164,8 @@ class JobNoticeRepository:
             company_size=row["company_size"],
             job_category=list(row["job_category"]) if row["job_category"] is not None else None,
             career_level=row["career_level"],
+            career_min_years=row["career_min_years"],
+            career_max_years=row["career_max_years"],
             location=row["location"],
             salary=row["salary"],
             notice_status=row["notice_status"],

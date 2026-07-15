@@ -25,7 +25,7 @@ public class UserVerificationDto {
         @NotBlank
         private String target;
 
-        @Schema(description = "인증 목적", allowableValues = {"REGISTER", "FIND_ID", "RESET_PASSWORD"}, example = "REGISTER")
+        @Schema(description = "인증 목적", allowableValues = {"REGISTER", "FIND_ID", "RESET_PASSWORD", "SOCIAL_SIGNUP", "EMAIL_CHANGE", "PHONE_CHANGE"}, example = "REGISTER")
         @NotNull
         private VerificationPurpose purpose;
     }

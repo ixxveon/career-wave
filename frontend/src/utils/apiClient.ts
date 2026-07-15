@@ -43,9 +43,7 @@ export async function apiClient<T = unknown>(
   const url = buildApiUrl(endpoint);
   const requestHeaders = createRequestHeaders(requestInit, isFormData);
 
-  const accessToken = auth === 'optional'
-    ? authSession.getAccessToken() ?? await requestAccessTokenRefresh()
-    : null;
+  const accessToken = auth === 'optional' ? authSession.getAccessToken() : null;
 
   if (accessToken) {
     requestHeaders.set('Authorization', `Bearer ${accessToken}`);
@@ -53,7 +51,7 @@ export async function apiClient<T = unknown>(
 
   let response = await fetch(url, buildRequestInit(requestInit, requestHeaders));
 
-  if (response.status === 401 && auth === 'optional') {
+  if (response.status === 401 && auth === 'optional' && requestHeaders.has('Authorization')) {
     const refreshedToken = await requestAccessTokenRefresh();
 
     if (refreshedToken) {

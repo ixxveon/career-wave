@@ -34,7 +34,7 @@ export const API_SORT_BY_LABEL = {
 } as const;
 
 export type FilterLabel = keyof typeof API_FILTER_PARAM_BY_LABEL;
-export type Filters = Record<FilterLabel, string>;
+export type Filters = Record<FilterLabel, string[]>;
 export type Bookmarks = JobNoticeBookmarkMap;
 export type Period = (typeof PERIODS)[number];
 export type SortOption = (typeof SORT_OPTIONS)[number];
@@ -49,6 +49,13 @@ export const FILTER_GROUPS = [
   { label: '기업 규모', optionKey: 'companySize' },
 ] as const;
 
+const JOB_CATEGORY_OPTION_GROUPS = [
+  { label: '개발', options: ['BACKEND', 'FRONTEND', 'MOBILE', 'EMBEDDED'] },
+  { label: '데이터·인프라', options: ['DATA', 'DEVOPS'] },
+  { label: '품질·보안', options: ['QA', 'SECURITY'] },
+  { label: '특화', options: ['GAME'] },
+] as const;
+
 const FILTER_OPTION_LABELS = {
   ...JOB_TYPE_LABELS,
   ...JOB_CATEGORY_LABELS,
@@ -59,26 +66,34 @@ const FILTER_OPTION_LABELS = {
 export interface FilterGroup {
   label: FilterLabel;
   options: string[];
+  optionGroups?: Array<{ label: string; options: string[] }>;
 }
 
 export function createInitialFilters(): Filters {
-  return Object.fromEntries(FILTER_GROUPS.map((group) => [group.label, DEFAULT_FILTER_VALUE])) as Filters;
+  return Object.fromEntries(FILTER_GROUPS.map((group) => [group.label, []])) as unknown as Filters;
 }
 
 export function createFilterGroups(filterOptions?: JobNoticeFilterOptions): FilterGroup[] {
-  return FILTER_GROUPS.map((group) => ({
-    label: group.label,
-    options: [DEFAULT_FILTER_VALUE, ...(filterOptions?.[group.optionKey] ?? [])],
-  }));
+  return FILTER_GROUPS.map((group) => {
+    const options = filterOptions?.[group.optionKey] ?? [];
+    const optionGroups = group.optionKey === 'jobCategory'
+      ? JOB_CATEGORY_OPTION_GROUPS
+        .map((optionGroup) => ({
+          label: optionGroup.label,
+          options: optionGroup.options.filter((option) => options.includes(option)),
+        }))
+        .filter((optionGroup) => optionGroup.options.length > 0)
+      : undefined;
+
+    return { label: group.label, options, optionGroups };
+  });
 }
 
 export function normalizeFilters(filters: Filters, filterGroups: FilterGroup[]): Filters {
   const nextFilters = { ...filters };
 
   filterGroups.forEach((group) => {
-    if (!group.options.includes(nextFilters[group.label])) {
-      nextFilters[group.label] = DEFAULT_FILTER_VALUE;
-    }
+    nextFilters[group.label] = nextFilters[group.label].filter((value) => group.options.includes(value));
   });
 
   return nextFilters;
@@ -114,9 +129,9 @@ export function createJobNoticeQueryParams({
   }
 
   (Object.entries(API_FILTER_PARAM_BY_LABEL) as Array<[FilterLabel, JobNoticeFilterParamKey]>).forEach(([label, paramKey]) => {
-    const value = filters[label];
-    if (value !== DEFAULT_FILTER_VALUE) {
-      params[paramKey] = value;
+    const values = filters[label];
+    if (values.length > 0) {
+      params[paramKey] = values;
     }
   });
 

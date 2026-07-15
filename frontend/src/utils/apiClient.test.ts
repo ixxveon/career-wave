@@ -75,49 +75,34 @@ describe('apiClient optional auth', () => {
     expect(headers.get('Authorization')).toBe('Bearer user-access-token');
   });
 
-  it('refreshes and attaches Authorization when token is missing', async () => {
+  it('requests public optional endpoints anonymously when token is missing', async () => {
     const { apiClient } = await loadApiClient('http://example.com');
     const { authSession } = await import('./user/member/authSession');
     vi.mocked(authSession.getAccessToken).mockReturnValue(null);
-    vi.spyOn(global, 'fetch')
-      .mockResolvedValueOnce(jsonResponse({ data: { accessToken: 'new-token' } }))
-      .mockResolvedValueOnce(jsonResponse({ ok: true }));
+    vi.spyOn(global, 'fetch').mockResolvedValue(jsonResponse({ ok: true }));
 
     await apiClient('/api/v1/user/job-notices', { auth: 'optional' });
 
-    const [, init] = vi.mocked(fetch).mock.calls[1];
-    const headers = new Headers(init?.headers as HeadersInit);
-    expect(headers.get('Authorization')).toBe('Bearer new-token');
-    expect(vi.mocked(authSession.setAccessToken)).toHaveBeenCalledWith('new-token');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    expect(new Headers(init?.headers as HeadersInit).get('Authorization')).toBeNull();
+    expect(vi.mocked(authSession.setAccessToken)).not.toHaveBeenCalled();
   });
 
-  it('shares one refresh request for concurrent optional auth calls', async () => {
+  it('does not refresh for concurrent anonymous optional requests', async () => {
     const { apiClient } = await loadApiClient('http://example.com');
     const { authSession } = await import('./user/member/authSession');
     vi.mocked(authSession.getAccessToken).mockReturnValue(null);
-
-    let resolveRefresh: (value: Response) => void = () => {};
-    const pendingRefresh = new Promise<Response>((resolve) => {
-      resolveRefresh = resolve;
-    });
-    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation((input) => {
-      const url = String(input);
-      if (url.includes('/token/refresh')) return pendingRefresh;
-      return Promise.resolve(jsonResponse({ ok: true }));
-    });
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(() => Promise.resolve(jsonResponse({ ok: true })));
 
     const first = apiClient('/api/v1/user/job-notices', { auth: 'optional' });
     const second = apiClient('/api/v1/user/job-notices/1', { auth: 'optional' });
 
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-    resolveRefresh(jsonResponse({ data: { accessToken: 'shared-token' } }));
-
     await Promise.all([first, second]);
 
     const refreshCalls = fetchSpy.mock.calls.filter(([input]) => String(input).includes('/token/refresh'));
-    expect(refreshCalls).toHaveLength(1);
-    expect(fetchSpy).toHaveBeenCalledTimes(3);
-    expect(vi.mocked(authSession.setAccessToken)).toHaveBeenCalledWith('shared-token');
+    expect(refreshCalls).toHaveLength(0);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
   it('falls back to anonymous retry when an optional auth token is rejected', async () => {

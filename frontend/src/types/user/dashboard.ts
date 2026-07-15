@@ -35,7 +35,7 @@ export interface ScrapJob {
   noticeStatus: "ACTIVE" | "CLOSED";
 
   deleted: boolean;
-  createdAt: string;
+  bookmarkedAt: string;
 }
 
 export interface ScrapJobPageResponse {

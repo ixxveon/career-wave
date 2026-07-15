@@ -9,6 +9,8 @@ import kr.co.carrer.admin.payment.repository.RefundRepository;
 import kr.co.carrer.admin.payment.type.PaymentStatus;
 import kr.co.carrer.admin.payment.type.RefundStatus;
 import kr.co.carrer.global.exception.CustomException;
+import kr.co.carrer.user.billing.entity.Subscription;
+import kr.co.carrer.user.billing.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,7 @@ public class RefundApprovalTxService {
 
     private final PaymentRepository paymentRepository;
     private final RefundRepository refundRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
     public record CancelRequest(String paymentKey, String reason, int amount) {}
 
@@ -57,6 +60,11 @@ public class RefundApprovalTxService {
         payment.refund();
         refundRepository.save(refund);
         paymentRepository.save(payment);
+
+        if (payment.getSubscriptionId() != null) {
+            subscriptionRepository.findBySubscriptionIdForUpdate(payment.getSubscriptionId())
+                    .ifPresent(Subscription::markRefunded);
+        }
 
         return new RefundDTO.ResponseApprove(
             paymentId.toString(),

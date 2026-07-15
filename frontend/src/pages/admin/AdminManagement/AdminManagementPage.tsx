@@ -59,7 +59,7 @@ export default function AdminManagementPage() {
   const handleCreateAdminAccount = () => { if (isAccountMasterRoleRequired) return; const { loginId, email, name, password, role } = adminDraft; if (!loginId.trim() || !email.trim() || !name.trim() || !password.trim()) return; createAdminMutation.mutate({ loginId: loginId.trim(), name: name.trim(), email: email.trim(), password: password.trim(), role }); };
   const toggleAdminStatus = (id: string) => { if (isAccountMasterRoleRequired) return; const target = filteredAdmins.find((item) => item.id === id); if (!target) return; updateAdminStatusMutation.mutate({ id, status: target.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE' }); };
   const removeAdminAccount = (admin: { id: string }) => { if (!isAccountMasterRoleRequired) deleteAdminMutation.mutate(admin.id); };
-  const addAclRule = () => { if (isAclMasterRoleRequired) return; const label = aclDraft.label.trim(); const cidr = aclDraft.cidr.trim(); const note = aclDraft.note.trim(); if (!label || !cidr) return; if (!isValidCidr(cidr)) return setAclCidrErrorMessage('CIDR Çü½ÄÀÌ ¿Ã¹Ù¸£Áö ¾Ê½À´Ï´Ù. ¿¹: 10.20.0.0/16'); setAclCidrErrorMessage(''); createAclRuleMutation.mutate({ label, cidr, note }); };
+  const addAclRule = () => { if (isAclMasterRoleRequired) return; const label = aclDraft.label.trim(); const cidr = aclDraft.cidr.trim(); const note = aclDraft.note.trim(); if (!label || !cidr) return; if (!isValidCidr(cidr)) return setAclCidrErrorMessage('CIDR í˜•ì‹ì´ ì˜¬ë°”ë¥´ì§€ ì•ŠìŠµë‹ˆë‹¤. ì˜ˆ: 10.20.0.0/16'); setAclCidrErrorMessage(''); createAclRuleMutation.mutate({ label, cidr, note }); };
   const toggleAclRule = (id: string) => { if (isAclMasterRoleRequired) return; const target = visibleAclRules.find((item) => item.id === id); if (target) updateAclEnabledMutation.mutate({ id, enabled: !target.enabled }); };
   const removeAclRule = (id: string) => { if (!isAclMasterRoleRequired) deleteAclRuleMutation.mutate(id); };
 
@@ -86,6 +86,7 @@ export default function AdminManagementPage() {
   const deleteAclRuleErrorMessage = deleteAclRuleApiError ? getAdminManagementAuthErrorMessage(deleteAclRuleApiError) : '';
   const isAllAdminManagementQueryError = isSummaryError && isAdminAccountsError && isAdminAclRulesError && isAdminAuditLogsError;
   const isRoleAdminAccessDenied = isAllAdminManagementQueryError && [summaryApiError, adminAccountsApiError, adminAclRulesApiError, adminAuditLogsApiError].every((error) => error?.code === ADMIN_MANAGEMENT_ERROR_CODE.FORBIDDEN);
+  const isAuditLogAccessDenied = adminAuditLogsApiError?.code === ADMIN_MANAGEMENT_ERROR_CODE.FORBIDDEN;
   const isAccountMasterRoleRequired = !isCurrentAdminMaster || [createAdminApiError, updateAdminRoleApiError, updateAdminStatusApiError, deleteAdminApiError].some((error) => error?.code === ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED);
   const isAclMasterRoleRequired = !isCurrentAdminMaster || [createAclRuleApiError, updateAclEnabledApiError, deleteAclRuleApiError].some((error) => error?.code === ADMIN_MANAGEMENT_ERROR_CODE.MASTER_ROLE_REQUIRED);
   const adminTotalItems = adminAccounts?.totalItems ?? filteredAdmins.length;
@@ -105,15 +106,15 @@ export default function AdminManagementPage() {
 
   return (
     <section className="admin-managementPage">
-      <header className="admin-header"><div><h2>°ü¸®ÀÚ ¼³Á¤</h2><p>RBAC, IP ACL, °ü¸®ÀÚ È°µ¿ ·Î±×¸¦ ÇÑ È­¸é¿¡¼­ °ü¸®ÇÕ´Ï´Ù.</p></div></header>
+      <header className="admin-header"><div><h2>ê´€ë¦¬ì ê´€ë¦¬</h2><p>ê´€ë¦¬ì ê³„ì •, IP ACL, ê´€ë¦¬ì ê´€ë¦¬ í™œë™ ë¡œê·¸ë¥¼ í•œ í™”ë©´ì—ì„œ í™•ì¸í•©ë‹ˆë‹¤.</p></div></header>
       <AdminManagementSummarySection
         isAllAdminManagementQueryError={isAllAdminManagementQueryError}
-        globalErrorTitle={isRoleAdminAccessDenied ? '°ü¸®ÀÚ °ü¸® È­¸é Á¢±Ù ±ÇÇÑÀÌ ¾ø½À´Ï´Ù.' : '°ü¸®ÀÚ °ü¸® µ¥ÀÌÅÍ¸¦ ºÒ·¯¿ÀÁö ¸øÇß½À´Ï´Ù.'}
-        globalErrorDescription={isRoleAdminAccessDenied ? 'ROLE_ADMIN ±ÇÇÑÀÌ ÀÖ´Â °ü¸®ÀÚ °èÁ¤À¸·Î ´Ù½Ã ·Î±×ÀÎÇØ ÁÖ¼¼¿ä.' : '³×Æ®¿öÅ© »óÅÂ¸¦ È®ÀÎÇÑ µÚ ´Ù½Ã ½ÃµµÇØ ÁÖ¼¼¿ä.'}
+        globalErrorTitle={isRoleAdminAccessDenied ? 'ê´€ë¦¬ì ê´€ë¦¬ í™”ë©´ì— ì ‘ê·¼í•  ê¶Œí•œì´ ì—†ìŠµë‹ˆë‹¤.' : 'ê´€ë¦¬ì ê´€ë¦¬ ë°ì´í„°ë¥¼ ë¶ˆëŸ¬ì˜¤ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.'}
+        globalErrorDescription={isRoleAdminAccessDenied ? 'ROLE_ADMIN ê¶Œí•œì´ ìˆëŠ” ê´€ë¦¬ì ê³„ì •ìœ¼ë¡œ ë‹¤ì‹œ ë¡œê·¸ì¸í•´ ì£¼ì„¸ìš”.' : 'ë„¤íŠ¸ì›Œí¬ ìƒíƒœë¥¼ í™•ì¸í•œ ë’¤ ë‹¤ì‹œ ì‹œë„í•´ ì£¼ì„¸ìš”.'}
         retryAdminManagementQueries={retryAdminManagementQueries}
         isSummaryLoading={isSummaryLoading}
         isSummaryError={isSummaryError}
-        summaryStatusText={isSummaryLoading ? '¿ä¾àÀ» ºÒ·¯¿À´Â Áß' : (summaryApiError ? getAdminManagementAuthErrorMessage(summaryApiError) : '')}
+        summaryStatusText={isSummaryLoading ? 'ìš”ì•½ì„ ë¶ˆëŸ¬ì˜¤ëŠ” ì¤‘' : (summaryApiError ? getAdminManagementAuthErrorMessage(summaryApiError) : '')}
         totalAdmins={summary?.totalAdminCount ?? 0}
         activeAdminCount={summary?.activeAdminCount ?? 0}
         activeAclCount={summary?.activeAclCount ?? 0}
@@ -184,7 +185,7 @@ export default function AdminManagementPage() {
           />
         </aside>
       </section>
-      <AdminAuditLogsSection isAdminAuditLogsLoading={isAdminAuditLogsLoading} isAdminAuditLogsError={isAdminAuditLogsError} auditLogsErrorMessage={auditLogsErrorMessage} filteredLogs={filteredLogs} />
+      <AdminAuditLogsSection isAdminAuditLogsLoading={isAdminAuditLogsLoading} isAdminAuditLogsError={isAdminAuditLogsError} isAuditLogAccessDenied={isAuditLogAccessDenied} auditLogsErrorMessage={auditLogsErrorMessage} filteredLogs={filteredLogs} onRetry={refreshAuditLogQueries} />
       <CreateAdminDialog isOpen={isCreateAdminOpen} adminDraft={adminDraft} setAdminDraft={setAdminDraft} closeCreateAdminPage={closeCreateAdminPage} handleCreateAdminAccount={handleCreateAdminAccount} createAdminPending={createAdminMutation.isPending} createAdminErrorMessage={createAdminErrorMessage} isAccountMasterRoleRequired={isAccountMasterRoleRequired} />
     </section>
   );
