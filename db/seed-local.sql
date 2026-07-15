@@ -64,7 +64,7 @@ VALUES
 
   (gen_random_uuid(), 'testuser04', 'testuser04@test.com',
    '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
-   '테스트유저(전체구독)', 'USER', 'ACTIVE', 'PREMIUM', 0, NOW(), NOW()),
+   '테스트유저(환불대기)', 'USER', 'ACTIVE', 'PREMIUM', 0, NOW(), NOW()),
 
   (gen_random_uuid(), 'testuser05', 'testuser05@test.com',
    '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
@@ -179,7 +179,7 @@ BEGIN
 END $$;
 
 -- ────────────────────────────────────────────
--- 데모용 결제·환불 데이터 (testuser04 — 전체구독)
+-- 데모용 결제·환불 데이터 (testuser04 — 환불대기)
 -- ────────────────────────────────────────────
 DELETE FROM refunds   WHERE payment_id IN (SELECT payment_id FROM payments WHERE order_id LIKE 'DEMO-%');
 DELETE FROM payments  WHERE order_id LIKE 'DEMO-%';
@@ -214,7 +214,7 @@ BEGIN
     'DEMO-TOSS-KEY-001',
     'DEMO-IDEM-001',
     'MANUAL', 0, 29000, 'KRW', 'PAID', 'CARD',
-    '테스트유저(전체구독)', 'testuser04@example.com', gen_random_uuid()::text, 'interview',
+    '테스트유저(환불대기)', 'testuser04@example.com', gen_random_uuid()::text, 'interview',
     NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days', NOW());
 
   INSERT INTO refunds (payment_id, amount, reason, refund_status, created_at)

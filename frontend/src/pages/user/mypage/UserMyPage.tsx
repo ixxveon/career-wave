@@ -111,6 +111,7 @@ function UserMyPage() {
 
   const {
     subscribedItems,
+    refundPendingItems,
     isLoading: isSubscriptionLoading,
     isError: hasSubscriptionError,
   } = useSubscriptionStatus();
@@ -535,7 +536,11 @@ function UserMyPage() {
                           ? subscribedItems
                               .map((item) => `${item.title} 구독중`)
                               .join(" · ")
-                          : "미구독"}
+                          : refundPendingItems.length > 0
+                            ? refundPendingItems
+                                .map((item) => `${item.title} 환불 대기 중`)
+                                .join(" · ")
+                            : "미구독"}
                   </strong>
                 </div>
               )}
