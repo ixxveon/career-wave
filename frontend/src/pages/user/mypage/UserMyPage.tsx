@@ -112,6 +112,7 @@ function UserMyPage() {
 
   const {
     subscribedItems,
+    refundPendingItems,
     isLoading: isSubscriptionLoading,
     isError: hasSubscriptionError,
   } = useSubscriptionStatus();
@@ -306,7 +307,7 @@ function UserMyPage() {
       return;
     }
 
-    if (!isValidName(trimmedName)) {
+    if (trimmedName !== userProfile.name && !isValidName(trimmedName)) {
       setEditErrorMessage("이름은 2~20자의 한글 또는 영문으로 입력해 주세요.");
       isSavingProfileRef.current = false;
       return;
@@ -532,10 +533,11 @@ function UserMyPage() {
                       ? "구독 상태 확인 중..."
                       : hasSubscriptionError
                         ? "구독 상태 확인 불가"
-                        : subscribedItems.length > 0
-                          ? subscribedItems
-                              .map(formatSubscriptionStatusLabel)
-                              .join(" · ")
+                        : subscribedItems.length > 0 || refundPendingItems.length > 0
+                          ? [
+                              ...subscribedItems.map(formatSubscriptionStatusLabel),
+                              ...refundPendingItems.map((item) => `${item.title} 환불 대기 중`),
+                            ].join(" · ")
                           : "미구독"}
                   </strong>
                 </div>
