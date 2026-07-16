@@ -22,7 +22,7 @@ function formatDate(iso: string): string {
 const HistoryItem = memo(function HistoryItem({ item }: HistoryItemProps) {
   const navigate = useNavigate();
   const isResume = item.fileType === 'RESUME';
-  const isAnalyzing = item.status === 'ANALYZING';
+  const isCompleted = item.status === 'COMPLETED';
   const isFailed = item.status === 'FAILED';
 
   const title = isResume
@@ -69,12 +69,12 @@ const HistoryItem = memo(function HistoryItem({ item }: HistoryItemProps) {
       {!isFailed && (
         <button
           type="button"
-          className={`hi-btn${isAnalyzing ? ' hi-btn--disabled' : ''}`}
-          onClick={() => !isAnalyzing && navigate(`/documents/report?documentId=${item.documentId}`)}
-          disabled={isAnalyzing}
-          aria-label={isAnalyzing ? `${title} 분석 중` : `${title} 결과 보기`}
+          className={`hi-btn${isCompleted ? '' : ' hi-btn--disabled'}`}
+          onClick={() => isCompleted && navigate(`/documents/report?documentId=${item.documentId}`)}
+          disabled={!isCompleted}
+          aria-label={isCompleted ? `${title} 결과 보기` : `${title} 분석 중`}
         >
-          {isAnalyzing ? '분석 중…' : <>결과 보기 <ChevronRight size={14} aria-hidden="true" /></>}
+          {isCompleted ? <>결과 보기 <ChevronRight size={14} aria-hidden="true" /></> : '분석 중…'}
         </button>
       )}
     </div>
