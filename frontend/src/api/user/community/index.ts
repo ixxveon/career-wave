@@ -5,5 +5,6 @@ export {
   deleteCommunityBoard,
   deleteCommunityComment,
   getCommunityBoard,
+  getCommunityBoardForEdit,
   getCommunityComments,
 } from "./communityApi";

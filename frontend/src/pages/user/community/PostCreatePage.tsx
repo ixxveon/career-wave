@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Send } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  useCommunityBoard,
+  useCommunityBoardForEdit,
   useCreateCommunityBoard,
   useUpdateCommunityBoard,
 } from "@/hooks/user/community";
@@ -18,16 +18,23 @@ export default function PostCreatePage() {
 
   const boardId = postId ? Number(postId) : null;
 
-  const { data: board } = useCommunityBoard(boardId);
+  const { data: board } = useCommunityBoardForEdit(boardId);
 
   const updateBoardMutation = useUpdateCommunityBoard();
   const createBoardMutation = useCreateCommunityBoard();
   const [category, setCategory] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const lastLoadedBoardId = useRef<number | null>(null);
 
   useEffect(() => {
     if (!board) return;
+
+    if (lastLoadedBoardId.current === board.boardId) {
+      return;
+    }
+
+    lastLoadedBoardId.current = board.boardId;
 
     setCategory(board.category);
     setTitle(board.title);
