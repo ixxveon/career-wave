@@ -1,33 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileSearch, FileText, ScrollText } from 'lucide-react';
+import { FileSearch } from 'lucide-react';
 import HistoryItem from '../../../components/user/resume/HistoryItem';
 import { useResumeHistory } from '../../../hooks/user/resume/useResumeHistory';
-import type { FileType } from '../../../types/user/resume';
 import '@/styles/user/resume/ResumeHistoryPage.css';
 
-const TYPE_TABS: { label: string; value: FileType | 'ALL'; Icon: typeof FileText }[] = [
-  { label: '전체',       value: 'ALL',          Icon: FileSearch },
-  { label: '이력서',     value: 'RESUME',        Icon: FileText   },
-  { label: '자기소개서', value: 'COVER_LETTER',  Icon: ScrollText },
-];
-
 export default function ResumeHistoryPage() {
-  const [activeType, setActiveType] = useState<FileType | 'ALL'>('ALL');
   const [page, setPage] = useState(0);
 
   const { data, isLoading, isError, refetch } = useResumeHistory(page);
 
-  function handleTabChange(type: FileType | 'ALL'): void {
-    setActiveType(type);
-    setPage(0);
-  }
-
   const allItems = data?.items ?? [];
-  const filteredItems = activeType === 'ALL'
-    ? allItems
-    : allItems.filter(item => item.fileType === activeType);
-
   const totalPages = data?.totalPages ?? 0;
 
   function renderPagination(): React.ReactNode {
@@ -78,23 +61,6 @@ export default function ResumeHistoryPage() {
 
       {/* 카드 영역 */}
       <div className="rh-card">
-        {/* 필터 탭 */}
-        <div className="rh-tabs" role="tablist" aria-label="서류 유형 필터">
-          {TYPE_TABS.map(({ label, value, Icon }) => (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              aria-selected={activeType === value}
-              className={`rh-tab${activeType === value ? ' rh-tab--active' : ''}`}
-              onClick={() => handleTabChange(value)}
-            >
-              <Icon size={13} aria-hidden="true" />
-              {label}
-            </button>
-          ))}
-        </div>
-
         {/* 로딩 */}
         {isLoading && (
           <div role="status" aria-label="불러오는 중">
@@ -129,9 +95,9 @@ export default function ResumeHistoryPage() {
               </div>
             ) : (
               <>
-                <p className="rh-count">총 {data?.totalItems ?? filteredItems.length}건</p>
+                <p className="rh-count">총 {data?.totalItems ?? allItems.length}건</p>
                 <ul className="rh-list" aria-label="분석 이력 목록">
-                  {filteredItems.map((item) => (
+                  {allItems.map((item) => (
                     <li key={item.documentId}>
                       <HistoryItem item={item} />
                     </li>
