@@ -140,6 +140,7 @@ public class AdminPaymentServiceImpl implements AdminPaymentService {
     // 별도 반영 없이 자동으로 정상 집계된다.
     // 정상 결제 게이트웨이(Toss)를 우회하는 민감한 작업이라 감사 로그를 남긴다.
     @Override
+    @Transactional
     public RefundDTO.ResponseApprove manualConfirmRefund(UUID paymentId, Long adminId, String adminRole, String ipAddress) {
         validateMasterRole(adminRole);
         RefundDTO.ResponseApprove result = refundApprovalTxService.finalizeManualApproval(paymentId, adminId);
