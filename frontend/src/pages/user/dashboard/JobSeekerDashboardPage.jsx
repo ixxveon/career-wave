@@ -306,9 +306,11 @@ function JobSeekerDashboardPage() {
                       {job.dday && <em className="cw-home-job__dday">{job.dday}</em>}
                     </p>
                     <div className="cw-home-job__tags">
-                      {job.tags.length > 0
-                        ? job.tags.map((tag) => <span key={tag}>{tag}</span>)
-                        : <span>{job.source}</span>}
+                      {job.tags.length > 0 ? (
+                        job.tags.map((tag) => <span key={tag}>{tag}</span>)
+                      ) : (
+                        <span className="cw-home-job__tags-empty">상세 스킬 정보 없음</span>
+                      )}
                     </div>
                     <p className="cw-home-job__location">
                       <MapPin size={12} />
