@@ -80,7 +80,6 @@ type CommunityPost = {
   reportCount: number;
   content: string;
 };
-const DEFAULT_AUTHOR_NAME = "커뮤니티 회원";
 
 function toPost(board: CommunityBoard): CommunityPost {
   return {
@@ -452,8 +451,9 @@ export default function PostDetailPage() {
   const { mutate: deleteComment } = useDeleteCommunityComment(
     validBoardId ?? 0,
   );
-  const { mutate: updateComment, isPending: isUpdatingComment } =
-    useUpdateCommunityComment(validBoardId ?? 0);
+const { mutate: updateComment } = useUpdateCommunityComment(
+  validBoardId ?? 0,
+);
   const post = useMemo(() => {
     if (!board) return null;
 
