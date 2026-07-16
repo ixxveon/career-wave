@@ -16,49 +16,43 @@ import java.util.List;
 
 public interface CommunityControllerDocs {
 
-    ResponseEntity<ApiResponse<PaginationResponse<BoardDTO.Response>>> getBoards(
-            @RequestParam(required = false) String category,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    );
+        ResponseEntity<ApiResponse<PaginationResponse<BoardDTO.Response>>> getBoards(
+                        @RequestParam(required = false) String category,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size);
 
-    ResponseEntity<ApiResponse<BoardDTO.Response>> getBoard(
-            @PathVariable Long boardId
-    );
+        ResponseEntity<ApiResponse<BoardDTO.Response>> getBoard(
+                        @PathVariable Long boardId);
 
-    ResponseEntity<ApiResponse<BoardDTO.Response>> createBoard(
-            @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody BoardDTO.CreateRequest request
-    );
+        ResponseEntity<ApiResponse<BoardDTO.Response>> getBoardForEdit(
+                        @PathVariable Long boardId);
 
-    ResponseEntity<ApiResponse<BoardDTO.Response>> updateBoard(
-            @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable Long boardId,
-            @RequestBody BoardDTO.UpdateRequest request
-    );
+        ResponseEntity<ApiResponse<BoardDTO.Response>> createBoard(
+                        @AuthenticationPrincipal AuthPrincipal principal,
+                        @RequestBody BoardDTO.CreateRequest request);
 
-    ResponseEntity<ApiResponse<Void>> deleteBoard(
-            @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable Long boardId
-    );
+        ResponseEntity<ApiResponse<BoardDTO.Response>> updateBoard(
+                        @AuthenticationPrincipal AuthPrincipal principal,
+                        @PathVariable Long boardId,
+                        @RequestBody BoardDTO.UpdateRequest request);
 
-    ResponseEntity<ApiResponse<List<CommentDTO.Response>>> getComments(
-            @PathVariable Long boardId
-    );
+        ResponseEntity<ApiResponse<Void>> deleteBoard(
+                        @AuthenticationPrincipal AuthPrincipal principal,
+                        @PathVariable Long boardId);
 
-    ResponseEntity<ApiResponse<CommentDTO.Response>> createComment(
-            @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable Long boardId,
-            @RequestBody CommentDTO.CreateRequest request
-    );
+        ResponseEntity<ApiResponse<List<CommentDTO.Response>>> getComments(
+                        @PathVariable Long boardId);
 
-    ResponseEntity<ApiResponse<Void>> deleteComment(
-            @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable Long commentId
-    );
+        ResponseEntity<ApiResponse<CommentDTO.Response>> createComment(
+                        @AuthenticationPrincipal AuthPrincipal principal,
+                        @PathVariable Long boardId,
+                        @RequestBody CommentDTO.CreateRequest request);
 
-    ResponseEntity<ApiResponse<Void>> createReport(
-            @AuthenticationPrincipal AuthPrincipal principal,
-            @RequestBody ReportDTO.CreateRequest request
-    );
+        ResponseEntity<ApiResponse<Void>> deleteComment(
+                        @AuthenticationPrincipal AuthPrincipal principal,
+                        @PathVariable Long commentId);
+
+        ResponseEntity<ApiResponse<Void>> createReport(
+                        @AuthenticationPrincipal AuthPrincipal principal,
+                        @RequestBody ReportDTO.CreateRequest request);
 }

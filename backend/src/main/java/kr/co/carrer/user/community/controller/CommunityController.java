@@ -37,8 +37,7 @@ public class CommunityController implements CommunityControllerDocs {
     public ResponseEntity<ApiResponse<PaginationResponse<BoardDTO.Response>>> getBoards(
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
+            @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(ApiResponse.ok(boardService.getBoards(category, page, size)));
     }
 
@@ -49,11 +48,18 @@ public class CommunityController implements CommunityControllerDocs {
     }
 
     @Override
+    @GetMapping("/boards/{boardId}/edit")
+    public ResponseEntity<ApiResponse<BoardDTO.Response>> getBoardForEdit(
+            @PathVariable Long boardId) {
+        return ResponseEntity.ok(
+                ApiResponse.ok(boardService.getBoardForEdit(boardId)));
+    }
+
+    @Override
     @PostMapping("/boards")
     public ResponseEntity<ApiResponse<BoardDTO.Response>> createBoard(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @Valid @RequestBody BoardDTO.CreateRequest request
-    ) {
+            @Valid @RequestBody BoardDTO.CreateRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(boardService.createBoard(getMemberId(principal), request)));
     }
 
@@ -62,8 +68,7 @@ public class CommunityController implements CommunityControllerDocs {
     public ResponseEntity<ApiResponse<BoardDTO.Response>> updateBoard(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long boardId,
-            @Valid @RequestBody BoardDTO.UpdateRequest request
-    ) {
+            @Valid @RequestBody BoardDTO.UpdateRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(boardService.updateBoard(getMemberId(principal), boardId, request)));
     }
 
@@ -71,8 +76,7 @@ public class CommunityController implements CommunityControllerDocs {
     @DeleteMapping("/boards/{boardId}")
     public ResponseEntity<ApiResponse<Void>> deleteBoard(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable Long boardId
-    ) {
+            @PathVariable Long boardId) {
         boardService.deleteBoard(getMemberId(principal), boardId);
         return ResponseEntity.ok(ApiResponse.ok((Void) null));
     }
@@ -88,17 +92,16 @@ public class CommunityController implements CommunityControllerDocs {
     public ResponseEntity<ApiResponse<CommentDTO.Response>> createComment(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long boardId,
-            @Valid @RequestBody CommentDTO.CreateRequest request
-    ) {
-        return ResponseEntity.ok(ApiResponse.ok(commentService.createComment(getMemberId(principal), boardId, request)));
+            @Valid @RequestBody CommentDTO.CreateRequest request) {
+        return ResponseEntity
+                .ok(ApiResponse.ok(commentService.createComment(getMemberId(principal), boardId, request)));
     }
 
     @Override
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponse<Void>> deleteComment(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable Long commentId
-    ) {
+            @PathVariable Long commentId) {
         commentService.deleteComment(getMemberId(principal), commentId);
         return ResponseEntity.ok(ApiResponse.ok((Void) null));
     }
@@ -107,8 +110,7 @@ public class CommunityController implements CommunityControllerDocs {
     @PostMapping("/reports")
     public ResponseEntity<ApiResponse<Void>> createReport(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @Valid @RequestBody ReportDTO.CreateRequest request
-    ) {
+            @Valid @RequestBody ReportDTO.CreateRequest request) {
         reportService.createReport(getMemberId(principal), request);
         return ResponseEntity.ok(ApiResponse.ok((Void) null));
     }

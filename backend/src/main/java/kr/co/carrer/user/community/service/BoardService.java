@@ -11,6 +11,8 @@ public interface BoardService {
 
     BoardDTO.Response getBoard(Long boardId);
 
+    BoardDTO.Response getBoardForEdit(Long boardId);
+
     BoardDTO.Response createBoard(UUID memberId, BoardDTO.CreateRequest request);
 
     BoardDTO.Response updateBoard(UUID memberId, Long boardId, BoardDTO.UpdateRequest request);

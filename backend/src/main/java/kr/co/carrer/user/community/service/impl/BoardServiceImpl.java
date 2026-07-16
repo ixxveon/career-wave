@@ -64,6 +64,16 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public BoardDTO.Response getBoardForEdit(Long boardId) {
+        Board board = boardRepository.findById(boardId)
+                .filter(item -> !item.getBlind())
+                .orElseThrow(() -> new CustomException(CommunityErrorCode.BOARD_NOT_FOUND));
+
+        return BoardDTO.Response.from(board);
+    }
+
+    @Override
     @Transactional
     public BoardDTO.Response createBoard(UUID memberId, BoardDTO.CreateRequest request) {
         Board board = new Board(
