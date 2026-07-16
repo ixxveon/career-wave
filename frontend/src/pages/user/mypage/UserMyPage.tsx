@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import MyPageSidebar from "../../../components/user/mypage/MyPageSidebar";
 import {
   UserRound,
@@ -600,6 +601,14 @@ function UserMyPage() {
           </p>
         </section>
         )}
+
+        <p className="cw-withdrawal-notice">
+          회원 탈퇴를 원하시면{" "}
+          <Link to="/support/inquiry/create" className="cw-withdrawal-notice__link">
+            1:1 문의
+          </Link>
+          를 통해 요청해 주세요.
+        </p>
       </section>
 
       {isEditModalOpen && (

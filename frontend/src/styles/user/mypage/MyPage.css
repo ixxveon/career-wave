@@ -3324,7 +3324,26 @@ Empty UI
   font-weight: 600;
 }
 
-/* 
+.cw-withdrawal-notice {
+  margin: 4px 2px 0;
+  color: #adb5bd;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: right;
+}
+
+.cw-withdrawal-notice__link {
+  color: #868e96;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.cw-withdrawal-notice__link:hover {
+  color: #495057;
+}
+
+/*
 스크랩 공고 페이지
 */
 
