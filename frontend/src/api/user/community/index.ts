@@ -7,4 +7,5 @@ export {
   getCommunityBoard,
   getCommunityBoardForEdit,
   getCommunityComments,
+  updateCommunityBoard,
 } from "./communityApi";
