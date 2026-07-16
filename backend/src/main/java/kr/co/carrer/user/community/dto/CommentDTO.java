@@ -11,32 +11,35 @@ public class CommentDTO {
     public record CreateRequest(
             Long parentId,
 
-            @NotBlank
-            String content
-    ) {
+            @NotBlank String content) {
+    }
+
+    public record UpdateRequest(
+
+            @NotBlank String content) {
     }
 
     public record Response(
             Long commentId,
             Long boardId,
             UUID memberId,
+            String memberName,
             Long parentId,
             String content,
             Boolean blind,
             ZonedDateTime createdAt,
-            ZonedDateTime updatedAt
-    ) {
-        public static Response from(Comment comment) {
+            ZonedDateTime updatedAt) {
+        public static Response from(Comment comment, String memberName) {
             return new Response(
                     comment.getCommentId(),
                     comment.getBoardId(),
                     comment.getMemberId(),
+                    memberName,
                     comment.getParentId(),
                     comment.getContent(),
                     comment.getBlind(),
                     comment.getCreatedAt(),
-                    comment.getUpdatedAt()
-            );
+                    comment.getUpdatedAt());
         }
     }
 }
