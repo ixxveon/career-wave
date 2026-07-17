@@ -65,10 +65,14 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     @Transactional(readOnly = true)
-    public BoardDTO.Response getBoardForEdit(Long boardId) {
+    public BoardDTO.Response getBoardForEdit(UUID memberId, Long boardId) {
         Board board = boardRepository.findById(boardId)
                 .filter(item -> !item.getBlind())
                 .orElseThrow(() -> new CustomException(CommunityErrorCode.BOARD_NOT_FOUND));
+
+        if (!board.getMemberId().equals(memberId)) {
+            throw new CustomException(CommunityErrorCode.COMMUNITY_ACCESS_DENIED);
+        }
 
         return BoardDTO.Response.from(board);
     }
