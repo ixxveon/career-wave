@@ -44,11 +44,12 @@ public class BoardDTO {
             String title,
             String content,
             Integer viewCount,
+            Long reportCount,
             Boolean blind,
             ZonedDateTime createdAt,
             ZonedDateTime updatedAt
     ) {
-        public static Response from(Board board) {
+        public static Response from(Board board, Long reportCount) {
             return new Response(
                     board.getBoardId(),
                     board.getMemberId(),
@@ -56,6 +57,7 @@ public class BoardDTO {
                     board.getTitle(),
                     board.getContent(),
                     board.getViewCount(),
+                    reportCount,
                     board.getBlind(),
                     board.getCreatedAt(),
                     board.getUpdatedAt()

@@ -6,23 +6,30 @@ import kr.co.carrer.user.community.dto.BoardDTO;
 import kr.co.carrer.user.community.entity.Board;
 import kr.co.carrer.user.community.exception.CommunityErrorCode;
 import kr.co.carrer.user.community.repository.BoardRepository;
+import kr.co.carrer.user.community.repository.CommunityReportRepository;
 import kr.co.carrer.user.community.service.BoardService;
+import kr.co.carrer.user.community.type.ReportTargetType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class BoardServiceImpl implements BoardService {
 
     private final BoardRepository boardRepository;
+    private final CommunityReportRepository reportRepository;
 
-    public BoardServiceImpl(BoardRepository boardRepository) {
+    public BoardServiceImpl(BoardRepository boardRepository, CommunityReportRepository reportRepository) {
         this.boardRepository = boardRepository;
+        this.reportRepository = reportRepository;
     }
 
     @Override
@@ -39,9 +46,13 @@ public class BoardServiceImpl implements BoardService {
                 ? boardRepository.findByBlindFalse(pageRequest)
                 : boardRepository.findByCategoryAndBlindFalse(category, pageRequest);
 
-        List<BoardDTO.Response> boards = boardPage.getContent()
-                .stream()
-                .map(BoardDTO.Response::from)
+        List<Board> boardList = boardPage.getContent();
+        Map<Long, Long> reportCounts = getReportCounts(
+                boardList.stream().map(Board::getBoardId).toList());
+
+        List<BoardDTO.Response> boards = boardList.stream()
+                .map(board -> BoardDTO.Response.from(
+                        board, reportCounts.getOrDefault(board.getBoardId(), 0L)))
                 .toList();
 
         return PaginationResponse.of(boards, page, size, boardPage.getTotalElements());
@@ -60,7 +71,10 @@ public class BoardServiceImpl implements BoardService {
                 .filter(item -> !item.getBlind())
                 .orElseThrow(() -> new CustomException(CommunityErrorCode.BOARD_NOT_FOUND));
 
-        return BoardDTO.Response.from(updatedBoard);
+        long reportCount = reportRepository.countByTargetTypeAndTargetId(
+                ReportTargetType.BOARD, updatedBoard.getBoardId());
+
+        return BoardDTO.Response.from(updatedBoard, reportCount);
     }
 
     @Override
@@ -72,7 +86,7 @@ public class BoardServiceImpl implements BoardService {
                 request.title(),
                 request.content());
 
-        return BoardDTO.Response.from(boardRepository.save(board));
+        return BoardDTO.Response.from(boardRepository.save(board), 0L);
     }
 
     @Override
@@ -91,7 +105,10 @@ public class BoardServiceImpl implements BoardService {
                 request.title(),
                 request.content());
 
-        return BoardDTO.Response.from(board);
+        long reportCount = reportRepository.countByTargetTypeAndTargetId(
+                ReportTargetType.BOARD, board.getBoardId());
+
+        return BoardDTO.Response.from(board, reportCount);
     }
 
     @Override
@@ -106,5 +123,15 @@ public class BoardServiceImpl implements BoardService {
         }
 
         board.blind();
+    }
+
+    private Map<Long, Long> getReportCounts(Collection<Long> boardIds) {
+        if (boardIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return reportRepository.countGroupedByTargetId(ReportTargetType.BOARD, boardIds)
+                .stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
     }
 }
