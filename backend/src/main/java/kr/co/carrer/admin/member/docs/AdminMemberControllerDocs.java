@@ -63,6 +63,14 @@ public interface AdminMemberControllerDocs {
         HttpServletRequest httpServletRequest
     );
 
+    @Operation(summary = "회원 블랙리스트(영구정지) 해제 — MASTER 권한 전용")
+    ResponseEntity<ApiResponse<MemberDTO.ResponseUnsuspend>> unbanMember(
+        @Parameter(description = "회원 UUID") @PathVariable UUID memberId,
+        @RequestBody MemberDTO.RequestUnsuspend request,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
+        HttpServletRequest httpServletRequest
+    );
+
     @Operation(summary = "기업 회원 목록 조회")
     ResponseEntity<ApiResponse<HrManagerDTO.ResponsePage>> getHrManagers(
         @Parameter(description = "기업 회원 상태 (PENDING / ACTIVE / REMOVED)") @RequestParam(required = false) String hrStatus,

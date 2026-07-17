@@ -11,7 +11,7 @@ import {
   type MemberCounts,
 } from '../../../api/admin/memberApi';
 import { adminSession } from '../../../api/admin/adminSession';
-import { MemberDetailModal, ConfirmViewModal, SuspendModal, UnsuspendModal } from './MemberModals';
+import { MemberDetailModal, ConfirmViewModal, SuspendModal, UnsuspendModal, UnbanModal } from './MemberModals';
 
 const memberStatusLabel: Record<MemberStatus, string> = {
   ACTIVE: '정상', SUSPENDED: '정지', BANNED: '영구정지', LOCKED: '잠금', WITHDRAWN: '탈퇴',
@@ -38,6 +38,7 @@ export default function MemberTab() {
   const [selectedMember, setSelectedMember] = useState<MemberDetailItem | null>(null);
   const [suspendTarget, setSuspendTarget] = useState<MemberItem | null>(null);
   const [unsuspendTarget, setUnsuspendTarget] = useState<MemberItem | null>(null);
+  const [unbanTarget, setUnbanTarget] = useState<MemberItem | null>(null);
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
   const [confirmViewTarget, setConfirmViewTarget] = useState<string | null>(null);
   const [memberCounts, setMemberCounts] = useState<MemberCounts | null>(null);
@@ -226,9 +227,13 @@ export default function MemberTab() {
                   <td>
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
                       <button className="tableBtn" onClick={() => openMemberDetail(m.memberId)}>상세보기</button>
-                      {m.memberStatus === MEMBER_STATUS.SUSPENDED ? (
+                      {m.memberStatus === MEMBER_STATUS.SUSPENDED && (
                         <button className="tableBtn tableBtn--success" onClick={() => { setSelectedMember(null); setUnsuspendTarget(m); }}>정지해제</button>
-                      ) : (
+                      )}
+                      {m.memberStatus === MEMBER_STATUS.BANNED && (
+                        <button className="tableBtn tableBtn--success" onClick={() => { setSelectedMember(null); setUnbanTarget(m); }}>블랙리스트해제</button>
+                      )}
+                      {m.memberStatus !== MEMBER_STATUS.SUSPENDED && m.memberStatus !== MEMBER_STATUS.BANNED && (
                         <button className="tableBtn tableBtn--danger" onClick={() => { setSelectedMember(null); setSuspendTarget(m); }} disabled={m.memberStatus === MEMBER_STATUS.WITHDRAWN}>정지처리</button>
                       )}
                     </div>
@@ -252,6 +257,7 @@ export default function MemberTab() {
           onClose={() => setSelectedMember(null)}
           onSuspend={(m) => { setSelectedMember(null); setSuspendTarget(m); }}
           onUnsuspend={(m) => { setSelectedMember(null); setUnsuspendTarget(m); }}
+          onUnban={(m) => { setSelectedMember(null); setUnbanTarget(m); }}
         />
       )}
       {confirmViewTarget && (
@@ -266,6 +272,9 @@ export default function MemberTab() {
       )}
       {unsuspendTarget && (
         <UnsuspendModal target={unsuspendTarget} onClose={() => setUnsuspendTarget(null)} onSuccess={refreshList} />
+      )}
+      {unbanTarget && (
+        <UnbanModal target={unbanTarget} onClose={() => setUnbanTarget(null)} onSuccess={refreshList} />
       )}
     </div>
   );

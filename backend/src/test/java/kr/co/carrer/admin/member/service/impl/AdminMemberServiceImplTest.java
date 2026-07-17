@@ -291,6 +291,83 @@ class AdminMemberServiceImplTest {
     }
 
     @Nested
+    @DisplayName("블랙리스트 해제 - unbanMember()")
+    class UnbanMember {
+
+        @Test
+        @DisplayName("MASTER 권한 - BANNED 회원 해제 성공")
+        void success() {
+            UUID memberId = UUID.randomUUID();
+            Member member = createBannedMember(memberId);
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+            given(auditLogRepository.save(any())).willAnswer(i -> i.getArgument(0));
+
+            MemberDTO.RequestUnsuspend request = new MemberDTO.RequestUnsuspend("관리자 오인으로 인한 영구정지 해제입니다.");
+
+            MemberDTO.ResponseUnsuspend result = adminMemberService.unbanMember(memberId, request, 1L, "MASTER", "127.0.0.1");
+
+            assertThat(result.memberStatus()).isEqualTo(MemberStatus.ACTIVE);
+            verify(auditLogRepository).save(any());
+        }
+
+        @Test
+        @DisplayName("MASTER가 아닌 권한 시 UNBAN_FORBIDDEN 예외")
+        void notMaster_throws() {
+            UUID memberId = UUID.randomUUID();
+            MemberDTO.RequestUnsuspend request = new MemberDTO.RequestUnsuspend("관리자 오인으로 인한 영구정지 해제입니다.");
+
+            assertThatThrownBy(() -> adminMemberService.unbanMember(memberId, request, 1L, "CS", "127.0.0.1"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminMemberErrorCode.UNBAN_FORBIDDEN);
+        }
+
+        @Test
+        @DisplayName("BANNED 상태가 아닌 회원 해제 시 NOT_BANNED 예외")
+        void notBanned_throws() {
+            UUID memberId = UUID.randomUUID();
+            Member member = createActiveMember(memberId);
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+
+            MemberDTO.RequestUnsuspend request = new MemberDTO.RequestUnsuspend("관리자 오인으로 인한 영구정지 해제입니다.");
+
+            assertThatThrownBy(() -> adminMemberService.unbanMember(memberId, request, 1L, "MASTER", "127.0.0.1"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminMemberErrorCode.NOT_BANNED);
+        }
+
+        @Test
+        @DisplayName("해제 사유 10자 미만 시 REASON_TOO_SHORT 예외")
+        void reason_tooShort_throws() {
+            UUID memberId = UUID.randomUUID();
+            Member member = createBannedMember(memberId);
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+
+            MemberDTO.RequestUnsuspend request = new MemberDTO.RequestUnsuspend("짧음");
+
+            assertThatThrownBy(() -> adminMemberService.unbanMember(memberId, request, 1L, "MASTER", "127.0.0.1"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminMemberErrorCode.REASON_TOO_SHORT);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 회원 해제 시 MEMBER_NOT_FOUND 예외")
+        void memberNotFound_throws() {
+            UUID memberId = UUID.randomUUID();
+            given(memberRepository.findById(memberId)).willReturn(Optional.empty());
+
+            MemberDTO.RequestUnsuspend request = new MemberDTO.RequestUnsuspend("관리자 오인으로 인한 영구정지 해제입니다.");
+
+            assertThatThrownBy(() -> adminMemberService.unbanMember(memberId, request, 1L, "MASTER", "127.0.0.1"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminMemberErrorCode.MEMBER_NOT_FOUND);
+        }
+    }
+
+    @Nested
     @DisplayName("기업 회원 목록 조회 - getHrManagers()")
     class GetHrManagers {
 

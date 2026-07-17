@@ -102,6 +102,19 @@ public class AdminMemberController implements AdminMemberControllerDocs {
         ));
     }
 
+    @PatchMapping("/members/{memberId}/unban")
+    public ResponseEntity<ApiResponse<MemberDTO.ResponseUnsuspend>> unbanMember(
+        @PathVariable UUID memberId,
+        @RequestBody MemberDTO.RequestUnsuspend request,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
+        HttpServletRequest httpServletRequest
+    ) {
+        Long adminId = parseAdminId(principal);
+        return ResponseEntity.ok(ApiResponse.ok(
+            adminMemberService.unbanMember(memberId, request, adminId, parseAdminRole(principal), AdminAuditClientIpExtractor.extract(httpServletRequest))
+        ));
+    }
+
     @GetMapping("/hr-managers")
     public ResponseEntity<ApiResponse<HrManagerDTO.ResponsePage>> getHrManagers(
         @RequestParam(required = false) String hrStatus,

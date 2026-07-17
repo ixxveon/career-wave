@@ -29,9 +29,10 @@ interface MemberDetailModalProps {
   onClose: () => void;
   onSuspend: (member: MemberDetailItem) => void;
   onUnsuspend: (member: MemberDetailItem) => void;
+  onUnban: (member: MemberDetailItem) => void;
 }
 
-export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend }: MemberDetailModalProps) {
+export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend, onUnban }: MemberDetailModalProps) {
   const [hrDetail, setHrDetail] = useState<HrManagerDetail | null>(null);
   const [hrDetailError, setHrDetailError] = useState('');
 
@@ -123,9 +124,13 @@ export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend }: M
         </div>
         <div className="modalAction">
           <button onClick={onClose}>닫기</button>
-          {member.memberStatus === MEMBER_STATUS.SUSPENDED ? (
+          {member.memberStatus === MEMBER_STATUS.SUSPENDED && (
             <button onClick={() => onUnsuspend(member)} style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}>정지 해제</button>
-          ) : (
+          )}
+          {member.memberStatus === MEMBER_STATUS.BANNED && (
+            <button onClick={() => onUnban(member)} style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}>블랙리스트 해제</button>
+          )}
+          {member.memberStatus !== MEMBER_STATUS.SUSPENDED && member.memberStatus !== MEMBER_STATUS.BANNED && (
             <button onClick={() => onSuspend(member)} disabled={member?.memberStatus === MEMBER_STATUS.WITHDRAWN}>활동 정지</button>
           )}
         </div>
@@ -333,6 +338,83 @@ export function UnsuspendModal({ target, onClose, onSuccess }: UnsuspendModalPro
             style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}
           >
             {loading ? '처리 중...' : '정지 해제'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface UnbanModalProps {
+  target: MemberItem;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export function UnbanModal({ target, onClose, onSuccess }: UnbanModalProps) {
+  const [reason, setReason] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleUnban = async () => {
+    if (reason.trim().length < 10) {
+      setError('해제 사유는 최소 10자 이상 입력해주세요.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await memberApi.unbanMember(target.memberId, { reason });
+      if (!res.data.success) throw new Error(res.data.message);
+      onClose();
+      onSuccess();
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message
+        : err instanceof Error ? err.message : '';
+      setError(msg || '블랙리스트 해제에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modalOverlay">
+      <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 480 }}>
+        <div className="modalHeader">
+          <div>
+            <h3>블랙리스트 해제</h3>
+            <p>{target.name} · {target.loginId}</p>
+          </div>
+          <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className="modalBody" style={{ display: 'grid', gap: 16, padding: '20px 24px' }}>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <span>해제 사유</span>
+            <textarea
+              placeholder="블랙리스트 해제 사유를 입력하세요 (최소 10자)"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              style={{
+                marginTop: 8, width: '100%', minHeight: 90, boxSizing: 'border-box',
+                border: '1px solid #d8e3ed', borderRadius: 10, padding: '10px 12px',
+                outline: 'none', resize: 'vertical', background: 'white',
+                fontSize: 14, fontFamily: 'inherit', color: '#10243f', lineHeight: 1.7,
+              }}
+            />
+          </div>
+          {error && (
+            <p style={{ gridColumn: '1 / -1', fontSize: 13, color: '#9a4444', margin: 0 }}>{error}</p>
+          )}
+        </div>
+        <div className="modalAction">
+          <button onClick={onClose} disabled={loading}>취소</button>
+          <button
+            onClick={handleUnban}
+            disabled={loading}
+            style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}
+          >
+            {loading ? '처리 중...' : '블랙리스트 해제'}
           </button>
         </div>
       </div>

@@ -180,6 +180,38 @@ public class AdminMemberServiceImpl implements AdminMemberService {
         return new MemberDTO.ResponseUnsuspend(member.getMemberId(), member.getMemberStatus());
     }
 
+    @Override
+    @Transactional
+    public MemberDTO.ResponseUnsuspend unbanMember(UUID memberId, MemberDTO.RequestUnsuspend dto, Long adminId, String adminRole, String ipAddress) {
+        validateMasterRole(adminRole);
+
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new CustomException(AdminMemberErrorCode.MEMBER_NOT_FOUND));
+
+        if (member.getMemberStatus() != MemberStatus.BANNED) {
+            throw new CustomException(AdminMemberErrorCode.NOT_BANNED);
+        }
+
+        String reason = dto.reason();
+        validateReason(reason);
+
+        member.unsuspend();
+
+        auditLogRepository.save(AuditLog.create(
+            adminId, AuditLogType.ADMIN_ACTIVITY, "UNBAN_MEMBER",
+            TARGET_TYPE_MEMBER, memberId.toString(), ipAddress,
+            AuditLogSeverity.WARN, reason
+        ));
+
+        return new MemberDTO.ResponseUnsuspend(member.getMemberId(), member.getMemberStatus());
+    }
+
+    private void validateMasterRole(String adminRole) {
+        if (!"MASTER".equals(adminRole)) {
+            throw new CustomException(AdminMemberErrorCode.UNBAN_FORBIDDEN);
+        }
+    }
+
     private LocalDate calculateSuspendEndDate(LocalDate from, SuspendDuration duration) {
         return switch (duration) {
             case THREE_DAYS  -> from.plusDays(3);
