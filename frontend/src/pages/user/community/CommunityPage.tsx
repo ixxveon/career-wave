@@ -342,9 +342,10 @@ export default function CommunityPage() {
 
         {!isChecking && !isLoggedIn && (
           <div className="cm-empty">
-            커뮤니티 게시글은 로그인 후 열람할 수 있습니다.
+            <p>커뮤니티 게시글은 로그인 후 열람할 수 있습니다.</p>
             <button
               type="button"
+              className="cm-empty__login-link"
               onClick={() =>
                 navigate(`/auth/login?next=${encodeURIComponent("/community")}`)
               }
