@@ -226,15 +226,15 @@ export default function MemberTab() {
                   <td><span className={`statusBadge ${memberStatusCls[m.memberStatus]}`}>{memberStatusLabel[m.memberStatus]}</span></td>
                   <td>
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                      <button className="tableBtn" onClick={() => openMemberDetail(m.memberId)}>상세보기</button>
+                      <button className="tableBtn memberActionBtn" onClick={() => openMemberDetail(m.memberId)}>상세보기</button>
                       {m.memberStatus === MEMBER_STATUS.SUSPENDED && (
-                        <button className="tableBtn tableBtn--success" onClick={() => { setSelectedMember(null); setUnsuspendTarget(m); }}>정지해제</button>
+                        <button className="tableBtn tableBtn--success memberActionBtn" onClick={() => { setSelectedMember(null); setUnsuspendTarget(m); }}>정지해제</button>
                       )}
                       {m.memberStatus === MEMBER_STATUS.BANNED && (
-                        <button className="tableBtn tableBtn--success" onClick={() => { setSelectedMember(null); setUnbanTarget(m); }}>영구정지 해제</button>
+                        <button className="tableBtn tableBtn--success memberActionBtn" onClick={() => { setSelectedMember(null); setUnbanTarget(m); }}>영구정지 해제</button>
                       )}
                       {m.memberStatus !== MEMBER_STATUS.SUSPENDED && m.memberStatus !== MEMBER_STATUS.BANNED && (
-                        <button className="tableBtn tableBtn--danger" onClick={() => { setSelectedMember(null); setSuspendTarget(m); }} disabled={m.memberStatus === MEMBER_STATUS.WITHDRAWN}>정지처리</button>
+                        <button className="tableBtn tableBtn--danger memberActionBtn" onClick={() => { setSelectedMember(null); setSuspendTarget(m); }} disabled={m.memberStatus === MEMBER_STATUS.WITHDRAWN}>정지처리</button>
                       )}
                     </div>
                   </td>

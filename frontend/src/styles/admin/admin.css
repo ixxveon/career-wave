@@ -1527,6 +1527,12 @@ button {
   background: #edf3f9;
 }
 
+/* 회원 관리 테이블 관리 버튼 — "영구정지 해제" 등 긴 라벨과 짧은 라벨("정지해제")이
+   같은 열에서 번갈아 나와도 열 너비가 흔들리지 않도록 최소 너비를 고정 */
+.memberActionBtn {
+  min-width: 108px;
+}
+
 .tableBtn--danger { border-color: #f0d0d0; color: #9a4545; background: #fff8f8; }
 .tableBtn--danger:hover { background: #fff0f0; border-color: #e8b8b8; }
 
