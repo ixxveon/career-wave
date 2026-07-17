@@ -11,6 +11,7 @@ import {
   type SuspendDuration,
   type HrManagerDetail,
 } from '../../../api/admin/memberApi';
+import { adminSession } from '../../../api/admin/adminSession';
 
 const WARN_THRESHOLD = 3;
 const SUSPEND_PERIODS: SuspendDuration[] = ['THREE_DAYS', 'SEVEN_DAYS', 'THIRTY_DAYS', 'PERMANENT'];
@@ -127,7 +128,7 @@ export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend, onU
           {member.memberStatus === MEMBER_STATUS.SUSPENDED && (
             <button onClick={() => onUnsuspend(member)} style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}>정지 해제</button>
           )}
-          {member.memberStatus === MEMBER_STATUS.BANNED && (
+          {member.memberStatus === MEMBER_STATUS.BANNED && adminSession.getRole() === 'MASTER' && (
             <button onClick={() => onUnban(member)} style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}>영구정지 해제</button>
           )}
           {member.memberStatus !== MEMBER_STATUS.SUSPENDED && member.memberStatus !== MEMBER_STATUS.BANNED && (

@@ -102,6 +102,7 @@ public class AdminMemberController implements AdminMemberControllerDocs {
         ));
     }
 
+    @PreAuthorize("hasRole('ADMIN') and principal.adminRole == 'MASTER'")
     @PatchMapping("/members/{memberId}/unban")
     public ResponseEntity<ApiResponse<MemberDTO.ResponseUnsuspend>> unbanMember(
         @PathVariable UUID memberId,

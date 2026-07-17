@@ -21,6 +21,7 @@ const memberStatusCls: Record<MemberStatus, string> = {
 };
 
 export default function MemberTab() {
+  const isMaster = adminSession.getRole() === 'MASTER';
   const [members, setMembers] = useState<MemberItem[]>([]);
   const [memberTotalItems, setMemberTotalItems] = useState(0);
   const [memberPage, setMemberPage] = useState(1);
@@ -230,7 +231,7 @@ export default function MemberTab() {
                       {m.memberStatus === MEMBER_STATUS.SUSPENDED && (
                         <button className="tableBtn tableBtn--success memberActionBtn" onClick={() => { setSelectedMember(null); setUnsuspendTarget(m); }}>정지해제</button>
                       )}
-                      {m.memberStatus === MEMBER_STATUS.BANNED && (
+                      {m.memberStatus === MEMBER_STATUS.BANNED && isMaster && (
                         <button className="tableBtn tableBtn--success memberActionBtn" onClick={() => { setSelectedMember(null); setUnbanTarget(m); }}>영구정지 해제</button>
                       )}
                       {m.memberStatus !== MEMBER_STATUS.SUSPENDED && m.memberStatus !== MEMBER_STATUS.BANNED && (
