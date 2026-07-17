@@ -34,4 +34,11 @@ public class ReportBoardRepository {
             .getResultList();
         return result.isEmpty() ? null : (String) result.get(0);
     }
+
+    public boolean isBlind(Long boardId) {
+        var result = em.createNativeQuery("SELECT is_blind FROM boards WHERE board_id = ?1")
+            .setParameter(1, boardId)
+            .getResultList();
+        return !result.isEmpty() && Boolean.TRUE.equals(result.get(0));
+    }
 }

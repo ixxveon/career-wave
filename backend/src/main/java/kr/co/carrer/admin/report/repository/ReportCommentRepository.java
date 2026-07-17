@@ -27,4 +27,11 @@ public class ReportCommentRepository {
             .getResultList();
         return result.isEmpty() ? null : (String) result.get(0);
     }
+
+    public boolean isBlind(Long commentId) {
+        var result = em.createNativeQuery("SELECT is_blind FROM comments WHERE comment_id = ?1")
+            .setParameter(1, commentId)
+            .getResultList();
+        return !result.isEmpty() && Boolean.TRUE.equals(result.get(0));
+    }
 }

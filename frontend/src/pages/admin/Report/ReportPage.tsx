@@ -65,10 +65,13 @@ interface ReportWithAi extends ReportItem {
   aiSuggestion?: AiSuggestion | null;
   userAiReview?: UserAiReview;
   contentBody?: ReportDetail['contentBody'];
+  contentBlind?: ReportDetail['contentBlind'];
   targetId?: ReportDetail['targetId'];
   processedAt?: ReportDetail['processedAt'];
   processedBy?: ReportDetail['processedBy'];
   memberId?: ReportDetail['memberId'];
+  reporterLoginId?: ReportDetail['reporterLoginId'];
+  reportedLoginId?: ReportDetail['reportedLoginId'];
 }
 
 export default function ReportPage() {
@@ -252,8 +255,7 @@ export default function ReportPage() {
     try {
       const res = await reportApi.deleteContent(reportId);
       if (!res.data.success) throw new Error(res.data.message);
-      alert('삭제 처리되었습니다.');
-      setSelected(null);
+      setSelected((prev) => (prev && prev.reportId === reportId ? { ...prev, contentBlind: true } : prev));
     } catch (err: unknown) {
       const msg = (err as any).response?.data?.message ?? (err instanceof Error ? err.message : undefined);
       alert(msg || '삭제 처리에 실패했습니다.');
@@ -434,8 +436,8 @@ export default function ReportPage() {
                 </div>
                 <div><span>신고 사유</span><strong>{reasonLabel[selected.reason]}</strong></div>
                 <div><span>접수일</span><strong>{new Date(selected.createdAt).toLocaleDateString('ko-KR')}</strong></div>
-                <div><span>신고 대상</span><strong>{selected.reportedName}</strong></div>
-                <div><span>신고자</span><strong>{selected.reporterName}</strong></div>
+                <div><span>신고 대상</span><strong>{selected.reportedName} ({selected.reportedLoginId})</strong></div>
+                <div><span>신고자</span><strong>{selected.reporterName} ({selected.reporterLoginId})</strong></div>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <span>신고 대상 제목</span>
                   <strong style={{ display: 'block', marginTop: 8, lineHeight: 1.7, wordBreak: 'break-all' }}>
@@ -456,6 +458,16 @@ export default function ReportPage() {
                     <span className={`statusBadge ${statusCls[selected.reportStatus]}`}>{statusLabel[selected.reportStatus]}</span>
                   </strong>
                 </div>
+                {selected.contentBlind !== null && selected.contentBlind !== undefined && (
+                  <div>
+                    <span>콘텐츠 상태</span>
+                    <strong>
+                      <span className={`statusBadge ${selected.contentBlind ? 'blinded' : 'normal'}`}>
+                        {selected.contentBlind ? '삭제됨(블라인드)' : '정상 노출 중'}
+                      </span>
+                    </strong>
+                  </div>
+                )}
               </div>
 
               {/* 콘텐츠 AI 검토 */}
@@ -547,10 +559,12 @@ export default function ReportPage() {
               {selected.targetType !== 'MEMBER' ? (
                 <button
                   className="tableBtn tableBtn--danger"
-                  disabled={processing}
+                  disabled={processing || selected.contentBlind === true}
                   onClick={() => handleDeleteContent(selected.reportId)}
                 >
-                  {selected.targetType === 'COMMENT' ? '댓글 삭제' : '게시글 삭제'}
+                  {selected.contentBlind === true
+                    ? (selected.targetType === 'COMMENT' ? '댓글 삭제 완료' : '게시글 삭제 완료')
+                    : (selected.targetType === 'COMMENT' ? '댓글 삭제' : '게시글 삭제')}
                 </button>
               ) : (
                 <span />

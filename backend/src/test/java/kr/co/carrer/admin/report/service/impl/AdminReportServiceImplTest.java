@@ -116,6 +116,20 @@ class AdminReportServiceImplTest {
         }
 
         @Test
+        @DisplayName("BOARD 신고 상세 조회 - 이미 블라인드된 게시글이면 contentBlind=true 반환")
+        void board_blinded_returnsContentBlindTrue() {
+            ReportDetailDTO.ResponseDetail base = createBaseDetail(7L, TargetType.BOARD, 70L);
+            given(reportQueryRepository.findReportDetail(7L)).willReturn(Optional.of(base));
+            given(reportBoardRepository.findTitleById(70L)).willReturn("게시글 제목");
+            given(reportBoardRepository.findContentById(70L)).willReturn("게시글 본문");
+            given(reportBoardRepository.isBlind(70L)).willReturn(true);
+
+            ReportDetailDTO.ResponseDetail result = adminReportService.getReportDetail(7L, 1L);
+
+            assertThat(result.contentBlind()).isTrue();
+        }
+
+        @Test
         @DisplayName("COMMENT 신고 상세 조회 - contentBody만 채움, contentTitle null")
         void comment_success() {
             ReportDetailDTO.ResponseDetail base = createBaseDetail(2L, TargetType.COMMENT, 20L);
@@ -439,8 +453,8 @@ class AdminReportServiceImplTest {
         return new ReportDetailDTO.ResponseDetail(
             reportId, targetType, targetId,
             ReportReason.SPAM, ReportStatus.PENDING,
-            "신고자", "피신고자",
-            null, null, "{\"severity\":\"높음\",\"category\":\"SPAM\",\"suggestion\":\"테스트\"}",
+            "신고자", "reporter01", "피신고자", "victim01",
+            null, null, null, "{\"severity\":\"높음\",\"category\":\"SPAM\",\"suggestion\":\"테스트\"}",
             ZonedDateTime.now(), null, null,
             java.util.UUID.randomUUID()
         );
@@ -450,8 +464,8 @@ class AdminReportServiceImplTest {
         return new ReportDetailDTO.ResponseDetail(
             reportId, targetType, targetId,
             ReportReason.SPAM, ReportStatus.PENDING,
-            "신고자", "피신고자",
-            null, null, null,
+            "신고자", "reporter01", "피신고자", "victim01",
+            null, null, null, null,
             ZonedDateTime.now(), null, null,
             java.util.UUID.randomUUID()
         );
