@@ -16,7 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class BoardServiceImpl implements BoardService {
@@ -50,9 +53,20 @@ public class BoardServiceImpl implements BoardService {
                 ? boardRepository.findByBlindFalse(pageRequest)
                 : boardRepository.findByCategoryAndBlindFalse(category, pageRequest);
 
-        List<BoardDTO.Response> boards = boardPage.getContent()
+        List<Board> boardList = boardPage.getContent();
+
+        Set<UUID> memberIds = boardList.stream()
+                .map(Board::getMemberId)
+                .collect(Collectors.toSet());
+
+        Map<UUID, String> memberNames = memberRepository.findAllById(memberIds)
                 .stream()
-                .map(this::toResponse)
+                .collect(Collectors.toMap(Member::getMemberId, Member::getName));
+
+        List<BoardDTO.Response> boards = boardList.stream()
+                .map(board -> BoardDTO.Response.from(
+                        board,
+                        memberNames.getOrDefault(board.getMemberId(), UNKNOWN_MEMBER_NAME)))
                 .toList();
 
         return PaginationResponse.of(

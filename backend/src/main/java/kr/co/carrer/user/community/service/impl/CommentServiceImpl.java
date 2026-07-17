@@ -14,7 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class CommentServiceImpl implements CommentService {
@@ -41,9 +44,20 @@ public class CommentServiceImpl implements CommentService {
                 .filter(item -> !item.getBlind())
                 .orElseThrow(() -> new CustomException(CommunityErrorCode.BOARD_NOT_FOUND));
 
-        return commentRepository.findByBoardIdAndBlindFalseOrderByCreatedAtAsc(board.getBoardId())
+        List<Comment> comments = commentRepository.findByBoardIdAndBlindFalseOrderByCreatedAtAsc(board.getBoardId());
+
+        Set<UUID> memberIds = comments.stream()
+                .map(Comment::getMemberId)
+                .collect(Collectors.toSet());
+
+        Map<UUID, String> memberNames = memberRepository.findAllById(memberIds)
                 .stream()
-                .map(this::toResponse)
+                .collect(Collectors.toMap(Member::getMemberId, Member::getName));
+
+        return comments.stream()
+                .map(comment -> CommentDTO.Response.from(
+                        comment,
+                        memberNames.getOrDefault(comment.getMemberId(), UNKNOWN_MEMBER_NAME)))
                 .toList();
     }
 
