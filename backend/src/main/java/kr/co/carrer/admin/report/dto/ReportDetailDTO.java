@@ -55,6 +55,13 @@ public class ReportDetailDTO {
         @Schema(description = "처리 일시") ZonedDateTime processedAt
     ) {}
 
+    @Schema(description = "신고 대상 콘텐츠 삭제(블라인드) 응답")
+    public record ResponseContentDelete(
+        @Schema(description = "신고 ID") Long reportId,
+        @Schema(description = "삭제된 대상 유형", allowableValues = {"BOARD", "COMMENT"}) TargetType targetType,
+        @Schema(description = "삭제된 대상 ID") Long targetId
+    ) {}
+
     @Schema(description = "대상 회원 AI 검토 응답")
     public record ResponseMemberAiReview(
         @Schema(description = "누적 신고 건수") long reportCount,

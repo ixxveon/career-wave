@@ -275,4 +275,23 @@ public class AdminReportServiceImpl implements AdminReportService {
             report.getReportId(), report.getReportStatus(), report.getProcessedAt()
         );
     }
+
+    @Override
+    @Transactional
+    public ReportDetailDTO.ResponseContentDelete deleteContent(Long reportId, Long adminId) {
+        Report report = reportRepository.findById(reportId)
+            .orElseThrow(() -> new CustomException(AdminReportErrorCode.REPORT_NOT_FOUND));
+
+        if (report.getTargetType() == TargetType.BOARD) {
+            reportBoardRepository.blind(report.getTargetId());
+        } else if (report.getTargetType() == TargetType.COMMENT) {
+            reportCommentRepository.blind(report.getTargetId());
+        } else {
+            throw new CustomException(AdminReportErrorCode.INVALID_TARGET_TYPE);
+        }
+
+        return new ReportDetailDTO.ResponseContentDelete(
+            report.getReportId(), report.getTargetType(), report.getTargetId()
+        );
+    }
 }

@@ -20,5 +20,7 @@ public interface AdminReportService {
 
     ReportDetailDTO.ResponseProcess dismissReport(Long reportId, Long adminId);
 
+    ReportDetailDTO.ResponseContentDelete deleteContent(Long reportId, Long adminId);
+
     ReportDetailDTO.ResponseMemberAiReview getMemberAiReview(Long reportId, Long adminId);
 }

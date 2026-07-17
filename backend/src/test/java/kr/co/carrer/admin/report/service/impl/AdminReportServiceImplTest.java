@@ -329,6 +329,79 @@ class AdminReportServiceImplTest {
         }
     }
 
+    // ── deleteContent ─────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("게시글·댓글 삭제(블라인드) - deleteContent()")
+    class DeleteContent {
+
+        @Test
+        @DisplayName("BOARD 신고 콘텐츠 삭제 - boards.is_blind만 변경, report_status는 그대로")
+        void board_success() {
+            Report report = createPendingReport(1L, TargetType.BOARD, 10L);
+            given(reportRepository.findById(1L)).willReturn(Optional.of(report));
+
+            ReportDetailDTO.ResponseContentDelete result = adminReportService.deleteContent(1L, 99L);
+
+            assertThat(result.targetType()).isEqualTo(TargetType.BOARD);
+            assertThat(result.targetId()).isEqualTo(10L);
+            assertThat(report.getReportStatus()).isEqualTo(ReportStatus.PENDING);
+            verify(reportBoardRepository).blind(10L);
+            verifyNoInteractions(reportCommentRepository);
+        }
+
+        @Test
+        @DisplayName("COMMENT 신고 콘텐츠 삭제 - comments.is_blind만 변경")
+        void comment_success() {
+            Report report = createPendingReport(2L, TargetType.COMMENT, 20L);
+            given(reportRepository.findById(2L)).willReturn(Optional.of(report));
+
+            ReportDetailDTO.ResponseContentDelete result = adminReportService.deleteContent(2L, 99L);
+
+            assertThat(result.targetType()).isEqualTo(TargetType.COMMENT);
+            verify(reportCommentRepository).blind(20L);
+            verifyNoInteractions(reportBoardRepository);
+        }
+
+        @Test
+        @DisplayName("이미 BLINDED/DISMISSED 처리된 신고여도 콘텐츠 삭제는 가능 — ALREADY_PROCESSED 가드 없음")
+        void alreadyProcessedReport_stillDeletesContent() {
+            Report report = createProcessedReport(3L, ReportStatus.DISMISSED);
+            given(reportRepository.findById(3L)).willReturn(Optional.of(report));
+
+            ReportDetailDTO.ResponseContentDelete result = adminReportService.deleteContent(3L, 99L);
+
+            assertThat(result.reportId()).isEqualTo(3L);
+            verify(reportBoardRepository).blind(1L);
+        }
+
+        @Test
+        @DisplayName("MEMBER 신고는 삭제 대상이 아니므로 INVALID_TARGET_TYPE 예외")
+        void memberTarget_throws() {
+            Report report = createPendingReport(4L, TargetType.MEMBER, 30L);
+            given(reportRepository.findById(4L)).willReturn(Optional.of(report));
+
+            assertThatThrownBy(() -> adminReportService.deleteContent(4L, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminReportErrorCode.INVALID_TARGET_TYPE);
+
+            verifyNoInteractions(reportBoardRepository);
+            verifyNoInteractions(reportCommentRepository);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 신고 삭제 시 REPORT_NOT_FOUND 예외")
+        void notFound_throws() {
+            given(reportRepository.findById(999L)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> adminReportService.deleteContent(999L, 1L))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminReportErrorCode.REPORT_NOT_FOUND);
+        }
+    }
+
     // ── 헬퍼 ──────────────────────────────────────────────────────────────────
 
     private Report createPendingReport(Long reportId, TargetType targetType, Long targetId) {

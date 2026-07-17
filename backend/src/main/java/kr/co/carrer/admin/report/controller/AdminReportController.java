@@ -90,6 +90,15 @@ public class AdminReportController implements AdminReportControllerDocs {
         return ResponseEntity.ok(ApiResponse.ok(adminReportService.dismissReport(reportId, adminId)));
     }
 
+    @DeleteMapping("/reports/{reportId}/content")
+    public ResponseEntity<ApiResponse<ReportDetailDTO.ResponseContentDelete>> deleteContent(
+        @PathVariable Long reportId,
+        @AuthenticationPrincipal AuthPrincipal principal
+    ) {
+        Long adminId = parseAdminId(principal);
+        return ResponseEntity.ok(ApiResponse.ok(adminReportService.deleteContent(reportId, adminId)));
+    }
+
     private Long parseAdminId(AuthPrincipal principal) {
         if (principal == null || principal.getId() == null || principal.getId().isBlank()) {
             throw new CustomException(ErrorCode.UNAUTHORIZED);

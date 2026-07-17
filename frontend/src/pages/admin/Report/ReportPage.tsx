@@ -244,6 +244,24 @@ export default function ReportPage() {
     }
   };
 
+  // ── 게시글·댓글 삭제(블라인드) — 신고 처리 상태와 무관하게 항상 가능 ──
+  const handleDeleteContent = async (reportId: number) => {
+    if (processing) return;
+    if (!window.confirm('신고 대상 게시글/댓글을 삭제(블라인드) 처리하시겠습니까?')) return;
+    setProcessing(true);
+    try {
+      const res = await reportApi.deleteContent(reportId);
+      if (!res.data.success) throw new Error(res.data.message);
+      alert('삭제 처리되었습니다.');
+      setSelected(null);
+    } catch (err: unknown) {
+      const msg = (err as any).response?.data?.message ?? (err instanceof Error ? err.message : undefined);
+      alert(msg || '삭제 처리에 실패했습니다.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   // ── 페이지네이션 ───────────────────────────────────────────
   const renderPagination = () => (
     <div className="pagination">
@@ -527,7 +545,11 @@ export default function ReportPage() {
             {/* Action */}
             <div className="modalAction" style={{ justifyContent: 'space-between' }}>
               {selected.targetType !== 'MEMBER' ? (
-                <button className="tableBtn tableBtn--danger" disabled>
+                <button
+                  className="tableBtn tableBtn--danger"
+                  disabled={processing}
+                  onClick={() => handleDeleteContent(selected.reportId)}
+                >
                   {selected.targetType === 'COMMENT' ? '댓글 삭제' : '게시글 삭제'}
                 </button>
               ) : (

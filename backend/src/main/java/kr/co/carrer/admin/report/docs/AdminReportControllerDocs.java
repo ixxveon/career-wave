@@ -53,4 +53,10 @@ public interface AdminReportControllerDocs {
         @Parameter(description = "신고 ID") @PathVariable Long reportId,
         @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
     );
+
+    @Operation(summary = "신고 대상 게시글·댓글 삭제(블라인드) — 신고 처리 상태와 무관하게 항상 가능")
+    ResponseEntity<ApiResponse<ReportDetailDTO.ResponseContentDelete>> deleteContent(
+        @Parameter(description = "신고 ID") @PathVariable Long reportId,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
+    );
 }
