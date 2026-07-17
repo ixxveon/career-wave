@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { AlertTriangle, Bot, Clock, EyeOff, Flag, UserX, X } from 'lucide-react';
 import { reportApi, REPORT_STATUS, type ReportItem, type ReportSummary, type ReportStatus, type TargetType, type ReportReason, type ReportDetail, type AiSuggestion } from '../../../api/admin/reportApi';
+import { memberApi, type SanctionType, type SuspendDuration } from '../../../api/admin/memberApi';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/Report.css';
 
 // ── 로컬 전용 타입 ───────────────────────────────────────────
 type ReportType     = TargetType;
 type Severity       = '낮음' | '중간' | '높음';
-type SuspendType    = 'WARNING' | 'SUSPEND' | 'BLACKLIST';
-type SuspendDuration = 'THREE_DAYS' | 'SEVEN_DAYS' | 'THIRTY_DAYS' | 'PERMANENT';
+type SuspendType    = SanctionType;
 type SanctionRec    = 'NONE' | 'WARNING' | 'SUSPEND' | 'BLACKLIST';
 
 const WARN_THRESHOLD = 3;
@@ -169,11 +169,31 @@ export default function ReportPage() {
     }
   };
 
-  const applySuspend = () => {
-    setSuspendTarget(null);
-    setSuspendReason('');
-    setSuspendType('WARNING');
-    setSuspendDuration('THREE_DAYS');
+  const applySuspend = async () => {
+    if (!suspendTarget?.memberId || processing) return;
+    if (suspendReason.trim().length < 10) return;
+
+    setProcessing(true);
+    try {
+      const res = await memberApi.sanctionMember(suspendTarget.memberId, {
+        sanctionType: suspendType,
+        duration: suspendType === 'SUSPEND' ? suspendDuration : undefined,
+        reason: suspendReason,
+      });
+      if (!res.data.success) throw new Error(res.data.message);
+
+      setSuspendTarget(null);
+      setSuspendReason('');
+      setSuspendType('WARNING');
+      setSuspendDuration('THREE_DAYS');
+      fetchSummary();
+      fetchReports(currentPage);
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
+      alert(msg || '제재 적용에 실패했습니다.');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   // ── 신고 상세 조회 ─────────────────────────────────────────
@@ -523,7 +543,8 @@ export default function ReportPage() {
                 )}
                 <button
                   className="tableBtn tableBtn--warn"
-                  disabled
+                  disabled={processing}
+                  onClick={() => setSuspendTarget(selected)}
                 >
                   회원 제재
                 </button>
@@ -567,7 +588,7 @@ export default function ReportPage() {
               <div className="sanctionDurationWrap">
                 <span>정지 기간</span>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {(['THREE_DAYS', 'SEVEN_DAYS', 'THIRTY_DAYS', 'PERMANENT'] as SuspendDuration[]).map((d) => (
+                  {(['THREE_DAYS', 'SEVEN_DAYS', 'THIRTY_DAYS'] as SuspendDuration[]).map((d) => (
                     <button
                       key={d}
                       onClick={() => setSuspendDuration(d)}
@@ -594,17 +615,17 @@ export default function ReportPage() {
                 onChange={(e) => setSuspendReason(e.target.value)}
                 rows={3}
               />
-              <p className="sanctionNote">해당 회원에게 안내됩니다.</p>
+              <p className="sanctionNote">해당 회원에게 안내됩니다. (최소 10자)</p>
             </div>
 
             <div className="modalAction">
-              <button className="tableBtn" onClick={() => setSuspendTarget(null)}>취소</button>
+              <button className="tableBtn" onClick={() => setSuspendTarget(null)} disabled={processing}>취소</button>
               <button
                 className="tableBtn tableBtn--danger"
                 onClick={applySuspend}
-                disabled={!suspendReason.trim()}
+                disabled={suspendReason.trim().length < 10 || processing}
               >
-                제재 적용
+                {processing ? '처리 중...' : '제재 적용'}
               </button>
             </div>
           </div>
