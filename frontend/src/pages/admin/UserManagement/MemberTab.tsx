@@ -231,7 +231,7 @@ export default function MemberTab() {
                         <button className="tableBtn tableBtn--success" onClick={() => { setSelectedMember(null); setUnsuspendTarget(m); }}>정지해제</button>
                       )}
                       {m.memberStatus === MEMBER_STATUS.BANNED && (
-                        <button className="tableBtn tableBtn--success" onClick={() => { setSelectedMember(null); setUnbanTarget(m); }}>블랙리스트해제</button>
+                        <button className="tableBtn tableBtn--success" onClick={() => { setSelectedMember(null); setUnbanTarget(m); }}>영구정지 해제</button>
                       )}
                       {m.memberStatus !== MEMBER_STATUS.SUSPENDED && m.memberStatus !== MEMBER_STATUS.BANNED && (
                         <button className="tableBtn tableBtn--danger" onClick={() => { setSelectedMember(null); setSuspendTarget(m); }} disabled={m.memberStatus === MEMBER_STATUS.WITHDRAWN}>정지처리</button>

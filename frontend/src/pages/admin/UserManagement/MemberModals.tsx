@@ -128,7 +128,7 @@ export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend, onU
             <button onClick={() => onUnsuspend(member)} style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}>정지 해제</button>
           )}
           {member.memberStatus === MEMBER_STATUS.BANNED && (
-            <button onClick={() => onUnban(member)} style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}>블랙리스트 해제</button>
+            <button onClick={() => onUnban(member)} style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}>영구정지 해제</button>
           )}
           {member.memberStatus !== MEMBER_STATUS.SUSPENDED && member.memberStatus !== MEMBER_STATUS.BANNED && (
             <button onClick={() => onSuspend(member)} disabled={member?.memberStatus === MEMBER_STATUS.WITHDRAWN}>활동 정지</button>
@@ -248,6 +248,12 @@ export function SuspendModal({ target, onClose, onSuccess }: SuspendModalProps) 
                 fontSize: 14, fontFamily: 'inherit', color: '#10243f', lineHeight: 1.7,
               }}
             />
+            <p style={{
+              margin: '4px 0 0', fontSize: 12, textAlign: 'right',
+              color: reason.trim().length < 10 ? '#9a4444' : '#7a8da4',
+            }}>
+              {reason.trim().length} / 10자 이상
+            </p>
           </div>
           {error && (
             <p style={{ gridColumn: '1 / -1', fontSize: 13, color: '#9a4444', margin: 0 }}>{error}</p>
@@ -325,6 +331,12 @@ export function UnsuspendModal({ target, onClose, onSuccess }: UnsuspendModalPro
                 fontSize: 14, fontFamily: 'inherit', color: '#10243f', lineHeight: 1.7,
               }}
             />
+            <p style={{
+              margin: '4px 0 0', fontSize: 12, textAlign: 'right',
+              color: reason.trim().length < 10 ? '#9a4444' : '#7a8da4',
+            }}>
+              {reason.trim().length} / 10자 이상
+            </p>
           </div>
           {error && (
             <p style={{ gridColumn: '1 / -1', fontSize: 13, color: '#9a4444', margin: 0 }}>{error}</p>
@@ -372,7 +384,7 @@ export function UnbanModal({ target, onClose, onSuccess }: UnbanModalProps) {
       const msg = axios.isAxiosError(err)
         ? (err.response?.data as { message?: string })?.message
         : err instanceof Error ? err.message : '';
-      setError(msg || '블랙리스트 해제에 실패했습니다.');
+      setError(msg || '영구정지 해제에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -383,7 +395,7 @@ export function UnbanModal({ target, onClose, onSuccess }: UnbanModalProps) {
       <div className="memberModal" onClick={(e) => e.stopPropagation()} style={{ width: 480 }}>
         <div className="modalHeader">
           <div>
-            <h3>블랙리스트 해제</h3>
+            <h3>영구정지 해제</h3>
             <p>{target.name} · {target.loginId}</p>
           </div>
           <button className="modalCloseBtn" aria-label="닫기" onClick={onClose}><X size={18} /></button>
@@ -392,7 +404,7 @@ export function UnbanModal({ target, onClose, onSuccess }: UnbanModalProps) {
           <div style={{ gridColumn: '1 / -1' }}>
             <span>해제 사유</span>
             <textarea
-              placeholder="블랙리스트 해제 사유를 입력하세요 (최소 10자)"
+              placeholder="영구정지 해제 사유를 입력하세요 (최소 10자)"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               style={{
@@ -402,6 +414,12 @@ export function UnbanModal({ target, onClose, onSuccess }: UnbanModalProps) {
                 fontSize: 14, fontFamily: 'inherit', color: '#10243f', lineHeight: 1.7,
               }}
             />
+            <p style={{
+              margin: '4px 0 0', fontSize: 12, textAlign: 'right',
+              color: reason.trim().length < 10 ? '#9a4444' : '#7a8da4',
+            }}>
+              {reason.trim().length} / 10자 이상
+            </p>
           </div>
           {error && (
             <p style={{ gridColumn: '1 / -1', fontSize: 13, color: '#9a4444', margin: 0 }}>{error}</p>
@@ -414,7 +432,7 @@ export function UnbanModal({ target, onClose, onSuccess }: UnbanModalProps) {
             disabled={loading}
             style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}
           >
-            {loading ? '처리 중...' : '블랙리스트 해제'}
+            {loading ? '처리 중...' : '영구정지 해제'}
           </button>
         </div>
       </div>
