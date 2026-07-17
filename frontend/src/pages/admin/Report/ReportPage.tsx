@@ -556,15 +556,13 @@ export default function ReportPage() {
 
             {/* Action */}
             <div className="modalAction" style={{ justifyContent: 'space-between' }}>
-              {selected.targetType !== 'MEMBER' ? (
+              {selected.targetType !== 'MEMBER' && selected.contentBlind !== true ? (
                 <button
                   className="tableBtn tableBtn--danger"
-                  disabled={processing || selected.contentBlind === true}
+                  disabled={processing}
                   onClick={() => handleDeleteContent(selected.reportId)}
                 >
-                  {selected.contentBlind === true
-                    ? (selected.targetType === 'COMMENT' ? '댓글 삭제 완료' : '게시글 삭제 완료')
-                    : (selected.targetType === 'COMMENT' ? '댓글 삭제' : '게시글 삭제')}
+                  {selected.targetType === 'COMMENT' ? '댓글 삭제' : '게시글 삭제'}
                 </button>
               ) : (
                 <span />
