@@ -49,6 +49,11 @@ public interface CommunityControllerDocs {
                         @PathVariable Long boardId,
                         @RequestBody CommentDTO.CreateRequest request);
 
+        ResponseEntity<ApiResponse<CommentDTO.Response>> updateComment(
+                        @AuthenticationPrincipal AuthPrincipal principal,
+                        @PathVariable Long commentId,
+                        @RequestBody CommentDTO.UpdateRequest request);
+
         ResponseEntity<ApiResponse<Void>> deleteComment(
                         @AuthenticationPrincipal AuthPrincipal principal,
                         @PathVariable Long commentId);

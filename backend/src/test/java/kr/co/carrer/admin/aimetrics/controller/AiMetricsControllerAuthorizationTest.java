@@ -247,6 +247,10 @@ class AiMetricsControllerAuthorizationTest {
                 AlertChannelType.DISCORD,
                 80,
                 true,
+                new BigDecimal("125000.00"),
+                new BigDecimal("800000.00"),
+                new BigDecimal("12.50"),
+                new BigDecimal("875000.00"),
                 ZonedDateTime.parse("2026-06-17T12:00:00Z")
         );
     }

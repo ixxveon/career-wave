@@ -40,6 +40,7 @@ type CommunityPost = {
 type BoardResponse = {
   boardId: number;
   memberId: string;
+  memberName: string;
   category: string;
   title: string;
   contentPreview: string;
@@ -68,7 +69,7 @@ function toPosts(response: BoardResponse[]): CommunityPost[] {
     category: board.category,
     title: board.title,
     preview: board.contentPreview,
-    author: "익명",
+    author: board.memberName,
     createdAt: board.createdAt?.slice(0, 10) ?? "",
     views: board.viewCount,
     likes: 0,

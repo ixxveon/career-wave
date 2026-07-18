@@ -8,3 +8,4 @@ export * from "./useCreateCommunityBoard";
 export { useCreateCommunityReport } from "./useCreateCommunityReport";
 export { useUpdateCommunityBoard } from "./useUpdateCommunityBoard";
 export { useCommunityBoardForEdit } from "./useCommunityBoardForEdit";
+export * from "./useUpdateCommunityComment";

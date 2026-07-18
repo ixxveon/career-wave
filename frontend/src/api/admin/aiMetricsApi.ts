@@ -123,6 +123,9 @@ export interface AiBudgetSetting {
   monthlyBudget: number;
   currentSpend: number | null;
   forecastSpend: number | null;
+  thresholdAmount: number | null;
+  usagePercent: number | null;
+  remainingBudget: number | null;
   thresholdPercent: number;
   discordAlertEnabled: boolean;
   rateLimitEnabled: boolean;
@@ -287,6 +290,10 @@ export interface AiBudgetSettingRaw {
   alertChannel: string;
   alertThreshold: number;
   rateLimitEnabled: boolean;
+  currentSpend?: number | string | null;
+  thresholdAmount?: number | string | null;
+  usagePercent?: number | string | null;
+  remainingBudget?: number | string | null;
   updatedAt: string;
 }
 
@@ -441,8 +448,11 @@ export const mapAiMetricLogs = (raw: PageResult<AiMetricLogRaw>): PageResult<AiM
 export const mapAiBudgetSetting = (raw: AiBudgetSettingRaw): AiBudgetSetting => ({
   selectedModelId: raw.selectedModelId,
   monthlyBudget: toNumber(raw.monthlyBudget),
-  currentSpend: null,
+  currentSpend: toNumberOrNull(raw.currentSpend),
   forecastSpend: null,
+  thresholdAmount: toNumberOrNull(raw.thresholdAmount),
+  usagePercent: toNumberOrNull(raw.usagePercent),
+  remainingBudget: toNumberOrNull(raw.remainingBudget),
   thresholdPercent: raw.alertThreshold,
   discordAlertEnabled: raw.alertEnabled,
   rateLimitEnabled: raw.rateLimitEnabled,

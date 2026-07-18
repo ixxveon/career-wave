@@ -101,6 +101,14 @@ public class AiMetricsFastApiResponse {
     ) {
     }
 
+    public record BudgetStatus(
+            BigDecimal currentSpend,
+            BigDecimal thresholdAmount,
+            BigDecimal usagePercent,
+            BigDecimal remainingBudget
+    ) {
+    }
+
     public record RagIndexStart(
             boolean accepted,
             Long ragDocumentId,

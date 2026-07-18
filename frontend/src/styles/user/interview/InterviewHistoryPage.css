@@ -143,6 +143,10 @@
   color: var(--color-danger, #ef4444);
 }
 
+.ih-status--incomplete {
+  color: var(--color-text-secondary, #94a3b8);
+}
+
 /* ─── 페이지네이션 ─── */
 .ih-pagination {
   display: flex;

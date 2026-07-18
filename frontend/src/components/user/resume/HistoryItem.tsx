@@ -22,7 +22,8 @@ function formatDate(iso: string): string {
 const HistoryItem = memo(function HistoryItem({ item }: HistoryItemProps) {
   const navigate = useNavigate();
   const isResume = item.fileType === 'RESUME';
-  const isAnalyzing = item.status === 'ANALYZING';
+  const isCompleted = item.status === 'COMPLETED';
+  const isFailed = item.status === 'FAILED';
 
   const title = isResume
     ? (item.originalName ?? '이력서')
@@ -58,20 +59,24 @@ const HistoryItem = memo(function HistoryItem({ item }: HistoryItemProps) {
               {SCORE_LABEL(score)}
             </span>
           </>
+        ) : isFailed ? (
+          <span className="hi-score__failed">분석 실패</span>
         ) : (
           <span className="hi-score__pending">분석 중</span>
         )}
       </div>
 
-      <button
-        type="button"
-        className={`hi-btn${isAnalyzing ? ' hi-btn--disabled' : ''}`}
-        onClick={() => !isAnalyzing && navigate(`/documents/report?documentId=${item.documentId}`)}
-        disabled={isAnalyzing}
-        aria-label={isAnalyzing ? `${title} 분석 중` : `${title} 결과 보기`}
-      >
-        {isAnalyzing ? '분석 중…' : <>결과 보기 <ChevronRight size={14} aria-hidden="true" /></>}
-      </button>
+      {!isFailed && (
+        <button
+          type="button"
+          className={`hi-btn${isCompleted ? '' : ' hi-btn--disabled'}`}
+          onClick={() => isCompleted && navigate(`/documents/report?documentId=${item.documentId}`)}
+          disabled={!isCompleted}
+          aria-label={isCompleted ? `${title} 결과 보기` : `${title} 분석 중`}
+        >
+          {isCompleted ? <>결과 보기 <ChevronRight size={14} aria-hidden="true" /></> : '분석 중…'}
+        </button>
+      )}
     </div>
   );
 });

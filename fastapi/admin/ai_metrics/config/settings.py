@@ -59,6 +59,12 @@ class AiMetricsSettings(BaseSettings):
         alias="VECTOR_STORE_BASE_PATH",
     )
 
+    discord_webhook_url: str = Field(default="", alias="DISCORD_WEBHOOK_URL")
+    discord_webhook_timeout_seconds: float = Field(
+        default=3.0,
+        alias="DISCORD_WEBHOOK_TIMEOUT_SECONDS",
+    )
+
     @property
     def database_url(self) -> str:
         username = quote(self.db_username, safe="")

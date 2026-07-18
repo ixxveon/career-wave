@@ -17,6 +17,7 @@ import {
   useCreateCommunityReport,
   useDeleteCommunityBoard,
   useDeleteCommunityComment,
+  useUpdateCommunityComment,
 } from "@/hooks/user/community";
 import type { CommunityBoard, CommunityComment } from "@/types/user/community";
 
@@ -79,7 +80,6 @@ type CommunityPost = {
   reportCount: number;
   content: string;
 };
-const DEFAULT_AUTHOR_NAME = "커뮤니티 회원";
 
 function toPost(board: CommunityBoard): CommunityPost {
   return {
@@ -87,7 +87,7 @@ function toPost(board: CommunityBoard): CommunityPost {
     memberId: board.memberId,
     category: board.category,
     title: board.title,
-    author: DEFAULT_AUTHOR_NAME,
+    author: board.memberName,
     createdAt: board.createdAt?.slice(0, 10) ?? "",
     views: board.viewCount,
     likes: 0,
@@ -102,7 +102,7 @@ function toComments(apiComments: CommunityComment[]): Comment[] {
     .map((item) => ({
       id: item.commentId,
       memberId: item.memberId,
-      author: DEFAULT_AUTHOR_NAME,
+      author: item.memberName,
       createdAt: item.createdAt?.slice(0, 10) ?? "",
       content: item.content,
       likes: 0,
@@ -112,7 +112,7 @@ function toComments(apiComments: CommunityComment[]): Comment[] {
         .map((reply) => ({
           id: reply.commentId,
           memberId: reply.memberId,
-          author: DEFAULT_AUTHOR_NAME,
+          author: reply.memberName,
           createdAt: reply.createdAt?.slice(0, 10) ?? "",
           content: reply.content,
           likes: 0,
@@ -125,6 +125,7 @@ type CommentItemProps = {
   comment: Comment;
   onReply: (commentId: number, content: string) => void;
   onReport: (type: ReportType, id: number) => void;
+  onUpdate: (commentId: number, content: string) => void;
   onDelete: (commentId: number) => void;
   currentMemberId: string | null;
 };
@@ -133,19 +134,48 @@ function CommentItem({
   comment,
   onReply,
   onReport,
+  onUpdate,
   onDelete,
   currentMemberId,
 }: CommentItemProps) {
   const [replyText, setReplyText] = useState("");
   const [replyOpen, setReplyOpen] = useState(false);
+
+  const [editing, setEditing] = useState(false);
+  const [editingText, setEditingText] = useState(comment.content);
+
+  const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
+  const [editingReplyText, setEditingReplyText] = useState("");
+
   const isCommentOwner = comment.memberId === currentMemberId;
 
   function submitReply() {
-    if (!replyText.trim()) return;
+    const trimmedReply = replyText.trim();
 
-    onReply(comment.id, replyText.trim());
+    if (!trimmedReply) return;
+
+    onReply(comment.id, trimmedReply);
     setReplyText("");
     setReplyOpen(false);
+  }
+
+  function submitUpdate() {
+    const trimmedContent = editingText.trim();
+
+    if (!trimmedContent) return;
+
+    onUpdate(comment.id, trimmedContent);
+    setEditing(false);
+  }
+
+  function submitReplyUpdate(replyId: number) {
+    const trimmedContent = editingReplyText.trim();
+
+    if (!trimmedContent) return;
+
+    onUpdate(replyId, trimmedContent);
+    setEditingReplyId(null);
+    setEditingReplyText("");
   }
 
   return (
@@ -156,6 +186,7 @@ function CommentItem({
         <div className="pd-comment__top">
           <span className="pd-comment__author">{comment.author}</span>
           <span className="pd-comment__date">{comment.createdAt}</span>
+
           {comment.reportCount > 0 && (
             <span className="pd-comment__reported">
               신고 {comment.reportCount}
@@ -163,43 +194,100 @@ function CommentItem({
           )}
         </div>
 
-        <p className="pd-comment__text">{comment.content}</p>
+        {editing ? (
+          <div className="pd-comment-edit">
+            <textarea
+              className="pd-comment-edit__textarea"
+              value={editingText}
+              maxLength={1000}
+              onChange={(event) => setEditingText(event.target.value)}
+            />
 
-        <div className="pd-comment__actions">
-          <button className="pd-comment__like" type="button">
-            <ThumbsUp size={11} /> {comment.likes}
-          </button>
+            <div className="pd-comment-edit__footer">
+              <span className="pd-comment-edit__count">
+                {editingText.length}/1000
+              </span>
 
-          <button
-            className="pd-comment__link"
-            type="button"
-            onClick={() => setReplyOpen((open) => !open)}
-          >
-            답글
-          </button>
+              <div className="pd-comment-edit__actions">
+                <button
+                  className="pd-comment-edit__cancel"
+                  type="button"
+                  onClick={() => {
+                    setEditing(false);
+                    setEditingText(comment.content);
+                  }}
+                >
+                  취소
+                </button>
 
-          <button
-            className="pd-comment__link is-report"
-            type="button"
-            onClick={() => onReport(REPORT_TYPE.COMMENT, comment.id)}
-          >
-            신고
-          </button>
-          {isCommentOwner && (
+                <button
+                  className="pd-comment-edit__save"
+                  type="button"
+                  disabled={!editingText.trim()}
+                  onClick={submitUpdate}
+                >
+                  저장
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="pd-comment__text">{comment.content}</p>
+        )}
+
+        {!editing && (
+          <div className="pd-comment__actions">
+            <button className="pd-comment__like" type="button">
+              <ThumbsUp size={11} /> {comment.likes}
+            </button>
+
             <button
               className="pd-comment__link"
               type="button"
-              onClick={() => onDelete(comment.id)}
+              onClick={() => setReplyOpen((open) => !open)}
             >
-              삭제
+              답글
             </button>
-          )}
-        </div>
+
+            <button
+              className="pd-comment__link is-report"
+              type="button"
+              onClick={() => onReport(REPORT_TYPE.COMMENT, comment.id)}
+            >
+              신고
+            </button>
+
+            {isCommentOwner && (
+              <>
+                <button
+                  className="pd-comment__link"
+                  type="button"
+                  onClick={() => {
+                    setEditing(true);
+                    setEditingText(comment.content);
+                    setReplyOpen(false);
+                  }}
+                >
+                  수정
+                </button>
+
+                <button
+                  className="pd-comment__link"
+                  type="button"
+                  onClick={() => onDelete(comment.id)}
+                >
+                  삭제
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         {!!comment.replies.length && (
           <div className="pd-replies">
             {comment.replies.map((reply) => {
               const isReplyOwner = reply.memberId === currentMemberId;
+              const isEditingReply = editingReplyId === reply.id;
 
               return (
                 <div key={reply.id} className="pd-reply">
@@ -208,9 +296,11 @@ function CommentItem({
                   <div className="pd-comment__body">
                     <div className="pd-comment__top">
                       <span className="pd-comment__author">{reply.author}</span>
+
                       <span className="pd-comment__date">
                         {reply.createdAt}
                       </span>
+
                       {reply.reportCount > 0 && (
                         <span className="pd-comment__reported">
                           신고 {reply.reportCount}
@@ -218,31 +308,89 @@ function CommentItem({
                       )}
                     </div>
 
-                    <p className="pd-comment__text">{reply.content}</p>
+                    {isEditingReply ? (
+                      <div className="pd-comment-edit">
+                        <textarea
+                          className="pd-comment-edit__textarea"
+                          value={editingReplyText}
+                          maxLength={1000}
+                          onChange={(event) =>
+                            setEditingReplyText(event.target.value)
+                          }
+                        />
 
-                    <div className="pd-comment__actions">
-                      <button className="pd-comment__like" type="button">
-                        <ThumbsUp size={11} /> {reply.likes}
-                      </button>
+                        <div className="pd-comment-edit__footer">
+                          <span className="pd-comment-edit__count">
+                            {editingReplyText.length}/1000
+                          </span>
 
-                      <button
-                        className="pd-comment__link is-report"
-                        type="button"
-                        onClick={() => onReport(REPORT_TYPE.COMMENT, reply.id)}
-                      >
-                        신고
-                      </button>
+                          <div className="pd-comment-edit__actions">
+                            <button
+                              className="pd-comment-edit__cancel"
+                              type="button"
+                              onClick={() => {
+                                setEditingReplyId(null);
+                                setEditingReplyText("");
+                              }}
+                            >
+                              취소
+                            </button>
 
-                      {isReplyOwner && (
-                        <button
-                          className="pd-comment__link"
-                          type="button"
-                          onClick={() => onDelete(reply.id)}
-                        >
-                          삭제
+                            <button
+                              className="pd-comment-edit__save"
+                              type="button"
+                              disabled={!editingReplyText.trim()}
+                              onClick={() => submitReplyUpdate(reply.id)}
+                            >
+                              저장
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="pd-comment__text">{reply.content}</p>
+                    )}
+
+                    {!isEditingReply && (
+                      <div className="pd-comment__actions">
+                        <button className="pd-comment__like" type="button">
+                          <ThumbsUp size={11} /> {reply.likes}
                         </button>
-                      )}
-                    </div>
+
+                        <button
+                          className="pd-comment__link is-report"
+                          type="button"
+                          onClick={() =>
+                            onReport(REPORT_TYPE.COMMENT, reply.id)
+                          }
+                        >
+                          신고
+                        </button>
+
+                        {isReplyOwner && (
+                          <>
+                            <button
+                              className="pd-comment__link"
+                              type="button"
+                              onClick={() => {
+                                setEditingReplyId(reply.id);
+                                setEditingReplyText(reply.content);
+                              }}
+                            >
+                              수정
+                            </button>
+
+                            <button
+                              className="pd-comment__link"
+                              type="button"
+                              onClick={() => onDelete(reply.id)}
+                            >
+                              삭제
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -250,7 +398,7 @@ function CommentItem({
           </div>
         )}
 
-        {replyOpen && (
+        {replyOpen && !editing && (
           <div className="pd-reply-write">
             <textarea
               className="pd-comment-write__input"
@@ -303,7 +451,9 @@ export default function PostDetailPage() {
   const { mutate: deleteComment } = useDeleteCommunityComment(
     validBoardId ?? 0,
   );
-
+const { mutate: updateComment } = useUpdateCommunityComment(
+  validBoardId ?? 0,
+);
   const post = useMemo(() => {
     if (!board) return null;
 
@@ -388,6 +538,24 @@ export default function PostDetailPage() {
     if (!window.confirm("댓글을 삭제하시겠습니까?")) return;
 
     deleteComment(commentId);
+  }
+
+  function handleUpdateComment(commentId: number, content: string) {
+    const trimmedContent = content.trim();
+
+    if (!trimmedContent) return;
+
+    updateComment(
+      {
+        commentId,
+        request: {
+          content: trimmedContent,
+        },
+      },
+      {
+        onSuccess: () => {},
+      },
+    );
   }
 
   function submitReport() {
@@ -557,6 +725,7 @@ export default function PostDetailPage() {
               comment={item}
               onReply={submitReply}
               onReport={(type, id) => setReportTarget({ type, id })}
+              onUpdate={handleUpdateComment}
               onDelete={handleDeleteComment}
               currentMemberId={currentMemberId}
             />

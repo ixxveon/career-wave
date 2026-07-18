@@ -99,6 +99,19 @@ public class CommunityController implements CommunityControllerDocs {
     }
 
     @Override
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<ApiResponse<CommentDTO.Response>> updateComment(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable Long commentId,
+            @Valid @RequestBody CommentDTO.UpdateRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                commentService.updateComment(
+                        getMemberId(principal),
+                        commentId,
+                        request)));
+    }
+
+    @Override
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponse<Void>> deleteComment(
             @AuthenticationPrincipal AuthPrincipal principal,

@@ -2,7 +2,7 @@ import asyncio
 import logging
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from fastapi import Path as FastApiPath
 from fastapi.responses import JSONResponse
 
@@ -19,6 +19,7 @@ from admin.ai_metrics.repository import (
 )
 from admin.ai_metrics.schema import (
     DomainUsageRequest,
+    BudgetStatusResponse,
     HeavyUsersRequest,
     OpsSettingSyncRequest,
     RagIndexStartRequest,
@@ -36,6 +37,8 @@ from admin.ai_metrics.service import (
     RagIndexService,
     UsageLogService,
     UsageMetricsService,
+    BudgetStatusService,
+    DiscordBudgetAlertService,
 )
 from admin.ai_metrics.task import RagIndexingTask
 from core.security import verify_internal_secret
@@ -173,6 +176,22 @@ async def sync_settings(request: OpsSettingSyncRequest):
         )
 
 
+@router.post("/ops/budget-status")
+def budget_status() -> BudgetStatusResponse:
+    try:
+        with get_session() as session:
+            service = BudgetStatusService(
+                ai_usage_log_repository=AiUsageLogRepository(session),
+                ai_ops_setting_repository=AiOpsSettingRepository(session),
+            )
+            return service.get_current_month_status()
+    except AiMetricsException as error:
+        return JSONResponse(
+            status_code=error.status_code,
+            content=build_error_response(error),
+        )
+
+
 @router.post("/rag-documents/index")
 async def start_rag_document_index(request: RagIndexStartRequest):
     try:
@@ -212,20 +231,29 @@ async def delete_rag_document_index(
 
 
 @router.post("/usage/log")
-async def create_usage_log(request: UsageLogCreateRequest):
+def create_usage_log(
+    request: UsageLogCreateRequest,
+    background_tasks: BackgroundTasks,
+):
     try:
         with get_session() as session:
             service = UsageLogService(
                 usage_log_repository=AiUsageLogRepository(session),
                 ai_model_repository=AiModelRepository(session),
+                ai_ops_setting_repository=AiOpsSettingRepository(session),
             )
-            saved_record = service.create_usage_log(request)
+            saved_record, alert_candidate = service.create_usage_log_with_budget_alert(request)
             session.commit()
-            return UsageLogCreateResponse(
-                aiUsageLogId=saved_record.ai_usage_log_id,
-                recorded=True,
-                createdAt=saved_record.created_at,
+        if alert_candidate is not None:
+            background_tasks.add_task(
+                DiscordBudgetAlertService().send_threshold_alert,
+                alert_candidate,
             )
+        return UsageLogCreateResponse(
+            aiUsageLogId=saved_record.ai_usage_log_id,
+            recorded=True,
+            createdAt=saved_record.created_at,
+        )
     except AiMetricsException as error:
         return JSONResponse(
             status_code=error.status_code,

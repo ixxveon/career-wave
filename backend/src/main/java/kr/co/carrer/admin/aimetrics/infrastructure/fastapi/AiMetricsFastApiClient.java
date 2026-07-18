@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 @Slf4j
@@ -27,6 +28,7 @@ public class AiMetricsFastApiClient implements AiMetricsFastApiGateway {
     private static final String HEAVY_USERS_PATH = "/internal/admin/ai-metrics/usage/heavy-users";
     private static final String USAGE_LOGS_PATH = "/internal/admin/ai-metrics/usage/logs/search";
     private static final String OPS_SETTING_SYNC_PATH = "/internal/admin/ai-metrics/ops/sync-settings";
+    private static final String BUDGET_STATUS_PATH = "/internal/admin/ai-metrics/ops/budget-status";
     private static final String RAG_INDEX_START_PATH = "/internal/admin/ai-metrics/rag-documents/index";
     private static final String RAG_INDEX_DELETE_PATH = "/internal/admin/ai-metrics/rag-documents/{ragDocumentId}/index";
     private static final String INTERNAL_SECRET_HEADER = "X-Internal-Secret";
@@ -105,6 +107,16 @@ public class AiMetricsFastApiClient implements AiMetricsFastApiGateway {
                 AiMetricsFastApiResponse.OpsSettingSync.class
         );
         return AiMetricsFastApiMapper.toOpsSettingSyncResponse(response);
+    }
+
+    @Override
+    public BudgetStatusResponse getBudgetStatus() {
+        AiMetricsFastApiResponse.BudgetStatus response = post(
+                BUDGET_STATUS_PATH,
+                Map.of(),
+                AiMetricsFastApiResponse.BudgetStatus.class
+        );
+        return AiMetricsFastApiMapper.toBudgetStatusResponse(response);
     }
 
     @Override

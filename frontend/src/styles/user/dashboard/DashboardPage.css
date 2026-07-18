@@ -741,6 +741,13 @@
   font-weight: 800;
 }
 
+.cw-home-job__tags span.cw-home-job__tags-empty {
+  background: none;
+  color: #9aa5b1;
+  font-weight: 600;
+  padding: 0;
+}
+
 .cw-home-job__location {
   display: flex;
   align-items: center;
