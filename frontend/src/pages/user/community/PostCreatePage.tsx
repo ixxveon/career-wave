@@ -18,7 +18,11 @@ export default function PostCreatePage() {
 
   const boardId = postId ? Number(postId) : null;
 
-  const { data: board } = useCommunityBoardForEdit(boardId);
+  const {
+    data: board,
+    isLoading: isBoardLoading,
+    isError: isBoardError,
+  } = useCommunityBoardForEdit(boardId);
 
   const updateBoardMutation = useUpdateCommunityBoard();
   const createBoardMutation = useCreateCommunityBoard();
@@ -86,6 +90,37 @@ export default function PostCreatePage() {
       },
     });
   }
+
+  if (isEdit && isBoardLoading) {
+    return (
+      <div className="pc-page">
+        <div className="pc-wrap">
+          <div className="pc-card">게시글 정보를 불러오는 중입니다.</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEdit && isBoardError) {
+    return (
+      <div className="pc-page">
+        <div className="pc-wrap">
+          <button
+            className="pc-back"
+            type="button"
+            onClick={() => navigate("/community")}
+          >
+            <ChevronLeft size={14} /> 커뮤니티로
+          </button>
+          <div className="pc-card">
+            게시글을 불러오지 못했습니다. 권한이 없거나 존재하지 않는
+            게시글일 수 있습니다.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="pc-page">
       <div className="pc-wrap">
