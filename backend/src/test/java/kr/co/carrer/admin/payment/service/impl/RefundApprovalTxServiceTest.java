@@ -52,7 +52,7 @@ class RefundApprovalTxServiceTest {
         subscription.markRefundPending();
 
         given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
-        given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+        given(refundRepository.findByPaymentIdAndRefundStatusForUpdate(paymentId, RefundStatus.PENDING))
             .willReturn(Optional.of(refund));
         given(subscriptionRepository.findBySubscriptionIdForUpdate(subscriptionId))
             .willReturn(Optional.of(subscription));
@@ -71,7 +71,7 @@ class RefundApprovalTxServiceTest {
         Refund refund = createRefund(paymentId);
 
         given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
-        given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+        given(refundRepository.findByPaymentIdAndRefundStatusForUpdate(paymentId, RefundStatus.PENDING))
             .willReturn(Optional.of(refund));
 
         refundApprovalTxService.finalizeApproval(paymentId, 1L);
@@ -89,7 +89,7 @@ class RefundApprovalTxServiceTest {
         Subscription subscription = newActiveSubscription(); // REFUND_PENDING으로 전이 안 된 채 ACTIVE 상태
 
         given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
-        given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+        given(refundRepository.findByPaymentIdAndRefundStatusForUpdate(paymentId, RefundStatus.PENDING))
             .willReturn(Optional.of(refund));
         given(subscriptionRepository.findBySubscriptionIdForUpdate(subscriptionId))
             .willReturn(Optional.of(subscription));
@@ -111,7 +111,7 @@ class RefundApprovalTxServiceTest {
         Subscription subscription = newActiveSubscription(); // REFUND_PENDING 미전이 상태
 
         given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
-        given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+        given(refundRepository.findByPaymentIdAndRefundStatusForUpdate(paymentId, RefundStatus.PENDING))
             .willReturn(Optional.of(refund));
         given(subscriptionRepository.findBySubscriptionIdForUpdate(subscriptionId))
             .willReturn(Optional.of(subscription));
@@ -133,7 +133,7 @@ class RefundApprovalTxServiceTest {
         subscription.markRefundPending();
 
         given(paymentRepository.findById(paymentId)).willReturn(Optional.of(payment));
-        given(refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING))
+        given(refundRepository.findByPaymentIdAndRefundStatusForUpdate(paymentId, RefundStatus.PENDING))
             .willReturn(Optional.of(refund));
         given(subscriptionRepository.findBySubscriptionIdForUpdate(subscriptionId))
             .willReturn(Optional.of(subscription));
@@ -142,6 +142,21 @@ class RefundApprovalTxServiceTest {
 
         assertThat(result.refundStatus()).isEqualTo(RefundStatus.COMPLETED);
         assertThat(subscription.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.REFUNDED);
+    }
+
+    @Test
+    @DisplayName("finalize() — 잠금 조회로 이미 처리된(PENDING 아닌) 환불을 재확정 시도하면 REFUND_NOT_PENDING 예외 " +
+            "(동시 요청 중 먼저 커밋된 트랜잭션이 상태를 바꾼 뒤 두 번째 요청이 잠금 대기 후 재조회하는 상황을 시뮬레이션)")
+    void finalizeApproval_refundNoLongerPending_throwsRefundNotPending() {
+        UUID paymentId = UUID.randomUUID();
+
+        given(refundRepository.findByPaymentIdAndRefundStatusForUpdate(paymentId, RefundStatus.PENDING))
+            .willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> refundApprovalTxService.finalizeApproval(paymentId, 1L))
+            .isInstanceOf(CustomException.class)
+            .extracting(e -> ((CustomException) e).getErrorCode())
+            .isEqualTo(AdminPaymentErrorCode.REFUND_NOT_PENDING);
     }
 
     private Subscription newActiveSubscription() {

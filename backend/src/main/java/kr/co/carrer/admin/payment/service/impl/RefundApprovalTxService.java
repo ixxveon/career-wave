@@ -65,10 +65,13 @@ public class RefundApprovalTxService {
     }
 
     private RefundDTO.ResponseApprove finalize(UUID paymentId, Long adminId, boolean healLegacySubscriptionState) {
+        // 같은 결제의 확정을 동시에 두 번 처리하지 못하도록 환불 건에 쓰기 잠금을 걸고
+        // 트랜잭션이 끝날 때까지 유지한다 — 두 번째 요청은 이 조회에서 첫 번째 요청의
+        // 커밋을 기다렸다가 PENDING이 아니게 된 상태를 보고 REFUND_NOT_PENDING으로 실패한다.
+        Refund refund = refundRepository.findByPaymentIdAndRefundStatusForUpdate(paymentId, RefundStatus.PENDING)
+            .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.REFUND_NOT_PENDING));
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.PAYMENT_NOT_FOUND));
-        Refund refund = refundRepository.findByPaymentIdAndRefundStatus(paymentId, RefundStatus.PENDING)
-            .orElseThrow(() -> new CustomException(AdminPaymentErrorCode.REFUND_NOT_PENDING));
 
         refund.approve(adminId);
         payment.refund();
