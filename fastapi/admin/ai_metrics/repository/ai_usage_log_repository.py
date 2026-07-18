@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import BigInteger, Column, DateTime, Integer, MetaData, Numeric, String, Table, case, func, insert, select
+from sqlalchemy import BigInteger, Column, DateTime, Integer, MetaData, Numeric, String, Table, case, func, insert, select, text
 from sqlalchemy.dialects.postgresql import UUID as PostgreSqlUUID
 from sqlalchemy.orm import Session
 
@@ -130,6 +130,21 @@ class AiUsageLogRepository:
             cost=Decimal(row["cost"]),
             created_at=row["created_at"],
         )
+
+    def acquire_monthly_budget_lock(self, period_key: str) -> None:
+        self._session.execute(
+            text("SELECT pg_advisory_xact_lock(hashtext(:period_key))"),
+            {"period_key": f"ai-budget-alert:{period_key}"},
+        )
+
+    def sum_cost(self, created_from: datetime, created_to: datetime) -> Decimal:
+        statement = select(
+            func.coalesce(func.sum(ai_usage_logs_table.c.cost), 0).label("total_cost")
+        ).where(
+            ai_usage_logs_table.c.created_at >= created_from,
+            ai_usage_logs_table.c.created_at < created_to,
+        )
+        return Decimal(self._session.execute(statement).scalar_one())
 
     def aggregate_summary(
         self,

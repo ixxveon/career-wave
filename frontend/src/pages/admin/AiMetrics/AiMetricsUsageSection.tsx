@@ -18,6 +18,8 @@ interface AiMetricsUsageSectionProps {
   updateBudgetPending: boolean;
   monthlyBudget: number;
   thresholdPercent: number;
+  thresholdAmount: number | null;
+  remainingBudget: number | null;
   tokenTrendLoading: boolean;
   tokenTrendIsError: boolean;
   tokenTrendError: Error | null;
@@ -36,15 +38,11 @@ interface AiMetricsUsageSectionProps {
   budgetProgress: number;
   budgetMutationErrorMessage: string;
   isBudgetRisk: boolean;
-  forecastSpend: number | null;
   totalTokensLabel: string;
   totalTokensValue?: number;
   discordAlertEnabled: boolean;
   handleDiscordAlertToggle: () => void;
   updateDiscordAlertPending: boolean;
-  rateLimitEnabled: boolean;
-  handleRateLimitToggle: () => void;
-  updateRateLimitPending: boolean;
 }
 
 export default function AiMetricsUsageSection(props: AiMetricsUsageSectionProps) {
@@ -63,6 +61,8 @@ export default function AiMetricsUsageSection(props: AiMetricsUsageSectionProps)
     updateBudgetPending,
     monthlyBudget,
     thresholdPercent,
+    thresholdAmount,
+    remainingBudget,
     tokenTrendLoading,
     tokenTrendIsError,
     tokenTrendError,
@@ -81,15 +81,11 @@ export default function AiMetricsUsageSection(props: AiMetricsUsageSectionProps)
     budgetProgress,
     budgetMutationErrorMessage,
     isBudgetRisk,
-    forecastSpend,
     totalTokensLabel,
     totalTokensValue,
     discordAlertEnabled,
     handleDiscordAlertToggle,
     updateDiscordAlertPending,
-    rateLimitEnabled,
-    handleRateLimitToggle,
-    updateRateLimitPending,
   } = props;
 
   return (
@@ -225,8 +221,8 @@ export default function AiMetricsUsageSection(props: AiMetricsUsageSectionProps)
             </div>
 
             <div className="aiOpsBudgetFacts">
-              <div><span>예상 비용</span><strong>{budgetLoading ? '조회 중' : formatCost(forecastSpend)}</strong></div>
-              <div><span>임계치</span><strong>{thresholdPercent > 0 ? `${thresholdPercent}%` : '-'}</strong></div>
+              <div><span>월 예산</span><strong>{budgetLoading ? '조회 중' : formatCost(monthlyBudget)}</strong></div>
+              <div><span>잔여 예산</span><strong>{budgetLoading ? '조회 중' : formatCost(remainingBudget)}</strong></div>
               <div><span>전체 토큰</span><strong>{typeof totalTokensValue === 'number' ? formatCompactToken(totalTokensValue) : totalTokensLabel}</strong></div>
             </div>
 
@@ -237,12 +233,8 @@ export default function AiMetricsUsageSection(props: AiMetricsUsageSectionProps)
                   <i />
                 </button>
               </div>
-              <div className="aiOpsThreshold"><span>임계치</span><strong>{thresholdPercent > 0 ? `${thresholdPercent}%` : '-'}</strong></div>
+              <div className="aiOpsThreshold"><span>임계치</span><strong>{thresholdAmount == null ? '-' : formatCost(thresholdAmount)} ({thresholdPercent}%)</strong></div>
             </div>
-
-            <button type="button" className={`aiOpsDangerButton ${rateLimitEnabled || isBudgetRisk ? 'danger' : 'neutral'}`} onClick={handleRateLimitToggle} disabled={budgetMutationDisabled || updateRateLimitPending}>
-              {updateRateLimitPending ? '처리 중' : rateLimitEnabled ? '사용량 제한 해제' : isBudgetRisk ? '긴급 제한' : '한도 제한 제어'}
-            </button>
           </div>
         </aside>
       </div>

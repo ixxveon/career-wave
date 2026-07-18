@@ -296,6 +296,10 @@ describe("aiMetricsApi budget contract mapper", () => {
     alertChannel: "DISCORD",
     alertThreshold: 85,
     rateLimitEnabled: false,
+    currentSpend: "1250000.50",
+    thresholdAmount: "2975000.00",
+    usagePercent: "35.73",
+    remainingBudget: "2249999.50",
     updatedAt: "2026-06-24T00:00:00Z",
   };
 
@@ -303,8 +307,11 @@ describe("aiMetricsApi budget contract mapper", () => {
     expect(mapAiBudgetSetting(rawBudget)).toEqual({
       selectedModelId: 7,
       monthlyBudget: 3500000,
-      currentSpend: null,
+      currentSpend: 1250000.5,
       forecastSpend: null,
+      thresholdAmount: 2975000,
+      usagePercent: 35.73,
+      remainingBudget: 2249999.5,
       thresholdPercent: 85,
       discordAlertEnabled: true,
       rateLimitEnabled: false,

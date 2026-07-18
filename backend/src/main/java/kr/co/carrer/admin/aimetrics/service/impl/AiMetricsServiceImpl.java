@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -50,6 +51,7 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     private final AiOpsSettingRepository aiOpsSettingRepository;
     private final RagDocumentRepository ragDocumentRepository;
     private final S3Uploader s3Uploader;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
     @Transactional(readOnly = true)
@@ -108,42 +110,45 @@ public class AiMetricsServiceImpl implements AiMetricsService {
     @Transactional(readOnly = true)
     public ResponseBudget getBudget() {
         return aiOpsSettingRepository.findSingleton()
-                .map(AiMetricsServiceMapper::toBudget)
+                .map(setting -> toBudget(setting))
                 .orElseThrow(() -> new CustomException(AiMetricsErrorCode.AI_OPS_SETTING_NOT_FOUND));
     }
 
     @Override
-    @Transactional
     public ResponseBudget updateBudget(RequestUpdateBudget command, Long actorAdminId, String ipAddress) {
-        validateMonthlyBudget(command.monthlyBudget());
-        validateAlertThreshold(command.alertThreshold());
-        validateAiModelExists(command.selectedModelId());
+        AiOpsSetting setting = transactionTemplate.execute(status -> {
+            validateMonthlyBudget(command.monthlyBudget());
+            validateAlertThreshold(command.alertThreshold());
+            validateAiModelExists(command.selectedModelId());
 
-        AiOpsSetting setting = getSingletonSetting();
-        setting.updateBudget(command.selectedModelId(), command.monthlyBudget(), command.alertThreshold());
-        runAfterCommit(() -> syncOpsSetting(setting));
-        saveAuditLog(actorAdminId, "UPDATE_AI_BUDGET", TARGET_TYPE_AI_OPS_SETTING, setting.getAiOpsSettingId(), ipAddress);
-        return AiMetricsServiceMapper.toBudget(setting);
+            AiOpsSetting updatedSetting = getSingletonSetting();
+            updatedSetting.updateBudget(command.selectedModelId(), command.monthlyBudget(), command.alertThreshold());
+            saveAuditLog(actorAdminId, "UPDATE_AI_BUDGET", TARGET_TYPE_AI_OPS_SETTING, updatedSetting.getAiOpsSettingId(), ipAddress);
+            return updatedSetting;
+        });
+        return syncAndGetBudget(setting);
     }
 
     @Override
-    @Transactional
     public ResponseBudget updateDiscordAlert(RequestUpdateDiscordAlert command, Long actorAdminId, String ipAddress) {
-        AiOpsSetting setting = getSingletonSetting();
-        setting.updateDiscordAlert(command.alertEnabled());
-        runAfterCommit(() -> syncOpsSetting(setting));
-        saveAuditLog(actorAdminId, "UPDATE_DISCORD_ALERT", TARGET_TYPE_AI_OPS_SETTING, setting.getAiOpsSettingId(), ipAddress);
-        return AiMetricsServiceMapper.toBudget(setting);
+        AiOpsSetting setting = transactionTemplate.execute(status -> {
+            AiOpsSetting updatedSetting = getSingletonSetting();
+            updatedSetting.updateDiscordAlert(command.alertEnabled());
+            saveAuditLog(actorAdminId, "UPDATE_DISCORD_ALERT", TARGET_TYPE_AI_OPS_SETTING, updatedSetting.getAiOpsSettingId(), ipAddress);
+            return updatedSetting;
+        });
+        return syncAndGetBudget(setting);
     }
 
     @Override
-    @Transactional
     public ResponseBudget updateRateLimit(RequestUpdateRateLimit command, Long actorAdminId, String ipAddress) {
-        AiOpsSetting setting = getSingletonSetting();
-        setting.updateRateLimit(command.rateLimitEnabled());
-        runAfterCommit(() -> syncOpsSetting(setting));
-        saveAuditLog(actorAdminId, "UPDATE_RATE_LIMIT", TARGET_TYPE_AI_OPS_SETTING, setting.getAiOpsSettingId(), ipAddress);
-        return AiMetricsServiceMapper.toBudget(setting);
+        AiOpsSetting setting = transactionTemplate.execute(status -> {
+            AiOpsSetting updatedSetting = getSingletonSetting();
+            updatedSetting.updateRateLimit(command.rateLimitEnabled());
+            saveAuditLog(actorAdminId, "UPDATE_RATE_LIMIT", TARGET_TYPE_AI_OPS_SETTING, updatedSetting.getAiOpsSettingId(), ipAddress);
+            return updatedSetting;
+        });
+        return syncAndGetBudget(setting);
     }
 
     @Override
@@ -224,6 +229,18 @@ public class AiMetricsServiceImpl implements AiMetricsService {
             throw new CustomException(AiMetricsErrorCode.FASTAPI_GATEWAY_UNAVAILABLE);
         }
         return gateway;
+    }
+
+    private ResponseBudget toBudget(AiOpsSetting setting) {
+        return AiMetricsServiceMapper.toBudget(
+                setting,
+                getFastApiGateway().getBudgetStatus()
+        );
+    }
+
+    private ResponseBudget syncAndGetBudget(AiOpsSetting setting) {
+        syncOpsSetting(setting);
+        return toBudget(setting);
     }
 
     private AiOpsSetting getSingletonSetting() {
