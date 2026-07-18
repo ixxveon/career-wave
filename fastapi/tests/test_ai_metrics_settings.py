@@ -23,3 +23,10 @@ def test_database_url_escapes_credentials():
     )
 
     assert settings.database_url == "postgresql://career%40user:p%40ss%2Fw%3Ard@postgres.internal:5432/career_wave"
+
+
+def test_discord_webhook_defaults_to_disabled():
+    settings = AiMetricsSettings()
+
+    assert settings.discord_webhook_url == ""
+    assert settings.discord_webhook_timeout_seconds == 3.0

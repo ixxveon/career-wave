@@ -288,6 +288,10 @@ public class AiMetricsController implements AiMetricsDocs {
                 result.alertChannel(),
                 result.alertThreshold(),
                 result.rateLimitEnabled(),
+                result.currentSpend(),
+                result.thresholdAmount(),
+                result.usagePercent(),
+                result.remainingBudget(),
                 result.updatedAt()
         );
     }

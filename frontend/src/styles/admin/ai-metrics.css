@@ -759,25 +759,11 @@
   font-weight: 800;
 }
 
-.aiOpsStatusBadge span {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: #28a36a;
-}
+.aiOpsStatusBadge span { width: 7px; height: 7px; border-radius: 999px; background: #28a36a; }
+.aiOpsStatusBadge.danger { border-color: #f0c7c7; background: #fff1f1; color: #9f2f2f; }
+.aiOpsStatusBadge.danger span { background: #d94141; }
 
-.aiOpsStatusBadge.danger {
-  border-color: #f0c7c7;
-  background: #fff1f1;
-  color: #9f2f2f;
-}
-
-.aiOpsStatusBadge.danger span {
-  background: #d94141;
-}
-
-.aiOpsBudgetFacts,
-.aiOpsAlertCard {
+.aiOpsBudgetFacts {
   display: grid;
   gap: 8px;
   padding: 12px;
@@ -786,87 +772,38 @@
   background: #f7fafe;
 }
 
-.aiOpsBudgetFacts div,
-.aiOpsThreshold {
+.aiOpsAlertCard { display: grid; gap: 8px; padding: 12px; border: 1px solid #e1ebf5; border-radius: 12px; background: #f7fafe; }
+.aiOpsAlertHead { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.aiOpsAlertHead > div { display: grid; gap: 2px; }
+.aiOpsAlertHead span, .aiOpsThreshold { color: #68839f; font-size: 11px; font-weight: 700; }
+.aiOpsAlertHead strong { color: #173b72; font-size: 12px; font-weight: 800; }
+.aiOpsThreshold { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.aiOpsSwitch { display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 32px; border: 1px solid var(--ai-border); border-radius: 999px; background: #f8fbff; cursor: pointer; }
+.aiOpsSwitch:disabled { opacity: 0.55; cursor: not-allowed; }
+.aiOpsSwitch i { position: relative; width: 24px; height: 14px; border-radius: 999px; background: #d1dce8; }
+.aiOpsSwitch i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 999px; background: #fff; transition: transform 0.2s ease; }
+.aiOpsSwitch.active i { background: #2563c9; }
+.aiOpsSwitch.active i::after { transform: translateX(10px); }
+
+.aiOpsBudgetFacts div {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   align-items: center;
 }
 
-.aiOpsBudgetFacts span,
-.aiOpsAlertHead span,
-.aiOpsThreshold {
+.aiOpsBudgetFacts span {
   color: #68839f;
   font-size: 11px;
   font-weight: 700;
 }
 
-.aiOpsBudgetFacts strong,
-.aiOpsAlertHead strong {
+.aiOpsBudgetFacts strong {
   color: #173b72;
   font-size: 12px;
   font-weight: 800;
 }
 
-.aiOpsAlertHead {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
-}
-
-.aiOpsAlertHead > div {
-  display: grid;
-  gap: 2px;
-}
-
-.aiOpsSwitch {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 32px;
-  border: 1px solid var(--ai-border);
-  border-radius: 999px;
-  background: #f8fbff;
-  cursor: pointer;
-}
-
-.aiOpsSwitch:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.aiOpsSwitch i {
-  position: relative;
-  width: 24px;
-  height: 14px;
-  border-radius: 999px;
-  background: #d1dce8;
-}
-
-.aiOpsSwitch i::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: #fff;
-  transition: transform 0.2s ease;
-}
-
-.aiOpsSwitch.active i {
-  background: #2563c9;
-}
-
-.aiOpsSwitch.active i::after {
-  transform: translateX(10px);
-}
-
-.aiOpsDangerButton,
 .aiOpsUploadCard button,
 .aiOpsTextButton {
   height: 32px;
@@ -879,27 +816,6 @@
   padding: 0 12px;
   font-family: inherit;
   cursor: pointer;
-}
-
-.aiOpsDangerButton {
-  width: 100%;
-}
-
-.aiOpsDangerButton:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.aiOpsDangerButton.neutral {
-  border-color: #c6d6ea;
-  background: #eaf1fb;
-  color: #173b72;
-}
-
-.aiOpsDangerButton.danger {
-  border-color: #dfb7b7;
-  background: #da2e2e;
-  color: #fff;
 }
 
 .aiOpsTableWrap {

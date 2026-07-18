@@ -6,6 +6,7 @@ import type {
   CreateCommunityBoardRequest,
   CreateCommunityCommentRequest,
   CreateCommunityReportRequest,
+  UpdateCommunityCommentRequest,
 } from "@/types/user/community";
 
 export async function getCommunityBoard(boardId: number) {
@@ -42,7 +43,20 @@ export async function createCommunityComment(
     },
   );
 }
-
+export async function updateCommunityComment(
+  commentId: number,
+  request: UpdateCommunityCommentRequest,
+) {
+  return memberApiClient<CommunityComment>(
+    `/api/v1/user/community/comments/${commentId}`,
+    {
+      method: "PUT",
+      auth: true,
+      allowRetry: true,
+      body: JSON.stringify(request),
+    },
+  );
+}
 export async function deleteCommunityComment(commentId: number) {
   return memberApiClient<void>(`/api/v1/user/community/comments/${commentId}`, {
     method: "DELETE",
@@ -62,14 +76,11 @@ export async function deleteCommunityBoard(boardId: number) {
 export async function createCommunityBoard(
   request: CreateCommunityBoardRequest,
 ) {
-  return memberApiClient<CommunityBoard>(
-    "/api/v1/user/community/boards",
-    {
-      method: "POST",
-      auth: true,
-      body: JSON.stringify(request),
-    },
-  );
+  return memberApiClient<CommunityBoard>("/api/v1/user/community/boards", {
+    method: "POST",
+    auth: true,
+    body: JSON.stringify(request),
+  });
 }
 
 export async function createCommunityReport(

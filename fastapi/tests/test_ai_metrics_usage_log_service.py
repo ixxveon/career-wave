@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException
 from admin.ai_metrics.repository.ai_model_repository import AiModelRecord
+from admin.ai_metrics.repository.ai_ops_setting_repository import AiOpsSettingRecord
 from admin.ai_metrics.repository.ai_usage_log_repository import AiUsageLogRecord
 from admin.ai_metrics.schema import UsageLogCreateRequest
 from admin.ai_metrics.service.usage_log_service import UsageLogService
@@ -93,6 +94,63 @@ def test_usage_log_service_persists_calculated_usage_log():
     assert persisted_request.input_tokens == 1300
     assert persisted_request.output_tokens == 420
     assert persisted_request.cost == Decimal("1192.000000")
+
+
+def test_usage_log_service_creates_discord_alert_candidate_only_when_threshold_is_crossed():
+    usage_log_repository = Mock()
+    ai_model_repository = Mock()
+    ai_ops_setting_repository = Mock()
+    token_cost_calculator = Mock()
+    ai_model_repository.find_by_id.return_value = _ai_model_record()
+    ai_ops_setting_repository.find_singleton.return_value = AiOpsSettingRecord(
+        ai_ops_setting_id=1,
+        selected_model_id=5,
+        monthly_budget=Decimal("100.00"),
+        alert_enabled=True,
+        alert_channel="DISCORD",
+        alert_threshold=85,
+        rate_limit_enabled=False,
+        updated_at=datetime(2026, 7, 1, tzinfo=timezone.utc),
+    )
+    token_cost_calculator.calculate_input_tokens.return_value = 1300
+    token_cost_calculator.calculate_output_tokens.return_value = 420
+    token_cost_calculator.calculate_cost.return_value = Decimal("2.00")
+    usage_log_repository.sum_cost.return_value = Decimal("84.00")
+    usage_log_repository.save.return_value = AiUsageLogRecord(
+        ai_usage_log_id=105,
+        member_id=UUID("55555555-5555-5555-5555-555555555555"),
+        admin_id=None,
+        session_id=None,
+        ai_model_id=5,
+        feature_type="DOCUMENT",
+        input_tokens=1300,
+        output_tokens=420,
+        cost=Decimal("2.00"),
+        created_at=datetime(2026, 7, 15, 12, 0, tzinfo=timezone.utc),
+    )
+    service = UsageLogService(
+        usage_log_repository=usage_log_repository,
+        ai_model_repository=ai_model_repository,
+        ai_ops_setting_repository=ai_ops_setting_repository,
+        token_cost_calculator=token_cost_calculator,
+    )
+
+    saved_record, alert_candidate = service.create_usage_log_with_budget_alert(
+        UsageLogCreateRequest(
+            memberId=UUID("55555555-5555-5555-5555-555555555555"),
+            aiModelId=5,
+            featureType="DOCUMENT",
+            inputTokens=1000,
+            outputTokens=300,
+            cost=Decimal("0"),
+        )
+    )
+
+    assert saved_record.ai_usage_log_id == 105
+    assert alert_candidate is not None
+    assert alert_candidate.threshold_amount == Decimal("85.000000")
+    assert alert_candidate.current_spend == Decimal("86.00")
+    usage_log_repository.acquire_monthly_budget_lock.assert_called_once()
 
 
 def test_usage_log_service_resolves_model_by_model_name():

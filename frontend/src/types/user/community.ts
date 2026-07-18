@@ -1,6 +1,7 @@
 export interface CommunityBoard {
   boardId: number;
   memberId: string;
+  memberName: string;
   category: string;
   title: string;
   content: string;
@@ -15,6 +16,7 @@ export interface CommunityComment {
   commentId: number;
   boardId: number;
   memberId: string;
+  memberName: string;
   parentId: number | null;
   content: string;
   reportCount: number;
@@ -27,7 +29,9 @@ export interface CreateCommunityCommentRequest {
   parentId: number | null;
   content: string;
 }
-
+export interface UpdateCommunityCommentRequest {
+  content: string;
+}
 export interface CreateCommunityBoardRequest {
   category: string;
   title: string;

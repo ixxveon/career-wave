@@ -17,6 +17,7 @@ from admin.ai_metrics.schema.rag_types import (
     RagEmbeddingVector,
 )
 from admin.ai_metrics.schema.response import (
+    BudgetStatusResponse,
     DomainUsageResponse,
     FeatureUsageResponse,
     HeavyUserResponse,
@@ -35,6 +36,7 @@ from admin.ai_metrics.schema.response import (
 __all__ = [
     "AiFeatureType",
     "AlertChannelType",
+    "BudgetStatusResponse",
     "DomainUsageRequest",
     "DomainUsageResponse",
     "FeatureUsageResponse",

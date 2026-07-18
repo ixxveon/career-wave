@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime, timezone
 from uuid import UUID
 
 from admin.ai_metrics.client import AiMetricsModelExecutionContext
@@ -6,7 +7,9 @@ from admin.ai_metrics.exception import AiMetricsErrorCode, AiMetricsException
 from admin.ai_metrics.repository import AiUsageLogRecord
 from admin.ai_metrics.repository.ai_model_repository import AiModelRecord, AiModelRepository
 from admin.ai_metrics.repository.ai_usage_log_repository import AiUsageLogRepository
+from admin.ai_metrics.repository.ai_ops_setting_repository import AiOpsSettingRepository
 from admin.ai_metrics.schema import AiFeatureType, UsageLogCreateRequest
+from admin.ai_metrics.service.budget_status_service import BudgetAlertCandidate, BudgetStatusService
 from admin.ai_metrics.service.token_cost_calculator import TokenCostCalculator
 
 
@@ -15,10 +18,12 @@ class UsageLogService:
         self,
         usage_log_repository: AiUsageLogRepository,
         ai_model_repository: AiModelRepository,
+        ai_ops_setting_repository: AiOpsSettingRepository | None = None,
         token_cost_calculator: TokenCostCalculator | None = None,
     ) -> None:
         self._usage_log_repository = usage_log_repository
         self._ai_model_repository = ai_model_repository
+        self._ai_ops_setting_repository = ai_ops_setting_repository
         self._token_cost_calculator = token_cost_calculator or TokenCostCalculator()
 
     def create_usage_log(
@@ -29,6 +34,45 @@ class UsageLogService:
         persist_request = self._build_persist_request(request, ai_model)
         saved_record = self._usage_log_repository.save(persist_request)
         return saved_record
+
+    def create_usage_log_with_budget_alert(
+        self,
+        request: UsageLogCreateRequest,
+    ) -> tuple[AiUsageLogRecord, BudgetAlertCandidate | None]:
+        if self._ai_ops_setting_repository is None:
+            return self.create_usage_log(request), None
+
+        ai_model = self._validate_request(request)
+        persist_request = self._build_persist_request(request, ai_model)
+        now = datetime.now(timezone.utc)
+        budget_service = BudgetStatusService(
+            ai_usage_log_repository=self._usage_log_repository,
+            ai_ops_setting_repository=self._ai_ops_setting_repository,
+        )
+        setting = budget_service.get_setting()
+        period_start, next_period_start = budget_service.month_bounds(now)
+
+        self._usage_log_repository.acquire_monthly_budget_lock(budget_service.period_key(now))
+        previous_spend = self._usage_log_repository.sum_cost(period_start, next_period_start)
+        saved_record = self._usage_log_repository.save(persist_request)
+        current_spend = previous_spend + saved_record.cost
+
+        if not setting.alert_enabled or setting.alert_channel != "DISCORD":
+            return saved_record, None
+        if not budget_service.is_threshold_crossed(
+            previous_spend=previous_spend,
+            current_spend=current_spend,
+            monthly_budget=setting.monthly_budget,
+            alert_threshold=setting.alert_threshold,
+        ):
+            return saved_record, None
+
+        return saved_record, budget_service.to_alert_candidate(
+            monthly_budget=setting.monthly_budget,
+            alert_threshold=setting.alert_threshold,
+            current_spend=current_spend,
+            now=now,
+        )
 
     def _validate_request(
         self,

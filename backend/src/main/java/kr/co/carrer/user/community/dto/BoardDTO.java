@@ -9,59 +9,47 @@ import java.util.UUID;
 
 public class BoardDTO {
 
-    public record CreateRequest(
-            @NotBlank
-            @Size(max = 30)
-            String category,
+        public record CreateRequest(
+                        @NotBlank @Size(max = 30) String category,
 
-            @NotBlank
-            @Size(max = 200)
-            String title,
+                        @NotBlank @Size(max = 200) String title,
 
-            @NotBlank
-            String content
-    ) {
-    }
-
-    public record UpdateRequest(
-            @NotBlank
-            @Size(max = 30)
-            String category,
-
-            @NotBlank
-            @Size(max = 200)
-            String title,
-
-            @NotBlank
-            String content
-    ) {
-    }
-
-    public record Response(
-            Long boardId,
-            UUID memberId,
-            String category,
-            String title,
-            String content,
-            Integer viewCount,
-            Long reportCount,
-            Boolean blind,
-            ZonedDateTime createdAt,
-            ZonedDateTime updatedAt
-    ) {
-        public static Response from(Board board, Long reportCount) {
-            return new Response(
-                    board.getBoardId(),
-                    board.getMemberId(),
-                    board.getCategory(),
-                    board.getTitle(),
-                    board.getContent(),
-                    board.getViewCount(),
-                    reportCount,
-                    board.getBlind(),
-                    board.getCreatedAt(),
-                    board.getUpdatedAt()
-            );
+                        @NotBlank String content) {
         }
-    }
+
+        public record UpdateRequest(
+                        @NotBlank @Size(max = 30) String category,
+
+                        @NotBlank @Size(max = 200) String title,
+
+                        @NotBlank String content) {
+        }
+
+        public record Response(
+                        Long boardId,
+                        UUID memberId,
+                        String memberName,
+                        String category,
+                        String title,
+                        String content,
+                        Integer viewCount,
+                        Long reportCount,
+                        Boolean blind,
+                        ZonedDateTime createdAt,
+                        ZonedDateTime updatedAt) {
+                public static Response from(Board board, String memberName, Long reportCount) {
+                        return new Response(
+                                        board.getBoardId(),
+                                        board.getMemberId(),
+                                        memberName,
+                                        board.getCategory(),
+                                        board.getTitle(),
+                                        board.getContent(),
+                                        board.getViewCount(),
+                                        reportCount,
+                                        board.getBlind(),
+                                        board.getCreatedAt(),
+                                        board.getUpdatedAt());
+                }
+        }
 }

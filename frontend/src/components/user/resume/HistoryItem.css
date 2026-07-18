@@ -89,6 +89,12 @@
   font-weight: 600;
 }
 
+.hi-score__failed {
+  font-size: 11px;
+  color: var(--color-danger, #ef4444);
+  font-weight: 600;
+}
+
 /* 버튼 */
 .hi-btn {
   display: inline-flex;

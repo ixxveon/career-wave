@@ -145,6 +145,10 @@ public interface AiMetricsService {
             AlertChannelType alertChannel,
             int alertThreshold,
             boolean rateLimitEnabled,
+            BigDecimal currentSpend,
+            BigDecimal thresholdAmount,
+            BigDecimal usagePercent,
+            BigDecimal remainingBudget,
             ZonedDateTime updatedAt
     ) {
     }

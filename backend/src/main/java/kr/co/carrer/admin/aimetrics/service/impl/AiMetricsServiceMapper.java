@@ -64,7 +64,10 @@ final class AiMetricsServiceMapper {
         );
     }
 
-    static AiMetricsService.ResponseBudget toBudget(AiOpsSetting setting) {
+    static AiMetricsService.ResponseBudget toBudget(
+            AiOpsSetting setting,
+            AiMetricsFastApiGateway.BudgetStatusResponse budgetStatus
+    ) {
         return new AiMetricsService.ResponseBudget(
                 setting.getAiOpsSettingId(),
                 setting.getSelectedModelId(),
@@ -73,6 +76,10 @@ final class AiMetricsServiceMapper {
                 setting.getAlertChannel(),
                 setting.getAlertThreshold(),
                 setting.isRateLimitEnabled(),
+                budgetStatus.currentSpend(),
+                budgetStatus.thresholdAmount(),
+                budgetStatus.usagePercent(),
+                budgetStatus.remainingBudget(),
                 setting.getUpdatedAt()
         );
     }
