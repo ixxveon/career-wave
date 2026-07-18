@@ -167,6 +167,10 @@ export const memberApi = {
   unsuspendMember: (memberId: string, data: UnsuspendRequest) =>
     axiosInstance.patch<ApiResponse<UnsuspendResult>>(`/api/v1/admin/members/${memberId}/unsuspend`, data),
 
+  // 회원 블랙리스트(영구정지) 해제 — MASTER 권한 전용
+  unbanMember: (memberId: string, data: UnsuspendRequest) =>
+    axiosInstance.patch<ApiResponse<UnsuspendResult>>(`/api/v1/admin/members/${memberId}/unban`, data),
+
   // 기업 회원 목록 조회
   getHrManagers: (params?: HrManagerListParams) =>
     axiosInstance.get<ApiResponse<HrManagerListData>>('/api/v1/admin/hr-managers', { params }),

@@ -146,6 +146,7 @@ const AUDIT_LOG_ACTION_LABELS: Record<string, string> = {
   SANCTION_MEMBER_BLACKLIST: '회원 블랙리스트 처리',
   SANCTION_MEMBER_SUSPEND: '회원 이용 정지',
   UNSUSPEND_MEMBER: '회원 이용 정지 해제',
+  UNBAN_MEMBER: '회원 영구정지 해제',
   CREATE_ADMIN: '관리자 생성',
   UPDATE_ADMIN_ROLE: '관리자 역할 변경',
   UPDATE_ADMIN_STATUS: '관리자 상태 변경',
