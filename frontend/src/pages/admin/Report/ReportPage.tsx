@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { AlertTriangle, Bot, Clock, EyeOff, Flag, UserX, X } from 'lucide-react';
 import { reportApi, REPORT_STATUS, type ReportItem, type ReportSummary, type ReportStatus, type TargetType, type ReportReason, type ReportDetail, type AiSuggestion } from '../../../api/admin/reportApi';
+import { memberApi, type SanctionType, type SuspendDuration } from '../../../api/admin/memberApi';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/Report.css';
 
 // ── 로컬 전용 타입 ───────────────────────────────────────────
 type ReportType     = TargetType;
 type Severity       = '낮음' | '중간' | '높음';
-type SuspendType    = 'WARNING' | 'SUSPEND' | 'BLACKLIST';
-type SuspendDuration = 'THREE_DAYS' | 'SEVEN_DAYS' | 'THIRTY_DAYS' | 'PERMANENT';
+type SuspendType    = SanctionType;
 type SanctionRec    = 'NONE' | 'WARNING' | 'SUSPEND' | 'BLACKLIST';
 
 const WARN_THRESHOLD = 3;
@@ -65,10 +65,13 @@ interface ReportWithAi extends ReportItem {
   aiSuggestion?: AiSuggestion | null;
   userAiReview?: UserAiReview;
   contentBody?: ReportDetail['contentBody'];
+  contentBlind?: ReportDetail['contentBlind'];
   targetId?: ReportDetail['targetId'];
   processedAt?: ReportDetail['processedAt'];
   processedBy?: ReportDetail['processedBy'];
   memberId?: ReportDetail['memberId'];
+  reporterLoginId?: ReportDetail['reporterLoginId'];
+  reportedLoginId?: ReportDetail['reportedLoginId'];
 }
 
 export default function ReportPage() {
@@ -169,11 +172,31 @@ export default function ReportPage() {
     }
   };
 
-  const applySuspend = () => {
-    setSuspendTarget(null);
-    setSuspendReason('');
-    setSuspendType('WARNING');
-    setSuspendDuration('THREE_DAYS');
+  const applySuspend = async () => {
+    if (!suspendTarget?.memberId || processing) return;
+    if (suspendReason.trim().length < 10) return;
+
+    setProcessing(true);
+    try {
+      const res = await memberApi.sanctionMember(suspendTarget.memberId, {
+        sanctionType: suspendType,
+        duration: suspendType === 'SUSPEND' ? suspendDuration : undefined,
+        reason: suspendReason,
+      });
+      if (!res.data.success) throw new Error(res.data.message);
+
+      setSuspendTarget(null);
+      setSuspendReason('');
+      setSuspendType('WARNING');
+      setSuspendDuration('THREE_DAYS');
+      fetchSummary();
+      fetchReports(currentPage);
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.message : err instanceof Error ? err.message : '';
+      alert(msg || '제재 적용에 실패했습니다.');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   // ── 신고 상세 조회 ─────────────────────────────────────────
@@ -219,6 +242,23 @@ export default function ReportPage() {
     } catch (err: unknown) {
       const msg = (err as any).response?.data?.message ?? (err instanceof Error ? err.message : undefined);
       alert(msg || '기각 처리에 실패했습니다.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // ── 게시글·댓글 삭제(블라인드) — 신고 처리 상태와 무관하게 항상 가능 ──
+  const handleDeleteContent = async (reportId: number) => {
+    if (processing) return;
+    if (!window.confirm('신고 대상 게시글/댓글을 삭제(블라인드) 처리하시겠습니까?')) return;
+    setProcessing(true);
+    try {
+      const res = await reportApi.deleteContent(reportId);
+      if (!res.data.success) throw new Error(res.data.message);
+      setSelected((prev) => (prev && prev.reportId === reportId ? { ...prev, contentBlind: true } : prev));
+    } catch (err: unknown) {
+      const msg = (err as any).response?.data?.message ?? (err instanceof Error ? err.message : undefined);
+      alert(msg || '삭제 처리에 실패했습니다.');
     } finally {
       setProcessing(false);
     }
@@ -396,8 +436,8 @@ export default function ReportPage() {
                 </div>
                 <div><span>신고 사유</span><strong>{reasonLabel[selected.reason]}</strong></div>
                 <div><span>접수일</span><strong>{new Date(selected.createdAt).toLocaleDateString('ko-KR')}</strong></div>
-                <div><span>신고 대상</span><strong>{selected.reportedName}</strong></div>
-                <div><span>신고자</span><strong>{selected.reporterName}</strong></div>
+                <div><span>신고 대상</span><strong>{selected.reportedName} ({selected.reportedLoginId})</strong></div>
+                <div><span>신고자</span><strong>{selected.reporterName} ({selected.reporterLoginId})</strong></div>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <span>신고 대상 제목</span>
                   <strong style={{ display: 'block', marginTop: 8, lineHeight: 1.7, wordBreak: 'break-all' }}>
@@ -418,6 +458,16 @@ export default function ReportPage() {
                     <span className={`statusBadge ${statusCls[selected.reportStatus]}`}>{statusLabel[selected.reportStatus]}</span>
                   </strong>
                 </div>
+                {selected.contentBlind !== null && selected.contentBlind !== undefined && (
+                  <div>
+                    <span>콘텐츠 상태</span>
+                    <strong>
+                      <span className={`statusBadge ${selected.contentBlind ? 'blinded' : 'normal'}`}>
+                        {selected.contentBlind ? '삭제됨(블라인드)' : '정상 노출 중'}
+                      </span>
+                    </strong>
+                  </div>
+                )}
               </div>
 
               {/* 콘텐츠 AI 검토 */}
@@ -506,8 +556,12 @@ export default function ReportPage() {
 
             {/* Action */}
             <div className="modalAction" style={{ justifyContent: 'space-between' }}>
-              {selected.targetType !== 'MEMBER' ? (
-                <button className="tableBtn tableBtn--danger" disabled>
+              {selected.targetType !== 'MEMBER' && selected.contentBlind !== true ? (
+                <button
+                  className="tableBtn tableBtn--danger"
+                  disabled={processing}
+                  onClick={() => handleDeleteContent(selected.reportId)}
+                >
                   {selected.targetType === 'COMMENT' ? '댓글 삭제' : '게시글 삭제'}
                 </button>
               ) : (
@@ -523,7 +577,8 @@ export default function ReportPage() {
                 )}
                 <button
                   className="tableBtn tableBtn--warn"
-                  disabled
+                  disabled={processing}
+                  onClick={() => setSuspendTarget(selected)}
                 >
                   회원 제재
                 </button>
@@ -567,7 +622,7 @@ export default function ReportPage() {
               <div className="sanctionDurationWrap">
                 <span>정지 기간</span>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  {(['THREE_DAYS', 'SEVEN_DAYS', 'THIRTY_DAYS', 'PERMANENT'] as SuspendDuration[]).map((d) => (
+                  {(['THREE_DAYS', 'SEVEN_DAYS', 'THIRTY_DAYS'] as SuspendDuration[]).map((d) => (
                     <button
                       key={d}
                       onClick={() => setSuspendDuration(d)}
@@ -594,17 +649,17 @@ export default function ReportPage() {
                 onChange={(e) => setSuspendReason(e.target.value)}
                 rows={3}
               />
-              <p className="sanctionNote">해당 회원에게 안내됩니다.</p>
+              <p className="sanctionNote">해당 회원에게 안내됩니다. (최소 10자)</p>
             </div>
 
             <div className="modalAction">
-              <button className="tableBtn" onClick={() => setSuspendTarget(null)}>취소</button>
+              <button className="tableBtn" onClick={() => setSuspendTarget(null)} disabled={processing}>취소</button>
               <button
                 className="tableBtn tableBtn--danger"
                 onClick={applySuspend}
-                disabled={!suspendReason.trim()}
+                disabled={suspendReason.trim().length < 10 || processing}
               >
-                제재 적용
+                {processing ? '처리 중...' : '제재 적용'}
               </button>
             </div>
           </div>

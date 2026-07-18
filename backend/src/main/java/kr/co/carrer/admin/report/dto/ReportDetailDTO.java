@@ -38,9 +38,12 @@ public class ReportDetailDTO {
         @Schema(description = "신고 사유", allowableValues = {"SPAM", "ABUSE", "AD", "INAPPROPRIATE", "OTHER"}) ReportReason reason,
         @Schema(description = "신고 처리 상태", allowableValues = {"PENDING", "BLINDED", "DISMISSED"}) ReportStatus reportStatus,
         @Schema(description = "신고자 이름") String reporterName,
+        @Schema(description = "신고자 로그인 ID") String reporterLoginId,
         @Schema(description = "피신고자 이름") String reportedName,
+        @Schema(description = "피신고자 로그인 ID") String reportedLoginId,
         @Schema(description = "신고 대상 콘텐츠 제목 (게시글인 경우, 삭제 시 null)") String contentTitle,
         @Schema(description = "신고 대상 콘텐츠 본문 (게시글·댓글인 경우, 삭제 시 null)") String contentBody,
+        @Schema(description = "신고 대상 콘텐츠 삭제(블라인드) 여부 — BOARD/COMMENT만 해당, MEMBER는 null") Boolean contentBlind,
         @Schema(description = "AI 검토 의견 JSON (severity/category/suggestion, AI 미호출 시 null)") String aiSuggestion,
         @Schema(description = "신고 접수 일시") ZonedDateTime createdAt,
         @Schema(description = "처리 일시 (미처리 시 null)") ZonedDateTime processedAt,
@@ -53,6 +56,13 @@ public class ReportDetailDTO {
         @Schema(description = "신고 ID") Long reportId,
         @Schema(description = "변경된 처리 상태") ReportStatus reportStatus,
         @Schema(description = "처리 일시") ZonedDateTime processedAt
+    ) {}
+
+    @Schema(description = "신고 대상 콘텐츠 삭제(블라인드) 응답")
+    public record ResponseContentDelete(
+        @Schema(description = "신고 ID") Long reportId,
+        @Schema(description = "삭제된 대상 유형", allowableValues = {"BOARD", "COMMENT"}) TargetType targetType,
+        @Schema(description = "삭제된 대상 ID") Long targetId
     ) {}
 
     @Schema(description = "대상 회원 AI 검토 응답")

@@ -113,8 +113,9 @@ public class AdminReportServiceImpl implements AdminReportService {
         return new ReportDetailDTO.ResponseDetail(
             detail.reportId(), detail.targetType(), detail.targetId(),
             detail.reason(), detail.reportStatus(),
-            detail.reporterName(), detail.reportedName(),
-            detail.contentTitle(), detail.contentBody(), aiSuggestion,
+            detail.reporterName(), detail.reporterLoginId(),
+            detail.reportedName(), detail.reportedLoginId(),
+            detail.contentTitle(), detail.contentBody(), detail.contentBlind(), aiSuggestion,
             detail.createdAt(), detail.processedAt(), detail.processedBy(),
             detail.memberId()
         );
@@ -127,19 +128,23 @@ public class AdminReportServiceImpl implements AdminReportService {
 
         String contentTitle = null;
         String contentBody  = null;
+        Boolean contentBlind = null;
 
         if (base.targetType() == TargetType.BOARD) {
             contentTitle = reportBoardRepository.findTitleById(base.targetId());
             contentBody  = reportBoardRepository.findContentById(base.targetId());
+            contentBlind = reportBoardRepository.isBlind(base.targetId());
         } else if (base.targetType() == TargetType.COMMENT) {
-            contentBody = reportCommentRepository.findContentById(base.targetId());
+            contentBody  = reportCommentRepository.findContentById(base.targetId());
+            contentBlind = reportCommentRepository.isBlind(base.targetId());
         }
 
         return new ReportDetailDTO.ResponseDetail(
             base.reportId(), base.targetType(), base.targetId(),
             base.reason(), base.reportStatus(),
-            base.reporterName(), base.reportedName(),
-            contentTitle, contentBody, base.aiSuggestion(),
+            base.reporterName(), base.reporterLoginId(),
+            base.reportedName(), base.reportedLoginId(),
+            contentTitle, contentBody, contentBlind, base.aiSuggestion(),
             base.createdAt(), base.processedAt(), base.processedBy(),
             base.memberId()
         );
@@ -273,6 +278,25 @@ public class AdminReportServiceImpl implements AdminReportService {
 
         return new ReportDetailDTO.ResponseProcess(
             report.getReportId(), report.getReportStatus(), report.getProcessedAt()
+        );
+    }
+
+    @Override
+    @Transactional
+    public ReportDetailDTO.ResponseContentDelete deleteContent(Long reportId, Long adminId) {
+        Report report = reportRepository.findById(reportId)
+            .orElseThrow(() -> new CustomException(AdminReportErrorCode.REPORT_NOT_FOUND));
+
+        if (report.getTargetType() == TargetType.BOARD) {
+            reportBoardRepository.blind(report.getTargetId());
+        } else if (report.getTargetType() == TargetType.COMMENT) {
+            reportCommentRepository.blind(report.getTargetId());
+        } else {
+            throw new CustomException(AdminReportErrorCode.INVALID_TARGET_TYPE);
+        }
+
+        return new ReportDetailDTO.ResponseContentDelete(
+            report.getReportId(), report.getTargetType(), report.getTargetId()
         );
     }
 }

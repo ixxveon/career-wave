@@ -56,7 +56,10 @@ export interface AiSuggestion {
 
 export interface ReportDetail extends ReportItem {
   targetId: number;
+  reporterLoginId: string;
+  reportedLoginId: string;
   contentBody: string | null;
+  contentBlind: boolean | null;
   aiSuggestion: AiSuggestion | null;
   processedAt: string | null;
   processedBy: number | null;
@@ -87,6 +90,12 @@ export interface MemberAiReview {
   riskLevel: '높음' | '중간' | '낮음';
   recommendation: 'NONE' | 'WARNING' | 'SUSPEND' | 'BLACKLIST';
   summary: string;
+}
+
+export interface ContentDeleteResult {
+  reportId: number;
+  targetType: TargetType;
+  targetId: number;
 }
 
 // ── API 함수 ───────────────────────────────────────────────────
@@ -124,4 +133,8 @@ export const reportApi = {
   // 대상 회원 AI 검토
   requestMemberAnalysis: (reportId: number) =>
     axiosInstance.post<ApiResponse<MemberAiReview>>(`/api/v1/admin/reports/${reportId}/member-analysis`),
+
+  // 신고 대상 게시글·댓글 삭제(블라인드) — 신고 처리 상태와 무관하게 항상 가능
+  deleteContent: (reportId: number) =>
+    axiosInstance.delete<ApiResponse<ContentDeleteResult>>(`/api/v1/admin/reports/${reportId}/content`),
 };
