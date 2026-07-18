@@ -19,10 +19,10 @@ const durationLabel: Record<SuspendDuration, string> = {
   THREE_DAYS: '3일', SEVEN_DAYS: '7일', THIRTY_DAYS: '30일', PERMANENT: '영구',
 };
 const memberStatusLabel: Record<MemberStatus, string> = {
-  ACTIVE: '정상', SUSPENDED: '정지', BANNED: '영구정지', LOCKED: '잠금', WITHDRAWN: '탈퇴',
+  ACTIVE: '정상', SUSPENDED: '정지', BANNED: '영구정지', BLACKLISTED: '블랙리스트', LOCKED: '잠금', WITHDRAWN: '탈퇴',
 };
 const memberStatusCls: Record<MemberStatus, string> = {
-  ACTIVE: 'normal', SUSPENDED: 'blinded', BANNED: 'dismissed', LOCKED: 'pending', WITHDRAWN: 'dismissed',
+  ACTIVE: 'normal', SUSPENDED: 'blinded', BANNED: 'dismissed', BLACKLISTED: 'dismissed', LOCKED: 'pending', WITHDRAWN: 'dismissed',
 };
 
 interface MemberDetailModalProps {
@@ -131,7 +131,7 @@ export function MemberDetailModal({ member, onClose, onSuspend, onUnsuspend, onU
           {member.memberStatus === MEMBER_STATUS.BANNED && adminSession.getRole() === 'MASTER' && (
             <button onClick={() => onUnban(member)} style={{ background: '#2e7d32', color: 'white', borderColor: '#2e7d32' }}>영구정지 해제</button>
           )}
-          {member.memberStatus !== MEMBER_STATUS.SUSPENDED && member.memberStatus !== MEMBER_STATUS.BANNED && (
+          {member.memberStatus !== MEMBER_STATUS.SUSPENDED && member.memberStatus !== MEMBER_STATUS.BANNED && member.memberStatus !== MEMBER_STATUS.BLACKLISTED && (
             <button onClick={() => onSuspend(member)} disabled={member?.memberStatus === MEMBER_STATUS.WITHDRAWN}>활동 정지</button>
           )}
         </div>

@@ -83,6 +83,12 @@ public class Member {
         this.updatedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
     }
 
+    public void blacklist() {
+        this.memberStatus = MemberStatus.BLACKLISTED;
+        this.suspendEndDate = null;
+        this.updatedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+    }
+
     public void unsuspend() {
         this.memberStatus = MemberStatus.ACTIVE;
         this.suspendEndDate = null;
