@@ -237,7 +237,12 @@ function CommentItem({
 
         {!editing && (
           <div className="pd-comment__actions">
-            <button className="pd-comment__like" type="button">
+            <button
+              className="pd-comment__like"
+              type="button"
+              disabled
+              title="아직 지원하지 않는 기능입니다."
+            >
               <ThumbsUp size={11} /> {comment.likes}
             </button>
 
@@ -353,7 +358,12 @@ function CommentItem({
 
                     {!isEditingReply && (
                       <div className="pd-comment__actions">
-                        <button className="pd-comment__like" type="button">
+                        <button
+                          className="pd-comment__like"
+                          type="button"
+                          disabled
+                          title="아직 지원하지 않는 기능입니다."
+                        >
                           <ThumbsUp size={11} /> {reply.likes}
                         </button>
 
@@ -462,8 +472,6 @@ const { mutate: updateComment } = useUpdateCommunityComment(
 
   const isPostOwner = post?.memberId === currentMemberId;
 
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post?.likes ?? 0);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<Comment[]>([]);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
@@ -473,23 +481,14 @@ const { mutate: updateComment } = useUpdateCommunityComment(
   );
 
   useEffect(() => {
-    setLiked(false);
-    setLikeCount(post?.likes ?? 0);
     setPostReportCount(post?.reportCount ?? 0);
     setReportTarget(null);
     setReportReason("AD");
-  }, [post?.id, post?.likes, post?.reportCount]);
+  }, [post?.id, post?.reportCount]);
 
   useEffect(() => {
     setComments(toComments(apiComments ?? []));
   }, [apiComments]);
-
-  function handleLike() {
-    setLiked((current) => {
-      setLikeCount((count) => (current ? count - 1 : count + 1));
-      return !current;
-    });
-  }
 
   function submitComment() {
     const trimmedComment = comment.trim();
@@ -693,12 +692,13 @@ const { mutate: updateComment } = useUpdateCommunityComment(
 
         <div className="pd-actions">
           <button
-            className={`pd-action-btn${liked ? " pd-action-btn--liked" : ""}`}
+            className="pd-action-btn"
             type="button"
-            onClick={handleLike}
+            disabled
+            title="아직 지원하지 않는 기능입니다."
           >
-            <ThumbsUp size={15} fill={liked ? "currentColor" : "none"} />{" "}
-            {likeCount}
+            <ThumbsUp size={15} />
+            {post?.likes ?? 0}
           </button>
 
           <button
