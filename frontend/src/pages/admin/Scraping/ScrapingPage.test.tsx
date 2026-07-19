@@ -6,8 +6,11 @@ import ScrapingPage from './ScrapingPage';
 
 const scrapingApiMock = vi.hoisted(() => ({
   getSources: vi.fn(),
-  getLogs: vi.fn(),
   requestAction: vi.fn(),
+}));
+
+const auditLogApiMock = vi.hoisted(() => ({
+  getLogs: vi.fn(),
 }));
 
 vi.mock('../../../api/admin/scrapingApi', async () => {
@@ -18,6 +21,17 @@ vi.mock('../../../api/admin/scrapingApi', async () => {
   return {
     ...actual,
     scrapingApi: scrapingApiMock,
+  };
+});
+
+vi.mock('../../../api/admin/auditLogApi', async () => {
+  const actual = await vi.importActual<typeof import('../../../api/admin/auditLogApi')>(
+    '../../../api/admin/auditLogApi',
+  );
+
+  return {
+    ...actual,
+    auditLogApi: auditLogApiMock,
   };
 });
 
@@ -75,7 +89,7 @@ describe('ScrapingPage action guards', () => {
         totalPages: 1,
       }),
     );
-    scrapingApiMock.getLogs.mockResolvedValue(
+    auditLogApiMock.getLogs.mockResolvedValue(
       apiResponse({
         content: [],
         page: 1,
@@ -88,7 +102,14 @@ describe('ScrapingPage action guards', () => {
     const { container } = renderPage();
 
     await waitFor(() => expect(scrapingApiMock.getSources).toHaveBeenCalled());
-    await waitFor(() => expect(scrapingApiMock.getLogs).toHaveBeenCalledWith({ page: 1, size: 5, sourceName: undefined }));
+    await waitFor(() =>
+      expect(auditLogApiMock.getLogs).toHaveBeenCalledWith({
+        logType: 'SCRAPING_SYSTEM',
+        keyword: undefined,
+        page: 1,
+        size: 5,
+      }),
+    );
     await waitFor(() =>
       expect(container.querySelectorAll<HTMLButtonElement>('.scrapeOpsActionGroup button')).toHaveLength(4),
     );

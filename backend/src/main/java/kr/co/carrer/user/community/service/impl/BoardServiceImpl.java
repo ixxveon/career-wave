@@ -6,7 +6,9 @@ import kr.co.carrer.user.community.dto.BoardDTO;
 import kr.co.carrer.user.community.entity.Board;
 import kr.co.carrer.user.community.exception.CommunityErrorCode;
 import kr.co.carrer.user.community.repository.BoardRepository;
+import kr.co.carrer.user.community.repository.CommunityReportRepository;
 import kr.co.carrer.user.community.service.BoardService;
+import kr.co.carrer.user.community.type.ReportTargetType;
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
 import org.springframework.data.domain.Page;
@@ -15,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,12 +31,15 @@ public class BoardServiceImpl implements BoardService {
 
     private final BoardRepository boardRepository;
     private final UserMemberRepository memberRepository;
+    private final CommunityReportRepository reportRepository;
 
     public BoardServiceImpl(
             BoardRepository boardRepository,
-            UserMemberRepository memberRepository) {
+            UserMemberRepository memberRepository,
+            CommunityReportRepository reportRepository) {
         this.boardRepository = boardRepository;
         this.memberRepository = memberRepository;
+        this.reportRepository = reportRepository;
     }
 
     @Override
@@ -63,10 +69,14 @@ public class BoardServiceImpl implements BoardService {
                 .stream()
                 .collect(Collectors.toMap(Member::getMemberId, Member::getName));
 
+        Map<Long, Long> reportCounts = getReportCounts(
+                boardList.stream().map(Board::getBoardId).toList());
+
         List<BoardDTO.Response> boards = boardList.stream()
                 .map(board -> BoardDTO.Response.from(
                         board,
-                        memberNames.getOrDefault(board.getMemberId(), UNKNOWN_MEMBER_NAME)))
+                        memberNames.getOrDefault(board.getMemberId(), UNKNOWN_MEMBER_NAME),
+                        reportCounts.getOrDefault(board.getBoardId(), 0L)))
                 .toList();
 
         return PaginationResponse.of(
@@ -161,14 +171,28 @@ public class BoardServiceImpl implements BoardService {
     }
 
     private BoardDTO.Response toResponse(Board board) {
+        long reportCount = reportRepository.countByTargetTypeAndTargetId(
+                ReportTargetType.BOARD, board.getBoardId());
+
         return BoardDTO.Response.from(
                 board,
-                getMemberName(board.getMemberId()));
+                getMemberName(board.getMemberId()),
+                reportCount);
     }
 
     private String getMemberName(UUID memberId) {
         return memberRepository.findById(memberId)
                 .map(Member::getName)
                 .orElse(UNKNOWN_MEMBER_NAME);
+    }
+
+    private Map<Long, Long> getReportCounts(Collection<Long> boardIds) {
+        if (boardIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return reportRepository.countGroupedByTargetId(ReportTargetType.BOARD, boardIds)
+                .stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
     }
 }

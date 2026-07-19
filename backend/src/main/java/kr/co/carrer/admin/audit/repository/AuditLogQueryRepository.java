@@ -265,12 +265,7 @@ public class AuditLogQueryRepository {
         String normalizedKeyword = normalizeKeyword(keyword);
 
         if (normalizedKeyword != null) {
-            predicate.and(
-                    auditLog.action.containsIgnoreCase(normalizedKeyword)
-                            .or(auditLog.targetType.containsIgnoreCase(normalizedKeyword))
-                            .or(auditLog.targetId.containsIgnoreCase(normalizedKeyword))
-                            .or(auditLog.detail.containsIgnoreCase(normalizedKeyword))
-            );
+            predicate.and(auditLog.searchText.containsIgnoreCase(normalizedKeyword));
         }
 
         return predicate;

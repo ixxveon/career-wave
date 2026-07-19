@@ -22,7 +22,7 @@ import '../../../styles/admin/audit-log.css';
 
 const DASHBOARD_SUMMARY_QUERY_KEY = ['admin', 'dashboard', 'summary'] as const;
 const DASHBOARD_RECENT_ADMIN_ACTIVITY_QUERY_KEY = ['admin', 'dashboard', 'recent-admin-activities'] as const;
-const RECENT_ACTIVITY_DISPLAY_LIMIT = 12;
+const RECENT_ACTIVITY_DISPLAY_LIMIT = 5;
 
 const KST_DATE_FORMATTER = new Intl.DateTimeFormat('ko-KR', {
   timeZone: 'Asia/Seoul',

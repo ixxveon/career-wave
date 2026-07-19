@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from admin.ai_metrics.client.openai_client import get_ai_metrics_openai_client
 from admin.ai_metrics.router import router as ai_metrics_router
 from admin.scraping.scheduler import ScrapingAutoRunScheduler
+from admin.scraping.task import get_pending_scraping_tasks, wait_for_pending_scraping_tasks
 from core.config import get_settings
 from core.middleware import InternalRouteGuardMiddleware
 from core.redis import close_redis
@@ -55,11 +56,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     )
     scheduler.start()
     yield
+    scheduler.shutdown()
+    await wait_for_pending_scraping_tasks()
     if get_ai_metrics_openai_client.cache_info().currsize > 0:
         await get_ai_metrics_openai_client().close()
         get_ai_metrics_openai_client.cache_clear()
     await close_redis()
-    scheduler.shutdown()
     outbox_task.cancel()
     try:
         await outbox_task
@@ -67,7 +69,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         pass
     # Graceful shutdown: 진행 중인 AI 파이프라인 태스크 최대 15초 대기
     current = asyncio.current_task()
-    pending = [t for t in asyncio.all_tasks() if not t.done() and t is not current]
+    scraping_tasks = set(get_pending_scraping_tasks())
+    pending = [
+        task
+        for task in asyncio.all_tasks()
+        if not task.done() and task is not current and task not in scraping_tasks
+    ]
     if pending:
         log.info("graceful shutdown: waiting for %d pending tasks (timeout=15s)", len(pending))
         await asyncio.wait(pending, timeout=15)

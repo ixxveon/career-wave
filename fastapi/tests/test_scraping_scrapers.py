@@ -1,3 +1,4 @@
+import pytest
 import httpx
 
 from admin.scraping.adapter import GroupByScraper, JumpitScraper, SaraminScraper, WantedScraper
@@ -286,6 +287,101 @@ def test_wanted_scraper_maps_list_based_skill_tags_without_detail_payload():
 
     assert len(notices) == 1
     assert notices[0].skill_tags == ["Python", "FastAPI"]
+
+
+def test_wanted_scraper_retries_timeout_before_detail_request_succeeds():
+    detail_request_count = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal detail_request_count
+        if request.url.path == "/api/v4/jobs":
+            return httpx.Response(
+                200,
+                json={"data": [{"id": 123, "position": "Backend Engineer", "company": {"name": "Career Wave"}}]},
+            )
+        if request.url.path == "/api/v4/jobs/123":
+            detail_request_count += 1
+            if detail_request_count == 1:
+                raise httpx.ReadTimeout("timeout", request=request)
+            return httpx.Response(200, json={"job": {"detail": "Detailed job description."}})
+        return httpx.Response(404)
+
+    client = httpx.Client(transport=httpx.MockTransport(handler), base_url="https://www.wanted.co.kr")
+    scraper = WantedScraper(
+        client=client,
+        request_delay_seconds=0,
+        retry_backoff_seconds=0,
+    )
+
+    notices = scraper.scrape()
+
+    assert notices[0].description == "Detailed job description."
+    assert scraper.detail_metrics.attempted_count == 1
+    assert scraper.detail_metrics.succeeded_count == 1
+    assert scraper.detail_metrics.timeout_count == 1
+    assert scraper.detail_metrics.retry_count == 1
+
+
+@pytest.mark.parametrize("failure", ["connect_error", "read_error", 429, 500])
+def test_wanted_scraper_retries_transient_detail_failures(failure: str | int):
+    detail_request_count = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal detail_request_count
+        if request.url.path == "/api/v4/jobs":
+            return httpx.Response(
+                200,
+                json={"data": [{"id": 123, "position": "Backend Engineer", "company": {"name": "Career Wave"}}]},
+            )
+        if request.url.path == "/api/v4/jobs/123":
+            detail_request_count += 1
+            if detail_request_count == 1:
+                if failure == "connect_error":
+                    raise httpx.ConnectError("connection failed", request=request)
+                if failure == "read_error":
+                    raise httpx.ReadError("connection reset", request=request)
+                return httpx.Response(failure)
+            return httpx.Response(200, json={"job": {"detail": "Detailed job description."}})
+        return httpx.Response(404)
+
+    client = httpx.Client(transport=httpx.MockTransport(handler), base_url="https://www.wanted.co.kr")
+    scraper = WantedScraper(
+        client=client,
+        request_delay_seconds=0,
+        retry_backoff_seconds=0,
+    )
+
+    notices = scraper.scrape()
+
+    assert notices[0].description == "Detailed job description."
+    assert detail_request_count == 2
+    assert scraper.detail_metrics.retry_count == 1
+
+
+def test_wanted_scraper_records_failed_detail_metrics_when_api_and_fallback_timeout():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/v4/jobs":
+            return httpx.Response(
+                200,
+                json={"data": [{"id": 123, "position": "Backend Engineer", "company": {"name": "Career Wave"}}]},
+            )
+        raise httpx.ReadTimeout("timeout", request=request)
+
+    client = httpx.Client(transport=httpx.MockTransport(handler), base_url="https://www.wanted.co.kr")
+    scraper = WantedScraper(
+        client=client,
+        request_delay_seconds=0,
+        retry_backoff_seconds=0,
+    )
+
+    notices = scraper.scrape()
+
+    assert notices == []
+    assert scraper.detail_metrics.attempted_count == 1
+    assert scraper.detail_metrics.succeeded_count == 0
+    assert scraper.detail_metrics.failed_count == 1
+    assert scraper.detail_metrics.timeout_count == 4
+    assert scraper.detail_metrics.retry_count == 2
 
 
 def test_saramin_scraper_maps_search_html_to_raw_job_notices():

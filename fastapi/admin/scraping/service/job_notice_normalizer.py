@@ -3,6 +3,12 @@ from dataclasses import dataclass
 from datetime import date, datetime, timezone
 
 from admin.scraping.adapter import RawJobNotice
+from admin.scraping.service.job_notice_filter_dictionary import (
+    COMPANY_SIZE_OPTIONS,
+    JOB_CATEGORY_OPTIONS,
+    JOB_TYPE_OPTIONS,
+    LOCATION_OPTIONS,
+)
 
 
 @dataclass(frozen=True)
@@ -28,9 +34,9 @@ class NormalizedJobNotice:
 
 
 class JobNoticeNormalizer:
-    _DEFAULT_JOB_TYPE = "FULLTIME"
+    _DEFAULT_JOB_TYPE = None
     _DEFAULT_COMPANY_SIZE = None
-    _DEFAULT_CAREER_LEVEL = "ANY"
+    _DEFAULT_CAREER_LEVEL = None
     _STANDARD_JOB_CATEGORIES = (
         ("BACKEND", ("BACKEND", "SERVER", "API", "\ubc31\uc5d4\ub4dc", "\uc11c\ubc84")),
         ("FRONTEND", ("FRONTEND", "WEB PUBLISHER", "\ud504\ub860\ud2b8\uc5d4\ub4dc", "\ud37c\ube14\ub9ac\uc154")),
@@ -195,12 +201,12 @@ class JobNoticeNormalizer:
     def _normalize_job_categories(cls, title: str, values: list[str] | None) -> list[str] | None:
         candidates = [title, *(values or [])]
         categories: list[str] = []
-        for category, keywords in cls._STANDARD_JOB_CATEGORIES:
+        for option in JOB_CATEGORY_OPTIONS:
             if any(
-                any(cls._job_category_keyword_matches(keyword, candidate) for keyword in keywords)
+                any(cls._job_category_keyword_matches(keyword, candidate) for keyword in option.keywords)
                 for candidate in candidates
             ):
-                categories.append(category)
+                categories.append(option.code)
         return categories or None
 
     @classmethod
@@ -223,23 +229,26 @@ class JobNoticeNormalizer:
         normalized = cls._normalize_token(value)
         if normalized is None:
             return None
-        for location, keywords in cls._STANDARD_LOCATIONS:
-            if any((keyword := cls._normalize_token(raw_keyword)) is not None and keyword in normalized for raw_keyword in keywords):
-                return location
+        for option in LOCATION_OPTIONS:
+            if any(
+                (keyword := cls._normalize_token(raw_keyword)) is not None and keyword in normalized
+                for raw_keyword in option.keywords
+            ):
+                return option.code
         return None
 
     @classmethod
-    def _normalize_job_type(cls, value: str | None) -> str:
+    def _normalize_job_type(cls, value: str | None) -> str | None:
         normalized = cls._normalize_token(value)
         if normalized is None:
             return cls._DEFAULT_JOB_TYPE
 
-        if any(marker in normalized for marker in ("INTERN", "INTERNSHIP", "인턴")):
-            return "INTERN"
-        if any(marker in normalized for marker in ("CONTRACT", "TEMPORARY", "계약", "프리랜서", "위촉")):
-            return "CONTRACT"
-        if any(marker in normalized for marker in ("FULLTIME", "FULL_TIME", "정규", "정직원")):
-            return "FULLTIME"
+        for option in JOB_TYPE_OPTIONS:
+            if any(
+                (keyword := cls._normalize_token(raw_keyword)) is not None and keyword in normalized
+                for raw_keyword in option.keywords
+            ):
+                return option.code
         return cls._DEFAULT_JOB_TYPE
 
     @classmethod
@@ -248,32 +257,35 @@ class JobNoticeNormalizer:
         if normalized is None:
             return cls._DEFAULT_COMPANY_SIZE
 
-        if any(marker in normalized for marker in ("LARGE", "ENTERPRISE", "대기업")):
-            return "LARGE"
-        if any(marker in normalized for marker in ("STARTUP", "스타트업", "벤처")):
-            return "STARTUP"
-        if any(marker in normalized for marker in ("MID_MARKET", "MIDMARKET", "MIDSIZE", "중견", "중견기업")):
-            return "MID_MARKET"
-        if any(marker in normalized for marker in ("SME", "SMALLMEDIUM", "중소", "중소기업")):
-            return "SME"
+        for option in COMPANY_SIZE_OPTIONS:
+            if any(
+                (keyword := cls._normalize_token(raw_keyword)) is not None and keyword in normalized
+                for raw_keyword in option.keywords
+            ):
+                return option.code
         return cls._DEFAULT_COMPANY_SIZE
 
     @classmethod
-    def _normalize_career_level(cls, value: str | None) -> str:
+    def _normalize_career_level(cls, value: str | None) -> str | None:
         normalized = cls._normalize_token(value)
         if normalized is None:
             return cls._DEFAULT_CAREER_LEVEL
 
         if any(marker in normalized for marker in ("ANY", "무관", "경력무관", "신입/경력")):
-            return "ANY"
-        if any(marker in normalized for marker in ("SENIOR", "시니어", "고급", "리드", "책임")):
-            return "SENIOR"
-        if any(marker in normalized for marker in ("JUNIOR", "주니어", "신입", "초급")):
-            return "JUNIOR"
+            return "ANY_EXPERIENCE"
+        if any(marker in normalized for marker in ("INTERN", "INTERNSHIP", "인턴", "교육생")):
+            return "INTERN"
+        if any(marker in normalized for marker in ("FRESHER", "JUNIOR", "주니어", "신입", "초급")):
+            return "FRESHER"
+        if any(marker in normalized for marker in ("이하", "미만", "UNDER", "LESS")):
+            return "UNDER_1"
 
         years = cls._extract_year_numbers(normalized)
         if years:
-            return "SENIOR" if max(years) >= 5 else "JUNIOR"
+            minimum = min(years)
+            for threshold in (10, 7, 5, 3, 2, 1):
+                if minimum >= threshold:
+                    return f"OVER_{threshold}"
         return cls._DEFAULT_CAREER_LEVEL
 
     @classmethod

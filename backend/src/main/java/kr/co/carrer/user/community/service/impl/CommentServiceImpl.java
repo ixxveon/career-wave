@@ -7,12 +7,15 @@ import kr.co.carrer.user.community.entity.Comment;
 import kr.co.carrer.user.community.exception.CommunityErrorCode;
 import kr.co.carrer.user.community.repository.BoardRepository;
 import kr.co.carrer.user.community.repository.CommentRepository;
+import kr.co.carrer.user.community.repository.CommunityReportRepository;
 import kr.co.carrer.user.community.service.CommentService;
+import kr.co.carrer.user.community.type.ReportTargetType;
 import kr.co.carrer.user.member.entity.Member;
 import kr.co.carrer.user.member.repository.UserMemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,14 +30,17 @@ public class CommentServiceImpl implements CommentService {
     private final BoardRepository boardRepository;
     private final CommentRepository commentRepository;
     private final UserMemberRepository memberRepository;
+    private final CommunityReportRepository reportRepository;
 
     public CommentServiceImpl(
             BoardRepository boardRepository,
             CommentRepository commentRepository,
-            UserMemberRepository memberRepository) {
+            UserMemberRepository memberRepository,
+            CommunityReportRepository reportRepository) {
         this.boardRepository = boardRepository;
         this.commentRepository = commentRepository;
         this.memberRepository = memberRepository;
+        this.reportRepository = reportRepository;
     }
 
     @Override
@@ -54,10 +60,14 @@ public class CommentServiceImpl implements CommentService {
                 .stream()
                 .collect(Collectors.toMap(Member::getMemberId, Member::getName));
 
+        Map<Long, Long> reportCounts = getReportCounts(
+                comments.stream().map(Comment::getCommentId).toList());
+
         return comments.stream()
                 .map(comment -> CommentDTO.Response.from(
                         comment,
-                        memberNames.getOrDefault(comment.getMemberId(), UNKNOWN_MEMBER_NAME)))
+                        memberNames.getOrDefault(comment.getMemberId(), UNKNOWN_MEMBER_NAME),
+                        reportCounts.getOrDefault(comment.getCommentId(), 0L)))
                 .toList();
     }
 
@@ -129,14 +139,28 @@ public class CommentServiceImpl implements CommentService {
     }
 
     private CommentDTO.Response toResponse(Comment comment) {
+        long reportCount = reportRepository.countByTargetTypeAndTargetId(
+                ReportTargetType.COMMENT, comment.getCommentId());
+
         return CommentDTO.Response.from(
                 comment,
-                getMemberName(comment.getMemberId()));
+                getMemberName(comment.getMemberId()),
+                reportCount);
     }
 
     private String getMemberName(UUID memberId) {
         return memberRepository.findById(memberId)
                 .map(Member::getName)
                 .orElse(UNKNOWN_MEMBER_NAME);
+    }
+
+    private Map<Long, Long> getReportCounts(Collection<Long> commentIds) {
+        if (commentIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return reportRepository.countGroupedByTargetId(ReportTargetType.COMMENT, commentIds)
+                .stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
     }
 }

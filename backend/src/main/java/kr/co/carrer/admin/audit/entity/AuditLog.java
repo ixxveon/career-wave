@@ -17,6 +17,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "audit_logs")
@@ -57,6 +60,9 @@ public class AuditLog {
     @Column(name = "detail", columnDefinition = "TEXT")
     private String detail;
 
+    @Column(name = "search_text", nullable = false, columnDefinition = "TEXT")
+    private String searchText;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;
 
@@ -79,7 +85,14 @@ public class AuditLog {
         auditLog.ipAddress = ipAddress;
         auditLog.severity = severity;
         auditLog.detail = detail;
+        auditLog.searchText = buildSearchText(action, targetType, targetId, detail);
         return auditLog;
+    }
+
+    private static String buildSearchText(String action, String targetType, String targetId, String detail) {
+        return Stream.of(action, targetType, targetId, detail)
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(" "));
     }
 
     @PrePersist

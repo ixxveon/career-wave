@@ -39,15 +39,15 @@ public interface UserJobNoticeControllerDocs {
     ResponseEntity<kr.co.carrer.global.response.ApiResponse<JobNoticeDTO.ResponseList>> getJobNotices(
             @Parameter(description = "Keyword search over title, description, companyName, skillTags, jobCategory, and source.")
             @RequestParam(required = false) String keyword,
-            @Parameter(description = "Job type filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"FULLTIME", "INTERN", "CONTRACT"}))
+            @Parameter(description = "Standard job type filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"FULL_TIME", "CONTRACT", "INTERN", "FREELANCE", "DAILY"}))
             @RequestParam(required = false) List<JobType> jobType,
             @Parameter(description = "Job category filters. Repeat the query parameter for multiple values.")
             @RequestParam(required = false) List<String> jobCategory,
-            @Parameter(description = "Career level filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"JUNIOR", "SENIOR", "ANY"}))
+            @Parameter(description = "Standard career filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"FRESHER", "ANY_EXPERIENCE", "INTERN", "UNDER_1", "OVER_1", "OVER_2", "OVER_3", "OVER_5", "OVER_7", "OVER_10"}))
             @RequestParam(required = false) List<CareerLevel> careerLevel,
             @Parameter(description = "Normalized representative location filters. Repeat the query parameter for multiple values.")
             @RequestParam(required = false) List<String> location,
-            @Parameter(description = "Company size filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"STARTUP", "SME", "MID_MARKET", "LARGE"}))
+            @Parameter(description = "Standard company size filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"STARTUP", "SME", "MID_MARKET", "LARGE", "PUBLIC", "UNICORN", "FOREIGN"}))
             @RequestParam(required = false) List<CompanySize> companySize,
             @Parameter(description = "Created-at period filter.", schema = @Schema(allowableValues = {"today", "7d", "30d", "all"}))
             @RequestParam(required = false) String period,

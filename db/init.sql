@@ -585,7 +585,7 @@ CREATE TABLE job_notices (
     job_type      VARCHAR(20)  NULL,
     company_size  VARCHAR(20)  NULL,
     job_category  TEXT[]       NULL,
-    career_level  VARCHAR(10)  NULL,
+    career_level  VARCHAR(20)  NULL,
     career_min_years INTEGER   NULL,
     career_max_years INTEGER   NULL,
     location      VARCHAR(100) NULL,
@@ -600,9 +600,9 @@ CREATE TABLE job_notices (
 
     CONSTRAINT pk_job_notices                     PRIMARY KEY (job_notice_id),
     CONSTRAINT uq_job_notices_source_original_url UNIQUE (source, original_url),
-    CONSTRAINT chk_job_type                       CHECK (job_type      IN ('FULLTIME', 'INTERN', 'CONTRACT')),
-    CONSTRAINT chk_company_size  CHECK (company_size  IN ('STARTUP', 'SME', 'MID_MARKET', 'LARGE')),
-    CONSTRAINT chk_career_level  CHECK (career_level  IN ('JUNIOR', 'SENIOR', 'ANY')),
+    CONSTRAINT chk_job_type                       CHECK (job_type      IN ('FULL_TIME', 'CONTRACT', 'INTERN', 'FREELANCE', 'DAILY')),
+    CONSTRAINT chk_company_size  CHECK (company_size  IN ('STARTUP', 'SME', 'MID_MARKET', 'LARGE', 'PUBLIC', 'UNICORN', 'FOREIGN')),
+    CONSTRAINT chk_career_level  CHECK (career_level  IN ('FRESHER', 'ANY_EXPERIENCE', 'INTERN', 'UNDER_1', 'OVER_1', 'OVER_2', 'OVER_3', 'OVER_5', 'OVER_7', 'OVER_10')),
     CONSTRAINT chk_career_year_range CHECK (
         career_min_years IS NULL OR career_min_years >= 0
     ),
@@ -620,10 +620,10 @@ COMMENT ON COLUMN job_notices.title         IS '공고 제목';
 COMMENT ON COLUMN job_notices.description   IS '공고 상세 내용';
 COMMENT ON COLUMN job_notices.search_text   IS '검색 성능 최적화를 위해 제목, 설명, 기업명, 출처, 기술 스택, 직무 카테고리를 합친 텍스트';
 COMMENT ON COLUMN job_notices.skill_tags    IS '요구 기술 스택 (다중 선택, TEXT[])';
-COMMENT ON COLUMN job_notices.job_type      IS '채용 유형 (FULLTIME / INTERN / CONTRACT)';
-COMMENT ON COLUMN job_notices.company_size  IS '기업 규모 (STARTUP / SME / MID_MARKET / LARGE)';
+COMMENT ON COLUMN job_notices.job_type      IS '채용 유형 (FULL_TIME / CONTRACT / INTERN / FREELANCE / DAILY)';
+COMMENT ON COLUMN job_notices.company_size  IS '기업 규모 (STARTUP / SME / MID_MARKET / LARGE / PUBLIC / UNICORN / FOREIGN)';
 COMMENT ON COLUMN job_notices.job_category  IS '직무 카테고리 (다중 선택, TEXT[])';
-COMMENT ON COLUMN job_notices.career_level  IS '경력 조건 (JUNIOR / SENIOR / ANY)';
+COMMENT ON COLUMN job_notices.career_level  IS '경력 조건 (FRESHER / ANY_EXPERIENCE / INTERN / UNDER_1 / OVER_1 / OVER_2 / OVER_3 / OVER_5 / OVER_7 / OVER_10)';
 COMMENT ON COLUMN job_notices.career_min_years IS '경력 최소 연차 (NULL이면 명시되지 않음)';
 COMMENT ON COLUMN job_notices.career_max_years IS '경력 최대 연차 (NULL이면 상한 없음 또는 명시되지 않음)';
 COMMENT ON COLUMN job_notices.location      IS '근무지';
@@ -1038,6 +1038,7 @@ CREATE TABLE audit_logs (
     ip_address   VARCHAR(45)  NULL,
     severity     VARCHAR(10)  NOT NULL,
     detail       TEXT         NULL,
+    search_text  TEXT         NOT NULL,
     created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_audit_logs  PRIMARY KEY (audit_log_id),
@@ -1055,7 +1056,23 @@ COMMENT ON COLUMN audit_logs.target_id    IS '대상 레코드 ID';
 COMMENT ON COLUMN audit_logs.ip_address   IS '요청 IP 주소';
 COMMENT ON COLUMN audit_logs.severity     IS '로그 등급 (INFO / WARN / ERROR / SUCCESS)';
 COMMENT ON COLUMN audit_logs.detail       IS '변경 상세 내용 (변경 전후 값)';
+COMMENT ON COLUMN audit_logs.search_text  IS '키워드 검색 최적화를 위해 액션, 대상 유형, 대상 ID, 상세를 합친 텍스트';
 COMMENT ON COLUMN audit_logs.created_at   IS '로그 기록 일시';
+
+CREATE INDEX idx_audit_logs_created_at
+    ON audit_logs (created_at DESC);
+
+CREATE INDEX idx_audit_logs_log_type_created_at
+    ON audit_logs (log_type, created_at DESC);
+
+CREATE INDEX idx_audit_logs_severity_created_at
+    ON audit_logs (severity, created_at DESC);
+
+CREATE INDEX idx_audit_logs_log_type_severity_created_at
+    ON audit_logs (log_type, severity, created_at DESC);
+
+CREATE INDEX idx_audit_logs_search_text_trgm
+    ON audit_logs USING gin (lower(search_text) gin_trgm_ops);
 
 -- ================================================
 -- 28. ip_acl

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { adminSession } from '../../../api/admin/adminAuthApi';
+import { AUDIT_LOG_TYPE } from '../../../api/admin/auditLogApi';
 import type { AdminDashboardSummary } from '../../../api/admin/dashboardApi';
 import { ADMIN_DETAIL_ROLE } from '../../../constants/admin/adminRoleConstants';
 import { ADMIN_ROUTE_PATHS } from '../../../constants/admin/adminRouteConstants';
@@ -245,10 +246,10 @@ describe('AdminDashboardPage contract rendering', () => {
     expect(await screen.findByText('recent-admin-activity')).toBeTruthy();
   });
 
-  it('renders only the twelve most recent admin activities', async () => {
+  it('renders only the five most recent admin activities', async () => {
     auditLogApiMock.getLogs.mockResolvedValueOnce(
       auditLogListResponse(
-        Array.from({ length: 12 }, (_, index) => createAuditLogItem({
+        Array.from({ length: 5 }, (_, index) => createAuditLogItem({
           id: `${index + 1}`,
           summary: `activity-${index + 1}`,
           occurredAt: `2026-06-28 17:${String(index).padStart(2, '0')}:00`,
@@ -258,7 +259,12 @@ describe('AdminDashboardPage contract rendering', () => {
     const { container } = renderPage();
 
     await waitFor(() => {
-      expect(container.querySelectorAll('.logCard .auditOpsTableRow')).toHaveLength(12);
+      expect(container.querySelectorAll('.logCard .auditOpsTableRow')).toHaveLength(5);
+    });
+    expect(auditLogApiMock.getLogs).toHaveBeenCalledWith({
+      logType: AUDIT_LOG_TYPE.ADMIN_ACTIVITY,
+      page: 1,
+      size: 5,
     });
   });
 

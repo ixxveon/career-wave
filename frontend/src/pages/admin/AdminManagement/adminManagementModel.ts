@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ACL_RISK_LEVEL, getAclRiskLevel, type AdminAccount as AdminAccountResponse, type AdminAclRule as AdminAclRuleResponse, type AdminAuditLog as AdminAuditLogResponse, type AdminRole, type AuditSeverity } from '../../../api/admin/adminManagementApi';
+import { ACL_RISK_LEVEL, getAclRiskLevel, type AdminAccount as AdminAccountResponse, type AdminAclRule as AdminAclRuleResponse, type AdminRole, type AuditSeverity } from '../../../api/admin/adminManagementApi';
+import type { AuditLogItem } from '../../../api/admin/auditLogApi';
 
 export type AdminStatus = 'ACTIVE' | 'LOCKED';
 
@@ -157,14 +158,14 @@ export function toAclRuleRow(aclRule: AdminAclRuleResponse): AclRule {
   };
 }
 
-export function toAuditLogRow(auditLog: AdminAuditLogResponse): AuditLog {
+export function toAuditLogRow(auditLog: AuditLogItem): AuditLog {
   return {
     id: auditLog.id,
     time: auditLog.occurredAt,
-    actor: auditLog.actor,
-    ip: auditLog.ip,
-    action: auditLog.action,
-    target: auditLog.target,
-    severity: auditLog.severity,
+    actor: auditLog.actorId,
+    ip: auditLog.ipAddressMasked,
+    action: auditLog.summary,
+    target: [auditLog.targetType, auditLog.targetId].filter((value) => value && value !== '-').join(' #') || '-',
+    severity: auditLog.severity as AuditSeverity,
   };
 }
