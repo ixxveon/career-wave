@@ -776,6 +776,7 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(260px, 0.95fr);
   gap: 18px;
+  align-self: start;
 }
 
 .chartCard,
@@ -1954,6 +1955,8 @@ button {
   .serviceListRow__meta {
     width: 100%;
     min-width: 0;
+    flex-direction: row;
+    align-items: center;
     justify-content: space-between;
   }
 }
