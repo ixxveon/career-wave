@@ -3,6 +3,7 @@ package kr.co.carrer.admin.payment.docs;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import kr.co.carrer.admin.payment.dto.PaymentDTO;
 import kr.co.carrer.admin.payment.dto.RefundDTO;
@@ -47,6 +48,13 @@ public interface AdminPaymentControllerDocs {
     ResponseEntity<ApiResponse<RefundDTO.ResponseApprove>> approveRefund(
         @Parameter(description = "결제 ID (UUID)") @PathVariable UUID paymentId,
         @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
+    );
+
+    @Operation(summary = "환불 수동 확정 처리 (Toss 취소 API 미호출 — 이미 Toss에서 수동 취소된 건 반영용)")
+    ResponseEntity<ApiResponse<RefundDTO.ResponseApprove>> manualConfirmRefund(
+        @Parameter(description = "결제 ID (UUID)") @PathVariable UUID paymentId,
+        @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal,
+        HttpServletRequest httpServletRequest
     );
 
     @Operation(summary = "환불 불가 처리")

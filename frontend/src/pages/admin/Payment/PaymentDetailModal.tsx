@@ -13,7 +13,7 @@ const PAY_STATUS_CLS: Record<string, string> = {
   PENDING: 'pending', DONE: 'normal', PAID: 'normal', CANCELED: 'dismissed', FAILED: 'blinded', REFUNDED: 'dismissed',
 };
 const REFUND_STATUS_CLS: Record<string, string> = {
-  PENDING: 'pending', COMPLETED: 'dismissed', FAILED: 'blinded', REJECTED: 'blinded',
+  PENDING: 'pending', COMPLETED: 'normal', FAILED: 'blinded', REJECTED: 'blinded',
 };
 
 function daysSincePaid(approvedAt: string): number {
@@ -79,17 +79,17 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
     }
   };
 
-  const confirmRefund = async () => {
+  const manualConfirmRefundAction = async () => {
+    if (!window.confirm('Toss 상점관리자에서 이미 취소 처리된 것이 확인된 건입니까?\nToss API를 다시 호출하지 않고 시스템 상태만 환불 완료로 확정합니다.')) return;
     setRefundLoading(true);
     setRefundError('');
     try {
-      const res = await paymentApi.confirmRefund(selected.paymentId);
+      const res = await paymentApi.manualConfirmRefund(selected.paymentId);
       if (!res.data.success) throw new Error(res.data.message);
       onRefundSuccess(selected.paymentId, { paymentStatus: res.data.data.paymentStatus, refundStatus: res.data.data.refundStatus });
-      onClose();
-      showToast('환불 처리가 완료되었습니다.');
+      showToast('환불 상태를 수동으로 확정했습니다.');
     } catch (err: unknown) {
-      setRefundError(resolveErrorMsg(err, '환불 처리에 실패했습니다.', 'refund'));
+      setRefundError(resolveErrorMsg(err, '수동 확정 처리에 실패했습니다.', 'refund'));
     } finally {
       setRefundLoading(false);
     }
@@ -213,12 +213,19 @@ export default function PaymentDetailModal({ selected, isMaster, showToast, onCl
                 <button onClick={() => { setRequestMode(false); setRequestReason(''); }} disabled={refundLoading}>취소</button>
               </>
             )}
-            {isMaster && selected.refundStatus === 'PENDING' && refundCheck?.eligible === true && (
-              <button onClick={confirmRefund} disabled={refundLoading}>{refundLoading ? '처리 중...' : '환불 처리 확정'}</button>
-            )}
             {isMaster && selected.refundStatus === 'PENDING' && refundCheck?.eligible === false && (
               <button className="tableBtn--danger" onClick={rejectRefundAction} disabled={refundLoading || !rejectReason.trim()}>
                 {refundLoading ? '처리 중...' : '환불 불가 처리'}
+              </button>
+            )}
+            {isMaster && selected.refundStatus === 'PENDING' && (
+              <button
+                className="tableBtn"
+                onClick={manualConfirmRefundAction}
+                disabled={refundLoading}
+                title="Toss 상점관리자에서 이미 취소 처리된 건을 시스템에만 반영합니다."
+              >
+                {refundLoading ? '처리 중...' : '수동 확정 (Toss 직접 처리)'}
               </button>
             )}
           </div>

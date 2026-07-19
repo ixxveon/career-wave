@@ -187,6 +187,13 @@ export const paymentApi = {
       `/api/v1/admin/payments/${paymentId}/refund`
     ),
 
+  // 환불 수동 확정 처리 — Toss 취소 API 미호출. Toss 상점관리자에서 이미 수동으로
+  // 취소 처리된 결제 건을 시스템 상태에만 반영할 때 사용 (#1193 임시 대응)
+  manualConfirmRefund: (paymentId: string) =>
+    axiosInstance.post<ApiResponse<RefundResult>>(
+      `/api/v1/admin/payments/${paymentId}/refund-manual-confirm`
+    ),
+
   // 환불 불가 처리
   rejectRefund: (paymentId: string, rejectReason: string) =>
     axiosInstance.post<ApiResponse<RefundResult>>(
