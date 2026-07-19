@@ -161,10 +161,15 @@
   background: var(--color-sky);
 }
 
-.pd-action-btn--liked {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  background: var(--color-sky);
+.pd-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pd-action-btn:disabled:hover {
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
 }
 
 .pd-action-btn--report {
@@ -292,6 +297,16 @@
 .pd-comment__like:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
+}
+
+.pd-comment__like:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pd-comment__like:disabled:hover {
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
 }
 
 .pd-comment__link {
