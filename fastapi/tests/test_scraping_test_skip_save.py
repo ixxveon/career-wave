@@ -206,7 +206,7 @@ async def test_scraping_task_invalidates_job_notice_caches_after_successful_run(
 @pytest.mark.asyncio
 async def test_scraping_task_marks_pipeline_failed_when_all_detail_requests_fail():
     dispatch_result = ScrapingRunResult(
-        notices=[RawJobNotice(original_url="https://example.com/jobs/1", title="Backend Engineer")],
+        notices=[],
         detail_metrics=ScrapingDetailMetrics(
             attempted_count=1,
             failed_count=1,
@@ -233,3 +233,41 @@ async def test_scraping_task_marks_pipeline_failed_when_all_detail_requests_fail
     assert status_service.failure_calls == [("wanted", "All detail scraping requests failed.")]
     assert len(log_service.failure_logs) == 1
     assert repository.saved_items == []
+
+
+@pytest.mark.asyncio
+async def test_scraping_task_saves_remaining_notices_when_some_detail_requests_fail():
+    dispatch_result = ScrapingRunResult(
+        notices=[
+            RawJobNotice(
+                original_url=f"https://example.com/jobs/{index}",
+                title=f"Backend Engineer {index}",
+                description="Detailed job description.",
+            )
+            for index in range(19)
+        ],
+        detail_metrics=ScrapingDetailMetrics(
+            attempted_count=1,
+            failed_count=1,
+            timeout_count=4,
+            retry_count=2,
+        ),
+    )
+    repository = _RecordingJobNoticeRepository()
+    status_service = _RecordingPipelineStatusService()
+    log_service = _RecordingScrapingLogService()
+    task = ScrapingTask(
+        pipeline_runner_service=_RecordingPipelineRunnerService(dispatch_result),
+        pipeline_status_service=status_service,
+        scraping_log_service=log_service,
+        job_notice_dedup_service=JobNoticeDedupService(repository),
+        job_notice_normalizer=JobNoticeNormalizer(),
+    )
+
+    result = await task.run(source_name="wanted", action_type=ScrapingActionType.RUN)
+
+    assert result.pipeline_status == "SUCCESS"
+    assert result.total_count == 19
+    assert len(repository.saved_items) == 19
+    assert len(status_service.success_calls) == 1
+    assert status_service.failure_calls == []

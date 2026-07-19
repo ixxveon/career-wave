@@ -322,7 +322,7 @@ def test_wanted_scraper_retries_timeout_before_detail_request_succeeds():
     assert scraper.detail_metrics.retry_count == 1
 
 
-@pytest.mark.parametrize("failure", ["connect_error", 429, 500])
+@pytest.mark.parametrize("failure", ["connect_error", "read_error", 429, 500])
 def test_wanted_scraper_retries_transient_detail_failures(failure: str | int):
     detail_request_count = 0
 
@@ -338,6 +338,8 @@ def test_wanted_scraper_retries_transient_detail_failures(failure: str | int):
             if detail_request_count == 1:
                 if failure == "connect_error":
                     raise httpx.ConnectError("connection failed", request=request)
+                if failure == "read_error":
+                    raise httpx.ReadError("connection reset", request=request)
                 return httpx.Response(failure)
             return httpx.Response(200, json={"job": {"detail": "Detailed job description."}})
         return httpx.Response(404)
@@ -374,7 +376,7 @@ def test_wanted_scraper_records_failed_detail_metrics_when_api_and_fallback_time
 
     notices = scraper.scrape()
 
-    assert notices[0].description is None
+    assert notices == []
     assert scraper.detail_metrics.attempted_count == 1
     assert scraper.detail_metrics.succeeded_count == 0
     assert scraper.detail_metrics.failed_count == 1

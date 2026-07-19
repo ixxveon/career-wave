@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 from contextlib import nullcontext
+from dataclasses import replace
 from time import monotonic, sleep
 from typing import Any
 
@@ -68,6 +69,9 @@ class WantedScraper(ScraperAdapter):
 
                 if requires_description:
                     self._record_detail_outcome(succeeded=notice.description is not None)
+                    if notice.description is None:
+                        self._delay()
+                        continue
 
                 notices.append(notice)
                 if len(notices) >= self._max_items:
@@ -191,7 +195,7 @@ class WantedScraper(ScraperAdapter):
                 if not self._retry_or_stop(attempt, deadline):
                     return None
                 continue
-            except httpx.ConnectError:
+            except httpx.TransportError:
                 if not self._retry_or_stop(attempt, deadline):
                     return None
                 continue
@@ -213,32 +217,25 @@ class WantedScraper(ScraperAdapter):
         remaining_seconds = deadline - monotonic()
         if remaining_seconds <= 0:
             return False
-        self._detail_metrics = ScrapingDetailMetrics(
-            attempted_count=self._detail_metrics.attempted_count,
-            succeeded_count=self._detail_metrics.succeeded_count,
-            failed_count=self._detail_metrics.failed_count,
-            timeout_count=self._detail_metrics.timeout_count,
+        self._detail_metrics = replace(
+            self._detail_metrics,
             retry_count=self._detail_metrics.retry_count + 1,
         )
         sleep(min(self._retry_backoff_seconds, remaining_seconds))
         return deadline - monotonic() > 0
 
     def _record_request_timeout(self) -> None:
-        self._detail_metrics = ScrapingDetailMetrics(
-            attempted_count=self._detail_metrics.attempted_count,
-            succeeded_count=self._detail_metrics.succeeded_count,
-            failed_count=self._detail_metrics.failed_count,
+        self._detail_metrics = replace(
+            self._detail_metrics,
             timeout_count=self._detail_metrics.timeout_count + 1,
-            retry_count=self._detail_metrics.retry_count,
         )
 
     def _record_detail_outcome(self, *, succeeded: bool) -> None:
-        self._detail_metrics = ScrapingDetailMetrics(
+        self._detail_metrics = replace(
+            self._detail_metrics,
             attempted_count=self._detail_metrics.attempted_count + 1,
             succeeded_count=self._detail_metrics.succeeded_count + int(succeeded),
             failed_count=self._detail_metrics.failed_count + int(not succeeded),
-            timeout_count=self._detail_metrics.timeout_count,
-            retry_count=self._detail_metrics.retry_count,
         )
 
     def _merge_detail(self, notice: RawJobNotice, detail: dict[str, Any]) -> RawJobNotice:

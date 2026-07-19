@@ -203,7 +203,11 @@ class ScrapingTask:
                 raw_notices = dispatch_result
                 detail_metrics = ScrapingDetailMetrics()
 
-            self._ensure_detail_completeness(source_name=source_name, metrics=detail_metrics)
+            self._ensure_detail_completeness(
+                source_name=source_name,
+                metrics=detail_metrics,
+                remaining_notice_count=len(raw_notices),
+            )
             normalized_notices = [
                 self._job_notice_normalizer.normalize(
                     source_name=source_name,
@@ -265,8 +269,13 @@ class ScrapingTask:
         return int((perf_counter() - started_at) * 1000)
 
     @staticmethod
-    def _ensure_detail_completeness(*, source_name: str, metrics: ScrapingDetailMetrics) -> None:
-        if metrics.attempted_count > 0 and metrics.succeeded_count == 0:
+    def _ensure_detail_completeness(
+        *,
+        source_name: str,
+        metrics: ScrapingDetailMetrics,
+        remaining_notice_count: int,
+    ) -> None:
+        if remaining_notice_count == 0 and metrics.attempted_count > 0 and metrics.succeeded_count == 0:
             raise ScrapingException(
                 error_code=ScrapingErrorCode.SCRAPING_DETAIL_COMPLETENESS_FAILED,
                 detail={
