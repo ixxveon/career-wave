@@ -35,7 +35,7 @@ export default function AdminManagementPage() {
   const { data: adminAccounts, error: adminAccountsError, isError: isAdminAccountsError, isLoading: isAdminAccountsLoading } = useQuery({ queryKey: [...ADMIN_MANAGEMENT_ADMINS_QUERY_KEY, adminListQueryParams], queryFn: () => getAdminAccounts(adminListQueryParams), refetchOnMount: 'always' });
   const aclListQueryParams = { page: aclPage, size: ACL_PAGE_SIZE };
   const { data: adminAclRules, error: adminAclRulesError, isError: isAdminAclRulesError, isLoading: isAdminAclRulesLoading } = useQuery({ queryKey: [...ADMIN_MANAGEMENT_ACLS_QUERY_KEY, aclListQueryParams], queryFn: () => getAdminAclRules(aclListQueryParams) });
-  const auditLogQueryParams = { logType: AUDIT_LOG_TYPE.ADMIN_MANAGEMENT, page: 1, size: MAX_SECURITY_LOGS };
+  const auditLogQueryParams = { logType: AUDIT_LOG_TYPE.ADMIN_ACTIVITY, page: 1, size: MAX_SECURITY_LOGS };
   const { data: adminAuditLogs, error: adminAuditLogsError, isError: isAdminAuditLogsError, isLoading: isAdminAuditLogsLoading } = useQuery({
     queryKey: [...ADMIN_MANAGEMENT_AUDIT_LOGS_QUERY_KEY, auditLogQueryParams],
     queryFn: async () => {

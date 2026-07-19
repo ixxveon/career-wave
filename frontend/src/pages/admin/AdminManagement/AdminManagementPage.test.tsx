@@ -369,7 +369,7 @@ describe('AdminManagementPage master-only controls', () => {
       auditLogListResponse([
         {
           id: '101',
-          logType: 'ADMIN_MANAGEMENT',
+          logType: 'ADMIN_ACTIVITY',
           logTypeLabel: '관리자 계정 관리',
           severity: 'INFO',
           summary: '관리자 권한을 변경했습니다.',
@@ -421,7 +421,7 @@ describe('AdminManagementPage master-only controls', () => {
     expect(queryByRole('button', { name: '다시 시도' })).toBeNull();
   });
 
-  it('requests only ADMIN_MANAGEMENT audit logs for the security console', async () => {
+  it('requests ADMIN_ACTIVITY audit logs for the security console', async () => {
     adminSession.setRole(ADMIN_ROLE.MASTER);
 
     const { findByText } = renderPage();
@@ -429,7 +429,7 @@ describe('AdminManagementPage master-only controls', () => {
     expect(await findByText('Master Admin')).toBeTruthy();
     await waitFor(() => {
       expect(auditLogApiMock.getLogs).toHaveBeenCalledWith({
-        logType: 'ADMIN_MANAGEMENT',
+        logType: 'ADMIN_ACTIVITY',
         page: 1,
         size: 5,
       });
