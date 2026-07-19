@@ -19,6 +19,15 @@ class RawJobNotice:
     deadline: str | None = None
 
 
+@dataclass(frozen=True)
+class ScrapingDetailMetrics:
+    attempted_count: int = 0
+    succeeded_count: int = 0
+    failed_count: int = 0
+    timeout_count: int = 0
+    retry_count: int = 0
+
+
 class ScraperAdapter(ABC):
     @property
     @abstractmethod
@@ -33,6 +42,10 @@ class ScraperAdapter(ABC):
     @abstractmethod
     def scrape(self) -> list[RawJobNotice]:
         raise NotImplementedError
+
+    @property
+    def detail_metrics(self) -> ScrapingDetailMetrics:
+        return ScrapingDetailMetrics()
 
     @abstractmethod
     def test_connection(self) -> bool:
