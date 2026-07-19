@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { adminSession } from '../../../api/admin/adminAuthApi';
+import { AUDIT_LOG_TYPE } from '../../../api/admin/auditLogApi';
 import { ADMIN_ROLE } from '../../../api/admin/adminManagementApi';
 import AdminManagementPage from './AdminManagementPage';
 
@@ -359,7 +360,7 @@ describe('AdminManagementPage master-only controls', () => {
     const { findByText, queryByText } = renderPage();
 
     expect(await findByText('Master Admin')).toBeTruthy();
-    expect(await findByText('표시할 관리자 관리 활동 로그가 없습니다.')).toBeTruthy();
+    expect(await findByText('표시할 관리자 활동 로그가 없습니다.')).toBeTruthy();
     expect(queryByText('super_admin')).toBeNull();
   });
 
@@ -369,7 +370,7 @@ describe('AdminManagementPage master-only controls', () => {
       auditLogListResponse([
         {
           id: '101',
-          logType: 'ADMIN_ACTIVITY',
+          logType: AUDIT_LOG_TYPE.ADMIN_ACTIVITY,
           logTypeLabel: '관리자 계정 관리',
           severity: 'INFO',
           summary: '관리자 권한을 변경했습니다.',
@@ -429,7 +430,7 @@ describe('AdminManagementPage master-only controls', () => {
     expect(await findByText('Master Admin')).toBeTruthy();
     await waitFor(() => {
       expect(auditLogApiMock.getLogs).toHaveBeenCalledWith({
-        logType: 'ADMIN_ACTIVITY',
+        logType: AUDIT_LOG_TYPE.ADMIN_ACTIVITY,
         page: 1,
         size: 5,
       });
