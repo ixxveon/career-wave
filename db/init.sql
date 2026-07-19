@@ -1038,6 +1038,7 @@ CREATE TABLE audit_logs (
     ip_address   VARCHAR(45)  NULL,
     severity     VARCHAR(10)  NOT NULL,
     detail       TEXT         NULL,
+    search_text  TEXT         NOT NULL,
     created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
     CONSTRAINT pk_audit_logs  PRIMARY KEY (audit_log_id),
@@ -1055,7 +1056,23 @@ COMMENT ON COLUMN audit_logs.target_id    IS '대상 레코드 ID';
 COMMENT ON COLUMN audit_logs.ip_address   IS '요청 IP 주소';
 COMMENT ON COLUMN audit_logs.severity     IS '로그 등급 (INFO / WARN / ERROR / SUCCESS)';
 COMMENT ON COLUMN audit_logs.detail       IS '변경 상세 내용 (변경 전후 값)';
+COMMENT ON COLUMN audit_logs.search_text  IS '키워드 검색 최적화를 위해 액션, 대상 유형, 대상 ID, 상세를 합친 텍스트';
 COMMENT ON COLUMN audit_logs.created_at   IS '로그 기록 일시';
+
+CREATE INDEX idx_audit_logs_created_at
+    ON audit_logs (created_at DESC);
+
+CREATE INDEX idx_audit_logs_log_type_created_at
+    ON audit_logs (log_type, created_at DESC);
+
+CREATE INDEX idx_audit_logs_severity_created_at
+    ON audit_logs (severity, created_at DESC);
+
+CREATE INDEX idx_audit_logs_log_type_severity_created_at
+    ON audit_logs (log_type, severity, created_at DESC);
+
+CREATE INDEX idx_audit_logs_search_text_trgm
+    ON audit_logs USING gin (lower(search_text) gin_trgm_ops);
 
 -- ================================================
 -- 28. ip_acl
