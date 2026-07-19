@@ -82,6 +82,26 @@ public class JobNoticeQueryRepository {
             String sort,
             Pageable pageable
     ) {
+        return findActiveJobNoticeContent(
+                keyword, jobTypes, jobCategories, careerLevels, locations, companySizes,
+                null, null, null, period, sort, pageable
+        );
+    }
+
+    public List<JobNotice> findActiveJobNoticeContent(
+            String keyword,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
+            List<String> careerRanges,
+            List<String> deadlineTypes,
+            List<String> sources,
+            String period,
+            String sort,
+            Pageable pageable
+    ) {
         Pageable normalizedPageable = normalizePageable(pageable);
         BooleanBuilder predicate = buildActiveJobNoticePredicate(
                 keyword,
@@ -90,6 +110,9 @@ public class JobNoticeQueryRepository {
                 careerLevels,
                 locations,
                 companySizes,
+                careerRanges,
+                deadlineTypes,
+                sources,
                 period
         );
 
@@ -131,6 +154,24 @@ public class JobNoticeQueryRepository {
             List<CompanySize> companySizes,
             String period
     ) {
+        return countActiveJobNotices(
+                keyword, jobTypes, jobCategories, careerLevels, locations, companySizes,
+                null, null, null, period
+        );
+    }
+
+    public long countActiveJobNotices(
+            String keyword,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
+            List<String> careerRanges,
+            List<String> deadlineTypes,
+            List<String> sources,
+            String period
+    ) {
         BooleanBuilder predicate = buildActiveJobNoticePredicate(
                 keyword,
                 jobTypes,
@@ -138,6 +179,9 @@ public class JobNoticeQueryRepository {
                 careerLevels,
                 locations,
                 companySizes,
+                careerRanges,
+                deadlineTypes,
+                sources,
                 period
         );
 
@@ -305,6 +349,9 @@ public class JobNoticeQueryRepository {
             List<CareerLevel> careerLevels,
             List<String> locations,
             List<CompanySize> companySizes,
+            List<String> careerRanges,
+            List<String> deadlineTypes,
+            List<String> sources,
             String period
     ) {
         BooleanBuilder builder = new BooleanBuilder();
@@ -341,12 +388,91 @@ public class JobNoticeQueryRepository {
             builder.and(jobNotice.companySize.in(companySizes));
         }
 
+        Predicate careerRangeCondition = careerRangeCondition(careerRanges);
+        if (careerRangeCondition != null) {
+            builder.and(careerRangeCondition);
+        }
+
+        Predicate deadlineTypeCondition = deadlineTypeCondition(deadlineTypes);
+        if (deadlineTypeCondition != null) {
+            builder.and(deadlineTypeCondition);
+        }
+
+        List<String> normalizedSources = normalizeUpperCaseValues(sources);
+        if (!normalizedSources.isEmpty()) {
+            builder.and(jobNotice.source.upper().in(normalizedSources));
+        }
+
         BooleanExpression periodCondition = periodCondition(period);
         if (periodCondition != null) {
             builder.and(periodCondition);
         }
 
         return builder;
+    }
+
+    private Predicate careerRangeCondition(List<String> careerRanges) {
+        List<String> normalizedRanges = normalizeUpperCaseValues(careerRanges);
+        if (normalizedRanges.isEmpty()) {
+            return null;
+        }
+
+        BooleanBuilder condition = new BooleanBuilder();
+        for (String careerRange : normalizedRanges) {
+            BooleanExpression exactCode = jobNotice.careerLevel.stringValue().eq(careerRange);
+            switch (careerRange) {
+                case "FRESHER", "ANY_EXPERIENCE", "INTERN" -> condition.or(exactCode);
+                case "UNDER_1" -> condition.or(exactCode.or(
+                        jobNotice.careerMinYears.isNotNull()
+                                .and(jobNotice.careerMinYears.loe(1))
+                                .and(jobNotice.careerMaxYears.isNull().or(jobNotice.careerMaxYears.goe(0)))
+                ));
+                case "OVER_1", "OVER_2", "OVER_3", "OVER_5", "OVER_7", "OVER_10" -> {
+                    int minimumYears = Integer.parseInt(careerRange.substring("OVER_".length()));
+                    condition.or(exactCode.or(
+                            jobNotice.careerMinYears.isNotNull().and(
+                                    jobNotice.careerMaxYears.isNull().or(jobNotice.careerMaxYears.goe(minimumYears))
+                            )
+                    ));
+                }
+                default -> {
+                    // Unknown codes are ignored so invalid query values do not widen the result set.
+                }
+            }
+        }
+        return condition.hasValue() ? condition : null;
+    }
+
+    private Predicate deadlineTypeCondition(List<String> deadlineTypes) {
+        List<String> normalizedTypes = normalizeUpperCaseValues(deadlineTypes);
+        if (normalizedTypes.isEmpty()) {
+            return null;
+        }
+
+        LocalDate today = ZonedDateTime.now(SERVICE_ZONE_ID).toLocalDate();
+        BooleanBuilder condition = new BooleanBuilder();
+        for (String deadlineType : normalizedTypes) {
+            switch (deadlineType) {
+                case "TODAY" -> condition.or(jobNotice.deadline.eq(today));
+                case "WITHIN_7_DAYS" -> condition.or(jobNotice.deadline.between(today, today.plusDays(7)));
+                case "OPEN_ENDED" -> condition.or(jobNotice.deadline.isNull());
+                default -> {
+                    // Unknown codes are ignored so invalid query values do not widen the result set.
+                }
+            }
+        }
+        return condition.hasValue() ? condition : null;
+    }
+
+    private List<String> normalizeUpperCaseValues(List<String> values) {
+        if (values == null) {
+            return List.of();
+        }
+        return values.stream()
+                .filter(value -> value != null && !value.isBlank())
+                .map(value -> value.trim().toUpperCase())
+                .distinct()
+                .toList();
     }
 
     private Predicate keywordCondition(String keyword) {

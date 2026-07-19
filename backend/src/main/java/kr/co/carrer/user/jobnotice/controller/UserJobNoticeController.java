@@ -38,6 +38,9 @@ public class UserJobNoticeController implements UserJobNoticeControllerDocs {
             @RequestParam(required = false) List<CareerLevel> careerLevel,
             @RequestParam(required = false) List<String> location,
             @RequestParam(required = false) List<CompanySize> companySize,
+            @RequestParam(required = false) List<String> careerRange,
+            @RequestParam(required = false) List<String> deadlineType,
+            @RequestParam(required = false) List<String> source,
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "1") int page,
@@ -56,11 +59,39 @@ public class UserJobNoticeController implements UserJobNoticeControllerDocs {
                                 careerLevel,
                                 location,
                                 companySize,
+                                careerRange,
+                                deadlineType,
+                                source,
                                 period,
                                 sort,
                                 page,
                                 size,
                                 memberId
+                        )
+                )
+        );
+    }
+
+    @Override
+    @GetMapping("/count")
+    public ResponseEntity<ApiResponse<JobNoticeDTO.ResponseFilterCount>> getJobNoticeFilterCount(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<JobType> jobType,
+            @RequestParam(required = false) List<String> jobCategory,
+            @RequestParam(required = false) List<CareerLevel> careerLevel,
+            @RequestParam(required = false) List<String> location,
+            @RequestParam(required = false) List<CompanySize> companySize,
+            @RequestParam(required = false) List<String> careerRange,
+            @RequestParam(required = false) List<String> deadlineType,
+            @RequestParam(required = false) List<String> source,
+            @RequestParam(required = false) String period
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.ok(
+                        "채용 공고 예상 결과 수 조회에 성공했습니다.",
+                        userJobNoticeService.getJobNoticeFilterCount(
+                                keyword, jobType, jobCategory, careerLevel, location, companySize,
+                                careerRange, deadlineType, source, period
                         )
                 )
         );

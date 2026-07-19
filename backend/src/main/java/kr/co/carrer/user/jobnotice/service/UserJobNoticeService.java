@@ -25,6 +25,36 @@ public interface UserJobNoticeService {
             UUID memberId
     );
 
+    JobNoticeDTO.ResponseList getJobNotices(
+            String keyword,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
+            List<String> careerRanges,
+            List<String> deadlineTypes,
+            List<String> sources,
+            String period,
+            String sort,
+            int page,
+            int size,
+            UUID memberId
+    );
+
+    JobNoticeDTO.ResponseFilterCount getJobNoticeFilterCount(
+            String keyword,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
+            List<String> careerRanges,
+            List<String> deadlineTypes,
+            List<String> sources,
+            String period
+    );
+
     JobNoticeDTO.ResponseDetail getJobNoticeDetail(Long jobNoticeId, UUID memberId);
 
     JobNoticeDTO.ResponseBookmark createBookmark(Long jobNoticeId, UUID memberId);

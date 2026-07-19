@@ -49,6 +49,12 @@ public interface UserJobNoticeControllerDocs {
             @RequestParam(required = false) List<String> location,
             @Parameter(description = "Standard company size filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"STARTUP", "SME", "MID_MARKET", "LARGE", "PUBLIC", "UNICORN", "FOREIGN"}))
             @RequestParam(required = false) List<CompanySize> companySize,
+            @Parameter(description = "Career range filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"FRESHER", "ANY_EXPERIENCE", "INTERN", "UNDER_1", "OVER_1", "OVER_2", "OVER_3", "OVER_5", "OVER_7", "OVER_10"}))
+            @RequestParam(required = false) List<String> careerRange,
+            @Parameter(description = "Deadline type filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"TODAY", "WITHIN_7_DAYS", "OPEN_ENDED"}))
+            @RequestParam(required = false) List<String> deadlineType,
+            @Parameter(description = "Notice source filters. Repeat the query parameter for multiple values.", schema = @Schema(allowableValues = {"WANTED", "JUMPIT", "SARAMIN", "GROUPBY", "DIRECT"}))
+            @RequestParam(required = false) List<String> source,
             @Parameter(description = "Created-at period filter.", schema = @Schema(allowableValues = {"today", "7d", "30d", "all"}))
             @RequestParam(required = false) String period,
             @Parameter(description = "List sort order.", schema = @Schema(allowableValues = {"recommend", "latest", "views"}))
@@ -58,6 +64,24 @@ public interface UserJobNoticeControllerDocs {
             @Parameter(description = "Page size.")
             @RequestParam(defaultValue = "20") int size,
             @Parameter(hidden = true) @AuthenticationPrincipal AuthPrincipal principal
+    );
+
+    @Operation(summary = "Get matching job notice count", description = "Returns the count using the same filter predicate as the job notice list.", security = {})
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Matching notice count retrieved successfully.",
+                    content = @Content(schema = @Schema(implementation = JobNoticeDTO.ResponseFilterCount.class)))
+    })
+    ResponseEntity<kr.co.carrer.global.response.ApiResponse<JobNoticeDTO.ResponseFilterCount>> getJobNoticeFilterCount(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<JobType> jobType,
+            @RequestParam(required = false) List<String> jobCategory,
+            @RequestParam(required = false) List<CareerLevel> careerLevel,
+            @RequestParam(required = false) List<String> location,
+            @RequestParam(required = false) List<CompanySize> companySize,
+            @RequestParam(required = false) List<String> careerRange,
+            @RequestParam(required = false) List<String> deadlineType,
+            @RequestParam(required = false) List<String> source,
+            @RequestParam(required = false) String period
     );
 
     @Operation(

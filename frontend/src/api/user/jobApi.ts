@@ -2,6 +2,7 @@ import { apiClient } from '../../utils/apiClient';
 import type {
     JobNoticeBookmarkResponse,
     JobNoticeDetailApiResponse,
+    JobNoticeFilterCountApiResponse,
     JobNoticeListApiResponse,
     JobNoticeQueryParams,
 } from '../../types/user/jobNotice';
@@ -33,6 +34,15 @@ export const jobApi = {
 
         return apiClient<JobNoticeListApiResponse>(
             `${JOB_NOTICE_BASE_PATH}${query ? `?${query}` : ''}`,
+            { auth: 'optional' },
+        );
+    },
+
+    getJobNoticeFilterCount: (params: JobNoticeQueryParams = {}): Promise<JobNoticeFilterCountApiResponse | null> => {
+        const query = createQueryString(params);
+
+        return apiClient<JobNoticeFilterCountApiResponse>(
+            `${JOB_NOTICE_BASE_PATH}/count${query ? `?${query}` : ''}`,
             { auth: 'optional' },
         );
     },

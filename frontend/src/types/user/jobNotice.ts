@@ -99,6 +99,13 @@ export interface JobNoticeFilterOptions {
   careerLevel: string[];
   location: string[];
   companySize: string[];
+  careerRange?: string[];
+  deadlineType?: string[];
+  source?: string[];
+}
+
+export interface JobNoticeFilterCount {
+  totalElements: number;
 }
 
 export interface JobNoticeListResponse {
@@ -176,6 +183,20 @@ export const COMPANY_SIZE_LABELS = {
   FOREIGN: '외국계',
 } as const;
 
+export const DEADLINE_TYPE_LABELS = {
+  TODAY: '오늘 마감',
+  WITHIN_7_DAYS: '7일 이내 마감',
+  OPEN_ENDED: '상시 채용',
+} as const;
+
+export const JOB_NOTICE_SOURCE_LABELS = {
+  WANTED: '원티드',
+  JUMPIT: '점핏',
+  SARAMIN: '사람인',
+  GROUPBY: '그룹바이',
+  DIRECT: '직접 등록',
+} as const;
+
 export const LOCATION_LABELS = {
   SEOUL: '서울', GYEONGGI: '경기', INCHEON: '인천', BUSAN: '부산', DAEGU: '대구',
   GWANGJU: '광주', DAEJEON: '대전', ULSAN: '울산', SEJONG: '세종', GANGWON: '강원',
@@ -190,6 +211,8 @@ export function getJobNoticeFilterLabel(value: string) {
     ...CAREER_LEVEL_LABELS,
     ...COMPANY_SIZE_LABELS,
     ...LOCATION_LABELS,
+    ...DEADLINE_TYPE_LABELS,
+    ...JOB_NOTICE_SOURCE_LABELS,
   } as Record<string, string>;
 
   return labels[value] ?? value;
@@ -214,6 +237,9 @@ export interface JobNoticeQueryParams {
   careerLevel?: string | string[];
   location?: string | string[];
   companySize?: string | string[];
+  careerRange?: string | string[];
+  deadlineType?: string | string[];
+  source?: string | string[];
   period?: JobNoticePeriod;
   sort?: JobNoticeSort;
   page?: number;
@@ -221,6 +247,7 @@ export interface JobNoticeQueryParams {
 }
 
 export type JobNoticeListApiResponse = JobNoticeApiResponse<JobNoticeListResponse>;
+export type JobNoticeFilterCountApiResponse = JobNoticeApiResponse<JobNoticeFilterCount>;
 export type JobNoticeDetailApiResponse = JobNoticeApiResponse<JobNoticeDetail>;
 export type JobNoticeBookmarkApiResponse = JobNoticeApiResponse<JobNoticeBookmarkResponse>;
 export const JOB_NOTICE_DEADLINE_FALLBACK = '\uB9C8\uAC10\uC77C \uBBF8\uC815';

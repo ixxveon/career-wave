@@ -27,4 +27,10 @@ public final class JobNoticeFilterDictionary {
     public static final List<String> COMPANY_SIZES = List.of(
             "STARTUP", "SME", "MID_MARKET", "LARGE", "PUBLIC", "UNICORN", "FOREIGN"
     );
+    public static final List<String> DEADLINE_TYPES = List.of(
+            "TODAY", "WITHIN_7_DAYS", "OPEN_ENDED"
+    );
+    public static final List<String> SOURCES = List.of(
+            "WANTED", "JUMPIT", "SARAMIN", "GROUPBY", "DIRECT"
+    );
 }

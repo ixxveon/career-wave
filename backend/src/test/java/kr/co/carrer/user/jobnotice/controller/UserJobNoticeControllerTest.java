@@ -85,6 +85,9 @@ class UserJobNoticeControllerTest {
                 isNull(),
                 isNull(),
                 isNull(),
+                isNull(),
+                isNull(),
+                isNull(),
                 org.mockito.ArgumentMatchers.eq(1),
                 org.mockito.ArgumentMatchers.eq(20),
                 isNull()

@@ -28,6 +28,7 @@ import {
 import { jobApi } from '../../../api/user/jobApi';
 import { useJobNoticeDetail } from '../../../hooks/user/jobNotice/useJobNoticeDetail';
 import { useJobNoticeList } from '../../../hooks/user/jobNotice/useJobNoticeList';
+import { useJobNoticeFilterCount } from '../../../hooks/user/jobNotice/useJobNoticeFilterCount';
 import { invalidateBookmarkQueries } from '../../../hooks/user/bookmark/bookmarkQueryCache';
 import { authSession } from '../../../utils/user/member/authSession';
 import '@/styles/user/jobNotice/JobNoticeListPage.css';
@@ -49,6 +50,8 @@ export default function JobNoticeListPage() {
   const [selectedJob, setSelectedJob] = useState<JobNotice | null>(null);
   const isClosingRef = useRef(false);
   const [filters, setFilters] = useState<Filters>(createInitialFilters);
+  const [previewFilters, setPreviewFilters] = useState<Filters>(createInitialFilters);
+  const [debouncedPreviewFilters, setDebouncedPreviewFilters] = useState<Filters>(createInitialFilters);
   const [bookmarks, setBookmarks] = useState<Bookmarks>({});
   const [bookmarkErrorMessage, setBookmarkErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,6 +65,16 @@ export default function JobNoticeListPage() {
       : null;
 
   const jobNoticeQueryParams = createJobNoticeQueryParams({ filters, period, searchQuery, sort });
+  const previewFilterQueryParams = createJobNoticeQueryParams({
+    filters: debouncedPreviewFilters,
+    period,
+    searchQuery,
+    sort,
+  });
+  const {
+    data: jobNoticeFilterCountApiResponse,
+    isFetching: isJobNoticeFilterCountFetching,
+  } = useJobNoticeFilterCount(previewFilterQueryParams, isFilterOpen);
   const {
     data: jobNoticeListApiResponse,
     isError: isJobNoticeListError,
@@ -119,6 +132,12 @@ export default function JobNoticeListPage() {
 
   function applyFilters(nextFilters: Filters) {
     setFilters(nextFilters);
+    setPreviewFilters(nextFilters);
+  }
+
+  function openFilterDialog() {
+    setPreviewFilters(filters);
+    setIsFilterOpen(true);
   }
 
   async function toggleBookmark(id: number, fallbackBookmarked = false) {
@@ -202,6 +221,11 @@ export default function JobNoticeListPage() {
   }, [currentFilterOptions]);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedPreviewFilters(previewFilters), 250);
+    return () => window.clearTimeout(timer);
+  }, [previewFilters]);
+
+  useEffect(() => {
     if (!availableFilterOptions) return;
     setFilters((current) => {
       const next = normalizeFilters(current, filterGroups);
@@ -277,14 +301,14 @@ export default function JobNoticeListPage() {
           filters={filters}
           filterGroups={filterGroups}
           onApply={applyFilters}
-          onOpen={() => setIsFilterOpen(true)}
+          onOpen={openFilterDialog}
         />
         <main className="jn-results">
           <button
             type="button"
             className="jn-filter-trigger"
             aria-expanded={isFilterOpen}
-            onClick={() => setIsFilterOpen(true)}
+            onClick={openFilterDialog}
           >
             <Filter size={17} /> 필터
           </button>
@@ -372,6 +396,9 @@ export default function JobNoticeListPage() {
               onApply={applyFilters}
               className="jn-filter-panel--dialog"
               isDialog
+              onDraftChange={setPreviewFilters}
+              expectedCount={jobNoticeFilterCountApiResponse?.data?.totalElements}
+              isExpectedCountLoading={isJobNoticeFilterCountFetching}
               onApplied={() => setIsFilterOpen(false)}
             />
           </section>
