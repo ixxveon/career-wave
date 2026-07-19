@@ -204,18 +204,18 @@ export const LOCATION_LABELS = {
   GYEONGBUK: '경북', GYEONGNAM: '경남', JEJU: '제주', OVERSEAS: '해외',
 } as const;
 
-export function getJobNoticeFilterLabel(value: string) {
-  const labels = {
-    ...JOB_TYPE_LABELS,
-    ...JOB_CATEGORY_LABELS,
-    ...CAREER_LEVEL_LABELS,
-    ...COMPANY_SIZE_LABELS,
-    ...LOCATION_LABELS,
-    ...DEADLINE_TYPE_LABELS,
-    ...JOB_NOTICE_SOURCE_LABELS,
-  } as Record<string, string>;
+const ALL_FILTER_LABELS: Record<string, string> = {
+  ...JOB_TYPE_LABELS,
+  ...JOB_CATEGORY_LABELS,
+  ...CAREER_LEVEL_LABELS,
+  ...COMPANY_SIZE_LABELS,
+  ...LOCATION_LABELS,
+  ...DEADLINE_TYPE_LABELS,
+  ...JOB_NOTICE_SOURCE_LABELS,
+};
 
-  return labels[value] ?? value;
+export function getJobNoticeFilterLabel(value: string) {
+  return ALL_FILTER_LABELS[value] ?? value;
 }
 
 export const JOB_NOTICE_PERIOD_OPTIONS = ['today', '7d', '30d', 'all'] as const;

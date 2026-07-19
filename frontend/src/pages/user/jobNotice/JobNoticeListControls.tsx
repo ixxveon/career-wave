@@ -260,9 +260,7 @@ export function JobNoticeFilters({
       const nextValues = selectedValues.includes(value)
         ? selectedValues.filter((selectedValue) => selectedValue !== value)
         : [...selectedValues, value];
-      const nextFilters = { ...current, [label]: nextValues };
-      onDraftChange?.(nextFilters);
-      return nextFilters;
+      return { ...current, [label]: nextValues };
     });
   }
 

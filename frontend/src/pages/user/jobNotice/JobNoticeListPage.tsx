@@ -137,6 +137,7 @@ export default function JobNoticeListPage() {
 
   function openFilterDialog() {
     setPreviewFilters(filters);
+    setDebouncedPreviewFilters(filters);
     setIsFilterOpen(true);
   }
 
