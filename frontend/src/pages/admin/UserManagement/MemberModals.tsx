@@ -14,7 +14,7 @@ import {
 import { adminSession } from '../../../api/admin/adminSession';
 
 const WARN_THRESHOLD = 3;
-const SUSPEND_PERIODS: SuspendDuration[] = ['THREE_DAYS', 'SEVEN_DAYS', 'THIRTY_DAYS', 'PERMANENT'];
+const SUSPEND_PERIODS: SuspendDuration[] = ['THREE_DAYS', 'SEVEN_DAYS', 'THIRTY_DAYS'];
 const durationLabel: Record<SuspendDuration, string> = {
   THREE_DAYS: '3일', SEVEN_DAYS: '7일', THIRTY_DAYS: '30일', PERMANENT: '영구',
 };
@@ -262,11 +262,7 @@ export function SuspendModal({ target, onClose, onSuccess }: SuspendModalProps) 
         </div>
         <div className="modalAction">
           <button onClick={onClose} disabled={loading}>취소</button>
-          <button
-            onClick={handleSuspend}
-            disabled={loading}
-            style={period === 'PERMANENT' ? { background: '#9a6767', color: 'white', borderColor: '#9a6767' } : {}}
-          >
+          <button onClick={handleSuspend} disabled={loading}>
             {loading ? '처리 중...' : `${durationLabel[period]} 정지 처리`}
           </button>
         </div>
