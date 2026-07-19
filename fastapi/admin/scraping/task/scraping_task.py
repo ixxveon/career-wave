@@ -20,7 +20,9 @@ from admin.scraping.service import (
     PipelineRunnerService,
     PipelineStatusService,
     ScrapingLogService,
+    ScrapingRunResult,
 )
+from admin.scraping.adapter import ScrapingDetailMetrics
 
 
 class _PipelineStatusService(Protocol):
@@ -64,6 +66,7 @@ class ScrapingTaskResult:
     pipeline_status: str
     total_count: int | None = None
     duration_ms: int | None = None
+    detail_metrics: ScrapingDetailMetrics | None = None
 
 
 class ScrapingTask:
@@ -189,10 +192,18 @@ class ScrapingTask:
                 )
                 return result
 
-            raw_notices = self._pipeline_runner_service.dispatch(
+            dispatch_result = self._pipeline_runner_service.dispatch(
                 action_type=action_type,
                 source_name=source_name,
             )
+            if isinstance(dispatch_result, ScrapingRunResult):
+                raw_notices = dispatch_result.notices
+                detail_metrics = dispatch_result.detail_metrics
+            else:
+                raw_notices = dispatch_result
+                detail_metrics = ScrapingDetailMetrics()
+
+            self._ensure_detail_completeness(source_name=source_name, metrics=detail_metrics)
             normalized_notices = [
                 self._job_notice_normalizer.normalize(
                     source_name=source_name,
@@ -217,6 +228,7 @@ class ScrapingTask:
                 pipeline_status="SUCCESS",
                 total_count=len(normalized_notices),
                 duration_ms=self._calculate_duration_ms(started_at),
+                detail_metrics=detail_metrics,
             )
             self._handle_success(
                 result,
@@ -251,6 +263,20 @@ class ScrapingTask:
     @staticmethod
     def _calculate_duration_ms(started_at: float) -> int:
         return int((perf_counter() - started_at) * 1000)
+
+    @staticmethod
+    def _ensure_detail_completeness(*, source_name: str, metrics: ScrapingDetailMetrics) -> None:
+        if metrics.attempted_count > 0 and metrics.succeeded_count == 0:
+            raise ScrapingException(
+                error_code=ScrapingErrorCode.SCRAPING_DETAIL_COMPLETENESS_FAILED,
+                detail={
+                    "sourceName": source_name,
+                    "detailAttemptedCount": metrics.attempted_count,
+                    "detailFailedCount": metrics.failed_count,
+                    "detailTimeoutCount": metrics.timeout_count,
+                    "detailRetryCount": metrics.retry_count,
+                },
+            )
 
     def _handle_success(
         self,

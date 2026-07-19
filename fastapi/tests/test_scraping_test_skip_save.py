@@ -2,9 +2,11 @@ from datetime import datetime, timezone
 
 import pytest
 
+from admin.scraping.adapter import RawJobNotice, ScrapingDetailMetrics
+from admin.scraping.exception import ScrapingErrorCode, ScrapingException
 from admin.scraping.repository import ScrapingPipelineRecord
 from admin.scraping.schema import ScrapingActionType
-from admin.scraping.service import JobNoticeDedupService, JobNoticeNormalizer
+from admin.scraping.service import JobNoticeDedupService, JobNoticeNormalizer, ScrapingRunResult
 from admin.scraping.task import ScrapingTask
 
 
@@ -21,9 +23,10 @@ class _RecordingJobNoticeRepository:
 
 
 class _RecordingPipelineRunnerService:
-    def __init__(self) -> None:
+    def __init__(self, dispatch_result: object | None = None) -> None:
         self.test_calls: list[str] = []
         self.dispatch_calls: list[tuple[ScrapingActionType, str]] = []
+        self._dispatch_result = dispatch_result
 
     def test(self, source_name: str) -> bool:
         self.test_calls.append(source_name)
@@ -31,12 +34,13 @@ class _RecordingPipelineRunnerService:
 
     def dispatch(self, *, action_type: ScrapingActionType, source_name: str):
         self.dispatch_calls.append((action_type, source_name))
-        return []
+        return self._dispatch_result if self._dispatch_result is not None else []
 
 
 class _RecordingPipelineStatusService:
     def __init__(self) -> None:
         self.success_calls: list[tuple[str, int, int]] = []
+        self.failure_calls: list[tuple[str, str | None]] = []
 
     def mark_success(self, source_name: str, total_count: int, duration_ms: int) -> ScrapingPipelineRecord:
         self.success_calls.append((source_name, total_count, duration_ms))
@@ -57,11 +61,31 @@ class _RecordingPipelineStatusService:
             updated_at=now,
         )
 
+    def mark_failed(self, source_name: str, error_message: str | None) -> ScrapingPipelineRecord:
+        self.failure_calls.append((source_name, error_message))
+        now = datetime.now(timezone.utc)
+        return ScrapingPipelineRecord(
+            scraping_pipeline_id=1,
+            source_name=source_name,
+            display_name=source_name.title(),
+            pipeline_status="FAILED",
+            is_enabled=True,
+            last_started_at=now,
+            last_success_at=None,
+            last_failed_at=now,
+            last_duration_ms=None,
+            last_total_count=None,
+            last_error_message=error_message,
+            created_at=now,
+            updated_at=now,
+        )
+
 
 class _RecordingScrapingLogService:
     def __init__(self) -> None:
         self.test_logs: list[dict] = []
         self.success_logs: list[dict] = []
+        self.failure_logs: list[dict] = []
 
     def log_test(
         self,
@@ -87,6 +111,15 @@ class _RecordingScrapingLogService:
                 "source_name": source_name,
                 "scraping_pipeline_id": scraping_pipeline_id,
                 "total_count": total_count,
+            }
+        )
+
+    def log_failure(self, source_name: str, scraping_pipeline_id: int | None, error_message: str | None) -> None:
+        self.failure_logs.append(
+            {
+                "source_name": source_name,
+                "scraping_pipeline_id": scraping_pipeline_id,
+                "error_message": error_message,
             }
         )
 
@@ -168,3 +201,35 @@ async def test_scraping_task_invalidates_job_notice_caches_after_successful_run(
 
     assert result.pipeline_status == "SUCCESS"
     assert cache_invalidation_calls == [True]
+
+
+@pytest.mark.asyncio
+async def test_scraping_task_marks_pipeline_failed_when_all_detail_requests_fail():
+    dispatch_result = ScrapingRunResult(
+        notices=[RawJobNotice(original_url="https://example.com/jobs/1", title="Backend Engineer")],
+        detail_metrics=ScrapingDetailMetrics(
+            attempted_count=1,
+            failed_count=1,
+            timeout_count=4,
+            retry_count=2,
+        ),
+    )
+    repository = _RecordingJobNoticeRepository()
+    status_service = _RecordingPipelineStatusService()
+    log_service = _RecordingScrapingLogService()
+    task = ScrapingTask(
+        pipeline_runner_service=_RecordingPipelineRunnerService(dispatch_result),
+        pipeline_status_service=status_service,
+        scraping_log_service=log_service,
+        job_notice_dedup_service=JobNoticeDedupService(repository),
+        job_notice_normalizer=JobNoticeNormalizer(),
+    )
+
+    with pytest.raises(ScrapingException) as exc_info:
+        await task.run(source_name="wanted", action_type=ScrapingActionType.RUN)
+
+    assert exc_info.value.error_code == ScrapingErrorCode.SCRAPING_DETAIL_COMPLETENESS_FAILED
+    assert status_service.success_calls == []
+    assert status_service.failure_calls == [("wanted", "All detail scraping requests failed.")]
+    assert len(log_service.failure_logs) == 1
+    assert repository.saved_items == []

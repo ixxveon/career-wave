@@ -37,12 +37,13 @@ def _on_bg_task_done(task: asyncio.Task[ScrapingTaskResult]) -> None:
     try:
         result = task.result()
         log.info(
-            "scraping task completed: source=%s action=%s status=%s total_count=%s duration_ms=%s",
+            "scraping task completed: source=%s action=%s status=%s total_count=%s duration_ms=%s detail_metrics=%s",
             result.source_name,
             result.action_type.value,
             result.pipeline_status,
             result.total_count,
             result.duration_ms,
+            result.detail_metrics,
         )
     except asyncio.CancelledError:
         log.info("scraping task cancelled")

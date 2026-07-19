@@ -1,12 +1,12 @@
 from collections.abc import Iterable
 from contextlib import nullcontext
-from time import sleep
+from time import monotonic, sleep
 from typing import Any
 
 import httpx
 from bs4 import BeautifulSoup
 
-from admin.scraping.adapter.scraper_adapter import RawJobNotice, ScraperAdapter
+from admin.scraping.adapter.scraper_adapter import RawJobNotice, ScraperAdapter, ScrapingDetailMetrics
 
 
 class WantedScraper(ScraperAdapter):
@@ -25,11 +25,18 @@ class WantedScraper(ScraperAdapter):
         timeout_seconds: float = 10.0,
         max_items: int = 20,
         request_delay_seconds: float = 0.1,
+        detail_time_budget_seconds: float | None = None,
+        max_detail_retries: int = 1,
+        retry_backoff_seconds: float = 0.2,
     ) -> None:
         self._client = client
         self._timeout_seconds = timeout_seconds
         self._max_items = max_items
         self._request_delay_seconds = request_delay_seconds
+        self._detail_time_budget_seconds = detail_time_budget_seconds or timeout_seconds
+        self._max_detail_retries = max_detail_retries
+        self._retry_backoff_seconds = retry_backoff_seconds
+        self._detail_metrics = ScrapingDetailMetrics()
 
     @property
     def source_name(self) -> str:
@@ -40,6 +47,7 @@ class WantedScraper(ScraperAdapter):
         return "Wanted"
 
     def scrape(self) -> list[RawJobNotice]:
+        self._detail_metrics = ScrapingDetailMetrics()
         with self._client_context() as client:
             payload = self._fetch_job_list(client)
             notices: list[RawJobNotice] = []
@@ -48,19 +56,28 @@ class WantedScraper(ScraperAdapter):
                 if notice is None:
                     continue
 
-                detail = self._fetch_job_detail(client, item)
+                requires_description = notice.description is None
+                deadline = monotonic() + self._detail_time_budget_seconds
+                detail = self._fetch_job_detail(client, item, deadline=deadline)
                 if detail is not None:
                     notice = self._merge_detail(notice, detail)
                 if notice.description is None:
-                    description = self._fetch_html_description(client, notice.original_url)
+                    description = self._fetch_html_description(client, notice.original_url, deadline=deadline)
                     if description:
                         notice = self._copy_notice(notice, description=description)
+
+                if requires_description:
+                    self._record_detail_outcome(succeeded=notice.description is not None)
 
                 notices.append(notice)
                 if len(notices) >= self._max_items:
                     break
                 self._delay()
             return notices
+
+    @property
+    def detail_metrics(self) -> ScrapingDetailMetrics:
+        return self._detail_metrics
 
     def test_connection(self) -> bool:
         try:
@@ -105,26 +122,41 @@ class WantedScraper(ScraperAdapter):
             "offset": offset,
         }
 
-    def _fetch_job_detail(self, client: httpx.Client, item: dict[str, Any]) -> dict[str, Any] | None:
+    def _fetch_job_detail(
+        self,
+        client: httpx.Client,
+        item: dict[str, Any],
+        *,
+        deadline: float,
+    ) -> dict[str, Any] | None:
         job_id = self._first(item, "id", "job_id", "position_id")
         if job_id is None:
             return None
 
+        response = self._get_detail_response(
+            client,
+            f"{self._BASE_URL}/api/v4/jobs/{job_id}",
+            deadline=deadline,
+        )
+        if response is None:
+            return None
         try:
-            response = client.get(f"{self._BASE_URL}/api/v4/jobs/{job_id}")
-            response.raise_for_status()
             payload = response.json()
-        except (httpx.HTTPError, ValueError):
+        except ValueError:
             return None
 
         job = payload.get("job") if isinstance(payload, dict) else None
         return job if isinstance(job, dict) else None
 
-    def _fetch_html_description(self, client: httpx.Client, original_url: str) -> str | None:
-        try:
-            response = client.get(original_url)
-            response.raise_for_status()
-        except httpx.HTTPError:
+    def _fetch_html_description(
+        self,
+        client: httpx.Client,
+        original_url: str,
+        *,
+        deadline: float,
+    ) -> str | None:
+        response = self._get_detail_response(client, original_url, deadline=deadline)
+        if response is None:
             return None
 
         soup = BeautifulSoup(response.text, "html.parser")
@@ -139,6 +171,75 @@ class WantedScraper(ScraperAdapter):
             if text:
                 return text
         return self._clean_text(soup.get_text(" "))
+
+    def _get_detail_response(
+        self,
+        client: httpx.Client,
+        url: str,
+        *,
+        deadline: float,
+    ) -> httpx.Response | None:
+        for attempt in range(self._max_detail_retries + 1):
+            remaining_seconds = deadline - monotonic()
+            if remaining_seconds <= 0:
+                return None
+
+            try:
+                response = client.get(url, timeout=remaining_seconds)
+            except httpx.TimeoutException:
+                self._record_request_timeout()
+                if not self._retry_or_stop(attempt, deadline):
+                    return None
+                continue
+            except httpx.ConnectError:
+                if not self._retry_or_stop(attempt, deadline):
+                    return None
+                continue
+
+            if response.status_code == 429 or response.status_code >= 500:
+                if not self._retry_or_stop(attempt, deadline):
+                    return None
+                continue
+            try:
+                response.raise_for_status()
+            except httpx.HTTPError:
+                return None
+            return response
+        return None
+
+    def _retry_or_stop(self, attempt: int, deadline: float) -> bool:
+        if attempt >= self._max_detail_retries:
+            return False
+        remaining_seconds = deadline - monotonic()
+        if remaining_seconds <= 0:
+            return False
+        self._detail_metrics = ScrapingDetailMetrics(
+            attempted_count=self._detail_metrics.attempted_count,
+            succeeded_count=self._detail_metrics.succeeded_count,
+            failed_count=self._detail_metrics.failed_count,
+            timeout_count=self._detail_metrics.timeout_count,
+            retry_count=self._detail_metrics.retry_count + 1,
+        )
+        sleep(min(self._retry_backoff_seconds, remaining_seconds))
+        return deadline - monotonic() > 0
+
+    def _record_request_timeout(self) -> None:
+        self._detail_metrics = ScrapingDetailMetrics(
+            attempted_count=self._detail_metrics.attempted_count,
+            succeeded_count=self._detail_metrics.succeeded_count,
+            failed_count=self._detail_metrics.failed_count,
+            timeout_count=self._detail_metrics.timeout_count + 1,
+            retry_count=self._detail_metrics.retry_count,
+        )
+
+    def _record_detail_outcome(self, *, succeeded: bool) -> None:
+        self._detail_metrics = ScrapingDetailMetrics(
+            attempted_count=self._detail_metrics.attempted_count + 1,
+            succeeded_count=self._detail_metrics.succeeded_count + int(succeeded),
+            failed_count=self._detail_metrics.failed_count + int(not succeeded),
+            timeout_count=self._detail_metrics.timeout_count,
+            retry_count=self._detail_metrics.retry_count,
+        )
 
     def _merge_detail(self, notice: RawJobNotice, detail: dict[str, Any]) -> RawJobNotice:
         return self._copy_notice(

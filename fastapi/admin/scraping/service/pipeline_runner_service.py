@@ -1,6 +1,19 @@
-from admin.scraping.adapter import RawJobNotice, ScraperAdapter, require_source_registry_entry
+from dataclasses import dataclass
+
+from admin.scraping.adapter import (
+    RawJobNotice,
+    ScraperAdapter,
+    ScrapingDetailMetrics,
+    require_source_registry_entry,
+)
 from admin.scraping.exception import ScrapingErrorCode, ScrapingException
 from admin.scraping.schema import ScrapingActionType
+
+
+@dataclass(frozen=True)
+class ScrapingRunResult:
+    notices: list[RawJobNotice]
+    detail_metrics: ScrapingDetailMetrics
 
 
 class PipelineRunnerService:
@@ -22,15 +35,20 @@ class PipelineRunnerService:
     def retry(self, source_name: str) -> list[RawJobNotice]:
         return self.run(source_name)
 
+    def run_with_metrics(self, source_name: str) -> ScrapingRunResult:
+        scraper = self._require_scraper(source_name)
+        notices = scraper.scrape()
+        return ScrapingRunResult(notices=notices, detail_metrics=scraper.detail_metrics)
+
     def test(self, source_name: str) -> bool:
         scraper = self._require_scraper(source_name)
         return scraper.test_connection()
 
     def dispatch(self, *, action_type: ScrapingActionType, source_name: str) -> object:
         if action_type == ScrapingActionType.RUN:
-            return self.run(source_name)
+            return self.run_with_metrics(source_name)
         if action_type == ScrapingActionType.RETRY:
-            return self.retry(source_name)
+            return self.run_with_metrics(source_name)
         if action_type == ScrapingActionType.TEST:
             return self.test(source_name)
         raise NotImplementedError("Unsupported scraping action type.")
