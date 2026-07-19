@@ -18,10 +18,14 @@ public interface CommunityControllerDocs {
 
         ResponseEntity<ApiResponse<PaginationResponse<BoardDTO.Response>>> getBoards(
                         @RequestParam(required = false) String category,
-                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "1") int page,
                         @RequestParam(defaultValue = "10") int size);
 
         ResponseEntity<ApiResponse<BoardDTO.Response>> getBoard(
+                        @PathVariable Long boardId);
+
+        ResponseEntity<ApiResponse<BoardDTO.Response>> getBoardForEdit(
+                        @AuthenticationPrincipal AuthPrincipal principal,
                         @PathVariable Long boardId);
 
         ResponseEntity<ApiResponse<BoardDTO.Response>> createBoard(

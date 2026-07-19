@@ -48,6 +48,15 @@ public class CommunityController implements CommunityControllerDocs {
     }
 
     @Override
+    @GetMapping("/boards/{boardId}/edit")
+    public ResponseEntity<ApiResponse<BoardDTO.Response>> getBoardForEdit(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable Long boardId) {
+        return ResponseEntity.ok(
+                ApiResponse.ok(boardService.getBoardForEdit(getMemberId(principal), boardId)));
+    }
+
+    @Override
     @PostMapping("/boards")
     public ResponseEntity<ApiResponse<BoardDTO.Response>> createBoard(
             @AuthenticationPrincipal AuthPrincipal principal,

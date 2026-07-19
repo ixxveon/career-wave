@@ -19,6 +19,16 @@ export async function getCommunityBoard(boardId: number) {
   );
 }
 
+export async function getCommunityBoardForEdit(boardId: number) {
+  return memberApiClient<CommunityBoard>(
+    `/api/v1/user/community/boards/${boardId}/edit`,
+    {
+      method: "GET",
+      auth: true,
+    },
+  );
+}
+
 export async function getCommunityComments(boardId: number) {
   return memberApiClient<CommunityComment[]>(
     `/api/v1/user/community/boards/${boardId}/comments`,
@@ -91,4 +101,19 @@ export async function createCommunityReport(
     auth: true,
     body: JSON.stringify(request),
   });
+}
+
+export async function updateCommunityBoard(
+  boardId: number,
+  request: CreateCommunityBoardRequest,
+) {
+  return memberApiClient<CommunityBoard>(
+    `/api/v1/user/community/boards/${boardId}`,
+    {
+      method: "PUT",
+      auth: true,
+      allowRetry: true,
+      body: JSON.stringify(request),
+    },
+  );
 }
