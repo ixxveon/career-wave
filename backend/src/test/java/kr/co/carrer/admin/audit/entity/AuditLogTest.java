@@ -38,6 +38,6 @@ class AuditLogTest {
                 null
         );
 
-        assertThat(auditLog.getSearchText()).isEqualTo("LOGIN   ");
+        assertThat(auditLog.getSearchText()).isEqualTo("LOGIN");
     }
 }
