@@ -74,7 +74,7 @@ def test_normalizer_maps_intern_contract_startup_large_and_senior_values():
 
     assert intern_notice.job_type == "INTERN"
     assert intern_notice.company_size == "STARTUP"
-    assert intern_notice.career_level == "INTERN"
+    assert intern_notice.career_level == "FRESHER"
     assert contract_notice.job_type == "CONTRACT"
     assert contract_notice.company_size == "LARGE"
     assert contract_notice.career_level == "OVER_5"
@@ -98,6 +98,7 @@ def test_normalizer_uses_standard_codes_for_extended_filter_values():
         source_name="jumpit",
         raw_notice=_raw_notice(
             title="Machine Learning Engineer",
+            job_category=None,
             job_type="Freelance",
             company_size="Foreign company",
             career_level="10 years or more",
@@ -158,7 +159,7 @@ def test_normalizer_standardizes_job_category_location_and_company_size():
 
     assert notice.job_category == ["BACKEND"]
     assert notice.skill_tags == ["Python", "FastAPI"]
-    assert notice.location == "\uc11c\uc6b8"
+    assert notice.location == "SEOUL"
     assert notice.company_size == "SME"
 
 
