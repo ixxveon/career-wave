@@ -12,6 +12,7 @@ public enum AdminMemberErrorCode implements BaseErrorCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."),
     HR_MANAGER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 기업 회원입니다."),
     ALREADY_BANNED(HttpStatus.CONFLICT, "이미 영구 정지된 회원입니다."),
+    ALREADY_BLACKLISTED(HttpStatus.CONFLICT, "이미 블랙리스트 처리된 회원입니다."),
     ALREADY_SUSPENDED(HttpStatus.CONFLICT, "이미 정지된 회원입니다."),
     NOT_SUSPENDED(HttpStatus.CONFLICT, "정지 상태가 아닌 회원입니다."),
     NOT_BANNED(HttpStatus.CONFLICT, "영구 정지 상태가 아닌 회원입니다."),

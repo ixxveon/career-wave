@@ -98,6 +98,9 @@ public class AdminMemberServiceImpl implements AdminMemberService {
         if (member.getMemberStatus() == MemberStatus.BANNED) {
             throw new CustomException(AdminMemberErrorCode.ALREADY_BANNED);
         }
+        if (member.getMemberStatus() == MemberStatus.BLACKLISTED) {
+            throw new CustomException(AdminMemberErrorCode.ALREADY_BLACKLISTED);
+        }
 
         String reason = dto.reason();
         validateReason(reason);
@@ -127,7 +130,7 @@ public class AdminMemberServiceImpl implements AdminMemberService {
                 endDate = calculateSuspendEndDate(today, duration);
                 member.suspend(endDate);
             }
-            case BLACKLIST -> member.ban();
+            case BLACKLIST -> member.blacklist();
         }
 
         SuspendDuration historyDuration = (sanctionType == SanctionType.SUSPEND) ? duration : null;

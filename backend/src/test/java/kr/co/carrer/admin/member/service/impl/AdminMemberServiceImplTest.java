@@ -137,7 +137,7 @@ class AdminMemberServiceImplTest {
         }
 
         @Test
-        @DisplayName("BLACKLIST 제재 - 영구 정지 처리")
+        @DisplayName("BLACKLIST 제재 - 블랙리스트 처리")
         void blacklist_success() {
             UUID memberId = UUID.randomUUID();
             Member member = createActiveMember(memberId);
@@ -146,12 +146,12 @@ class AdminMemberServiceImplTest {
             given(auditLogRepository.save(any())).willAnswer(i -> i.getArgument(0));
 
             MemberDTO.RequestSanction request = new MemberDTO.RequestSanction(
-                SanctionType.BLACKLIST, null, "사기 행위 확인으로 영구 정지 처리합니다."
+                SanctionType.BLACKLIST, null, "사기 행위 확인으로 블랙리스트 처리합니다."
             );
 
             MemberDTO.ResponseSanction result = adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1");
 
-            assertThat(result.memberStatus()).isEqualTo(MemberStatus.BANNED);
+            assertThat(result.memberStatus()).isEqualTo(MemberStatus.BLACKLISTED);
         }
 
         @Test
@@ -203,6 +203,23 @@ class AdminMemberServiceImplTest {
                 .isInstanceOf(CustomException.class)
                 .extracting(e -> ((CustomException) e).getErrorCode())
                 .isEqualTo(AdminMemberErrorCode.ALREADY_BANNED);
+        }
+
+        @Test
+        @DisplayName("이미 BLACKLISTED 회원 제재 시 ALREADY_BLACKLISTED 예외")
+        void alreadyBlacklisted_throws() {
+            UUID memberId = UUID.randomUUID();
+            Member member = createBlacklistedMember(memberId);
+            given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+
+            MemberDTO.RequestSanction request = new MemberDTO.RequestSanction(
+                SanctionType.WARNING, null, "테스트 사유입니다. 최소 열 글자."
+            );
+
+            assertThatThrownBy(() -> adminMemberService.sanctionMember(memberId, request, 1L, "127.0.0.1"))
+                .isInstanceOf(CustomException.class)
+                .extracting(e -> ((CustomException) e).getErrorCode())
+                .isEqualTo(AdminMemberErrorCode.ALREADY_BLACKLISTED);
         }
 
         @Test
@@ -603,6 +620,21 @@ class AdminMemberServiceImplTest {
 
             setField(member, "memberId", memberId);
             setField(member, "memberStatus", MemberStatus.BANNED);
+            setField(member, "warningCount", 0);
+            return member;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Member createBlacklistedMember(UUID memberId) {
+        try {
+            var constructor = Member.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            Member member = constructor.newInstance();
+
+            setField(member, "memberId", memberId);
+            setField(member, "memberStatus", MemberStatus.BLACKLISTED);
             setField(member, "warningCount", 0);
             return member;
         } catch (Exception e) {

@@ -14,10 +14,10 @@ import { adminSession } from '../../../api/admin/adminSession';
 import { MemberDetailModal, ConfirmViewModal, SuspendModal, UnsuspendModal, UnbanModal } from './MemberModals';
 
 const memberStatusLabel: Record<MemberStatus, string> = {
-  ACTIVE: '정상', SUSPENDED: '정지', BANNED: '영구정지', LOCKED: '잠금', WITHDRAWN: '탈퇴',
+  ACTIVE: '정상', SUSPENDED: '정지', BANNED: '영구정지', BLACKLISTED: '블랙리스트', LOCKED: '잠금', WITHDRAWN: '탈퇴',
 };
 const memberStatusCls: Record<MemberStatus, string> = {
-  ACTIVE: 'normal', SUSPENDED: 'blinded', BANNED: 'dismissed', LOCKED: 'pending', WITHDRAWN: 'dismissed',
+  ACTIVE: 'normal', SUSPENDED: 'blinded', BANNED: 'dismissed', BLACKLISTED: 'dismissed', LOCKED: 'pending', WITHDRAWN: 'dismissed',
 };
 
 export default function MemberTab() {
@@ -186,7 +186,8 @@ export default function MemberTab() {
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
           <option value="">상태 전체</option>
           <option value="ACTIVE">정상</option><option value="SUSPENDED">정지</option>
-          <option value="BANNED">영구정지</option><option value="LOCKED">잠금</option><option value="WITHDRAWN">탈퇴</option>
+          <option value="BANNED">영구정지</option><option value="BLACKLISTED">블랙리스트</option>
+          <option value="LOCKED">잠금</option><option value="WITHDRAWN">탈퇴</option>
         </select>
         <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         <span style={{ fontSize: 13, color: '#7a8da4', fontWeight: 600 }}>~</span>
@@ -234,7 +235,7 @@ export default function MemberTab() {
                       {m.memberStatus === MEMBER_STATUS.BANNED && isMaster && (
                         <button className="tableBtn tableBtn--success memberActionBtn" onClick={() => { setSelectedMember(null); setUnbanTarget(m); }}>영구정지 해제</button>
                       )}
-                      {m.memberStatus !== MEMBER_STATUS.SUSPENDED && m.memberStatus !== MEMBER_STATUS.BANNED && (
+                      {m.memberStatus !== MEMBER_STATUS.SUSPENDED && m.memberStatus !== MEMBER_STATUS.BANNED && m.memberStatus !== MEMBER_STATUS.BLACKLISTED && (
                         <button className="tableBtn tableBtn--danger memberActionBtn" onClick={() => { setSelectedMember(null); setSuspendTarget(m); }} disabled={m.memberStatus === MEMBER_STATUS.WITHDRAWN}>정지처리</button>
                       )}
                     </div>
