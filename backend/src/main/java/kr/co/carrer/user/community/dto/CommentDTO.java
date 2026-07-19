@@ -26,10 +26,11 @@ public class CommentDTO {
             String memberName,
             Long parentId,
             String content,
+            Long reportCount,
             Boolean blind,
             ZonedDateTime createdAt,
             ZonedDateTime updatedAt) {
-        public static Response from(Comment comment, String memberName) {
+        public static Response from(Comment comment, String memberName, Long reportCount) {
             return new Response(
                     comment.getCommentId(),
                     comment.getBoardId(),
@@ -37,6 +38,7 @@ public class CommentDTO {
                     memberName,
                     comment.getParentId(),
                     comment.getContent(),
+                    reportCount,
                     comment.getBlind(),
                     comment.getCreatedAt(),
                     comment.getUpdatedAt());

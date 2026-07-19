@@ -6,6 +6,7 @@ export interface CommunityBoard {
   title: string;
   content: string;
   viewCount: number;
+  reportCount: number;
   blind: boolean;
   createdAt: string;
   updatedAt: string;
@@ -18,6 +19,7 @@ export interface CommunityComment {
   memberName: string;
   parentId: number | null;
   content: string;
+  reportCount: number;
   blind: boolean;
   createdAt: string;
   updatedAt: string;

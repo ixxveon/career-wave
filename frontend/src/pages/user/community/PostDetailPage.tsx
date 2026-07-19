@@ -91,7 +91,7 @@ function toPost(board: CommunityBoard): CommunityPost {
     createdAt: board.createdAt?.slice(0, 10) ?? "",
     views: board.viewCount,
     likes: 0,
-    reportCount: 0,
+    reportCount: board.reportCount,
     content: board.content,
   };
 }
@@ -106,7 +106,7 @@ function toComments(apiComments: CommunityComment[]): Comment[] {
       createdAt: item.createdAt?.slice(0, 10) ?? "",
       content: item.content,
       likes: 0,
-      reportCount: 0,
+      reportCount: item.reportCount,
       replies: apiComments
         .filter((reply) => reply.parentId === item.commentId)
         .map((reply) => ({
@@ -116,7 +116,7 @@ function toComments(apiComments: CommunityComment[]): Comment[] {
           createdAt: reply.createdAt?.slice(0, 10) ?? "",
           content: reply.content,
           likes: 0,
-          reportCount: 0,
+          reportCount: reply.reportCount,
         })),
     }));
 }
@@ -443,7 +443,7 @@ export default function PostDetailPage() {
     useCreateCommunityComment(validBoardId ?? 0);
 
   const { mutate: createReport, isPending: isCreatingReport } =
-    useCreateCommunityReport();
+    useCreateCommunityReport(validBoardId ?? 0);
 
   const { mutate: deleteBoard, isPending: isDeletingBoard } =
     useDeleteCommunityBoard();
@@ -468,17 +468,13 @@ const { mutate: updateComment } = useUpdateCommunityComment(
   const [comments, setComments] = useState<Comment[]>([]);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [reportReason, setReportReason] = useState<ReportReason>("AD");
-  const [postReportCount, setPostReportCount] = useState(
-    post?.reportCount ?? 0,
-  );
 
   useEffect(() => {
     setLiked(false);
     setLikeCount(post?.likes ?? 0);
-    setPostReportCount(post?.reportCount ?? 0);
     setReportTarget(null);
     setReportReason("AD");
-  }, [post?.id, post?.likes, post?.reportCount]);
+  }, [post?.id, post?.likes]);
 
   useEffect(() => {
     setComments(toComments(apiComments ?? []));
@@ -652,7 +648,7 @@ const { mutate: updateComment } = useUpdateCommunityComment(
             <span className="pd-meta__dot">·</span>
             <span>조회 {post.views.toLocaleString()}</span>
             <span className="pd-meta__dot">·</span>
-            <span>신고 {postReportCount}</span>
+            <span>신고 {post.reportCount}</span>
           </div>
         </div>
 
