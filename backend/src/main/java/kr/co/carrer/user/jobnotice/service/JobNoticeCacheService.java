@@ -82,7 +82,10 @@ public class JobNoticeCacheService {
                 JobNoticeFilterDictionary.JOB_CATEGORIES,
                 JobNoticeFilterDictionary.CAREER_LEVELS,
                 JobNoticeFilterDictionary.LOCATIONS,
-                JobNoticeFilterDictionary.COMPANY_SIZES
+                JobNoticeFilterDictionary.COMPANY_SIZES,
+                JobNoticeFilterDictionary.CAREER_LEVELS,
+                JobNoticeFilterDictionary.DEADLINE_TYPES,
+                JobNoticeFilterDictionary.SOURCES
         );
     }
 

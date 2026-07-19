@@ -57,10 +57,35 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
             int size,
             UUID memberId
     ) {
+        return getJobNotices(
+                keyword, jobTypes, jobCategories, careerLevels, locations, companySizes,
+                null, null, null, period, sort, page, size, memberId
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public JobNoticeDTO.ResponseList getJobNotices(
+            String keyword,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
+            List<String> careerRanges,
+            List<String> deadlineTypes,
+            List<String> sources,
+            String period,
+            String sort,
+            int page,
+            int size,
+            UUID memberId
+    ) {
         int normalizedPage = Math.max(page, DEFAULT_PAGE);
         int normalizedSize = Math.min(Math.max(size, 1), MAX_SIZE);
+        boolean hasAdvancedFilters = hasValues(careerRanges) || hasValues(deadlineTypes) || hasValues(sources);
 
-        if (memberId == null) {
+        if (memberId == null && !hasAdvancedFilters) {
             return jobNoticeCacheService.getAnonymousJobNoticeList(
                     keyword, jobTypes, jobCategories, careerLevels, locations,
                     companySizes, period, sort, normalizedPage, normalizedSize
@@ -69,26 +94,23 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
 
         PageRequest pageRequest = PageRequest.of(normalizedPage - 1, normalizedSize);
 
-        List<JobNotice> jobNotices = jobNoticeQueryRepository.findActiveJobNoticeContent(
-                keyword,
-                jobTypes,
-                jobCategories,
-                careerLevels,
-                locations,
-                companySizes,
-                period,
-                sort,
-                pageRequest
-        );
-        long totalElements = jobNoticeCacheService.getActiveJobNoticeCount(
-                keyword,
-                jobTypes,
-                jobCategories,
-                careerLevels,
-                locations,
-                companySizes,
-                period
-        );
+        List<JobNotice> jobNotices = hasAdvancedFilters
+                ? jobNoticeQueryRepository.findActiveJobNoticeContent(
+                        keyword, jobTypes, jobCategories, careerLevels, locations, companySizes,
+                        careerRanges, deadlineTypes, sources, period, sort, pageRequest
+                )
+                : jobNoticeQueryRepository.findActiveJobNoticeContent(
+                        keyword, jobTypes, jobCategories, careerLevels, locations, companySizes,
+                        period, sort, pageRequest
+                );
+        long totalElements = hasAdvancedFilters
+                ? jobNoticeQueryRepository.countActiveJobNotices(
+                        keyword, jobTypes, jobCategories, careerLevels, locations, companySizes,
+                        careerRanges, deadlineTypes, sources, period
+                )
+                : jobNoticeCacheService.getActiveJobNoticeCount(
+                        keyword, jobTypes, jobCategories, careerLevels, locations, companySizes, period
+                );
         Page<JobNotice> result = new PageImpl<>(jobNotices, pageRequest, totalElements);
 
         Set<Long> bookmarkedJobNoticeIds = getBookmarkedJobNoticeIds(memberId, result.getContent());
@@ -104,6 +126,28 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
                 result.getTotalPages(),
                 jobNoticeCacheService.getListStats(),
                 jobNoticeCacheService.getFilterOptions()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public JobNoticeDTO.ResponseFilterCount getJobNoticeFilterCount(
+            String keyword,
+            List<JobType> jobTypes,
+            List<String> jobCategories,
+            List<CareerLevel> careerLevels,
+            List<String> locations,
+            List<CompanySize> companySizes,
+            List<String> careerRanges,
+            List<String> deadlineTypes,
+            List<String> sources,
+            String period
+    ) {
+        return new JobNoticeDTO.ResponseFilterCount(
+                jobNoticeQueryRepository.countActiveJobNotices(
+                        keyword, jobTypes, jobCategories, careerLevels, locations, companySizes,
+                        careerRanges, deadlineTypes, sources, period
+                )
         );
     }
 
@@ -233,6 +277,10 @@ public class UserJobNoticeServiceImpl implements UserJobNoticeService {
             current = current.getCause();
         }
         return false;
+    }
+
+    private boolean hasValues(List<String> values) {
+        return values != null && values.stream().anyMatch(value -> value != null && !value.isBlank());
     }
 
     private List<String> toList(String[] values) {

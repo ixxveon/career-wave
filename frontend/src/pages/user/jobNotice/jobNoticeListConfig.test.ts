@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { JobNoticeFilterOptions } from '../../../types/user/jobNotice';
 import {
+  API_FILTER_PARAM_BY_LABEL,
   createFilterGroups,
   createInitialFilters,
   createJobNoticeQueryParams,
@@ -40,6 +41,27 @@ describe('job notice dynamic filters', () => {
       jobCategory: ['SECURITY'],
       companySize: ['MID_MARKET'],
     });
+  });
+
+  it('sends standardized career selections with the careerRange parameter', () => {
+    const careerLabel = Object.entries(API_FILTER_PARAM_BY_LABEL)
+      .find(([, parameter]) => parameter === 'careerLevel')?.[0];
+    const filters = createInitialFilters();
+
+    if (!careerLabel) {
+      throw new Error('career filter label is missing');
+    }
+    filters[careerLabel as keyof typeof filters] = ['OVER_3'];
+
+    const params = createJobNoticeQueryParams({
+      filters,
+      period: Object.keys(API_FILTER_PARAM_BY_LABEL)[0] as never,
+      searchQuery: '',
+      sort: Object.keys(API_FILTER_PARAM_BY_LABEL)[0] as never,
+    });
+
+    expect(params.careerRange).toEqual(['OVER_3']);
+    expect(params.careerLevel).toBeUndefined();
   });
 
   it('resets a selected value that is no longer active', () => {

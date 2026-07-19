@@ -58,6 +58,29 @@ class UserJobNoticeServiceImplTest {
     @Mock
     private JobNoticeCacheService jobNoticeCacheService;
 
+    @Test
+    @DisplayName("세분 필터 예상 결과 수는 목록과 같은 확장 조건으로 조회한다")
+    void getJobNoticeFilterCount_usesAdvancedFilterPredicate() {
+        given(jobNoticeQueryRepository.countActiveJobNotices(
+                eq("java"), eq(List.of(JobType.FULLTIME)), eq(List.of("BACKEND")), eq(null),
+                eq(List.of("SEOUL")), eq(List.of(CompanySize.STARTUP)),
+                eq(List.of("OVER_3")), eq(List.of("WITHIN_7_DAYS")), eq(List.of("WANTED")), eq("all")
+        )).willReturn(3L);
+
+        JobNoticeDTO.ResponseFilterCount response = userJobNoticeService.getJobNoticeFilterCount(
+                "java", List.of(JobType.FULLTIME), List.of("BACKEND"), null,
+                List.of("SEOUL"), List.of(CompanySize.STARTUP),
+                List.of("OVER_3"), List.of("WITHIN_7_DAYS"), List.of("WANTED"), "all"
+        );
+
+        assertThat(response.totalElements()).isEqualTo(3L);
+        verify(jobNoticeQueryRepository).countActiveJobNotices(
+                "java", List.of(JobType.FULLTIME), List.of("BACKEND"), null,
+                List.of("SEOUL"), List.of(CompanySize.STARTUP),
+                List.of("OVER_3"), List.of("WITHIN_7_DAYS"), List.of("WANTED"), "all"
+        );
+    }
+
     @Nested
     @DisplayName("채용 공고 목록 조회 - getJobNotices()")
     class GetJobNotices {

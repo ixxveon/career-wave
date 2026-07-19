@@ -120,7 +120,32 @@ public class JobNoticeDTO {
             List<String> location,
 
             @Schema(description = "Company size filter options", allowableValues = {"STARTUP", "SME", "MID_MARKET", "LARGE"})
-            List<String> companySize
+            List<String> companySize,
+
+            @Schema(description = "Career range filter options")
+            List<String> careerRange,
+
+            @Schema(description = "Deadline type filter options")
+            List<String> deadlineType,
+
+            @Schema(description = "Notice source filter options")
+            List<String> source
+    ) {
+        public ResponseFilterOptions(
+                List<String> jobType,
+                List<String> jobCategory,
+                List<String> careerLevel,
+                List<String> location,
+                List<String> companySize
+        ) {
+            this(jobType, jobCategory, careerLevel, location, companySize, careerLevel, List.of(), List.of());
+        }
+    }
+
+    @Schema(description = "Job notice filter result count")
+    public record ResponseFilterCount(
+            @Schema(description = "Number of notices matching the supplied filters")
+            long totalElements
     ) {}
 
     @Schema(description = "Job notice detail response")

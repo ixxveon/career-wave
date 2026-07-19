@@ -215,6 +215,9 @@ type JobNoticeFiltersProps = {
   onApply: (filters: Filters) => void;
   className?: string;
   onApplied?: () => void;
+  onDraftChange?: (filters: Filters) => void;
+  expectedCount?: number;
+  isExpectedCountLoading?: boolean;
 } & (
   | { isDialog: true; onOpen?: never }
   | { isDialog?: false; onOpen: () => void }
@@ -228,6 +231,9 @@ export function JobNoticeFilters({
   isDialog = false,
   onApplied,
   onOpen,
+  onDraftChange,
+  expectedCount,
+  isExpectedCountLoading,
 }: JobNoticeFiltersProps) {
   const [draftFilters, setDraftFilters] = useState<Filters>(filters);
   const [activeLabel, setActiveLabel] = useState<FilterLabel>(() => filterGroups[0]?.label ?? '직무');
@@ -241,6 +247,12 @@ export function JobNoticeFilters({
       setActiveLabel(filterGroups[0].label);
     }
   }, [activeLabel, filterGroups]);
+
+  useEffect(() => {
+    if (isDialog) {
+      onDraftChange?.(draftFilters);
+    }
+  }, [draftFilters, isDialog, onDraftChange]);
 
   function toggleFilter(label: FilterLabel, value: string) {
     setDraftFilters((current) => {
@@ -297,6 +309,9 @@ export function JobNoticeFilters({
       )}
       {isDialog && <div className="jn-filter-actions">
         <button type="button" onClick={() => setDraftFilters(createInitialFilters())}>초기화</button>
+        <span className="jn-filter-actions__count" aria-live="polite">
+          {isExpectedCountLoading ? '결과 수 계산 중...' : `예상 결과 ${expectedCount?.toLocaleString() ?? 0}건`}
+        </span>
         <button type="button" onClick={() => {
           onApply(draftFilters);
           onApplied?.();

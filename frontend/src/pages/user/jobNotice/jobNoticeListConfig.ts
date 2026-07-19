@@ -2,8 +2,10 @@ import type { JobNotice, JobNoticeBookmarkMap, JobNoticeFilterOptions, JobNotice
 import {
   CAREER_LEVEL_LABELS,
   COMPANY_SIZE_LABELS,
+  DEADLINE_TYPE_LABELS,
   JOB_CATEGORY_LABELS,
   JOB_NOTICE_ALL_FILTER_VALUE,
+  JOB_NOTICE_SOURCE_LABELS,
   JOB_TYPE_LABELS,
   getJobNoticeFilterLabel,
   LOCATION_LABELS,
@@ -20,6 +22,8 @@ export const API_FILTER_PARAM_BY_LABEL = {
   '채용 유형': 'jobType',
   지역: 'location',
   '기업 규모': 'companySize',
+  '마감 유형': 'deadlineType',
+  출처: 'source',
 } as const;
 
 export const API_PERIOD_BY_LABEL = {
@@ -41,7 +45,7 @@ export type Bookmarks = JobNoticeBookmarkMap;
 export type Period = (typeof PERIODS)[number];
 export type SortOption = (typeof SORT_OPTIONS)[number];
 export type JobNoticeListStatus = 'loading' | 'success' | 'empty' | 'error';
-type JobNoticeFilterParamKey = 'jobCategory' | 'careerLevel' | 'jobType' | 'location' | 'companySize';
+type JobNoticeFilterParamKey = 'jobCategory' | 'careerLevel' | 'jobType' | 'location' | 'companySize' | 'deadlineType' | 'source';
 
 export const FILTER_GROUPS = [
   { label: '직무', optionKey: 'jobCategory' },
@@ -49,6 +53,8 @@ export const FILTER_GROUPS = [
   { label: '채용 유형', optionKey: 'jobType' },
   { label: '지역', optionKey: 'location' },
   { label: '기업 규모', optionKey: 'companySize' },
+  { label: '마감 유형', optionKey: 'deadlineType' },
+  { label: '출처', optionKey: 'source' },
 ] as const;
 
 const JOB_CATEGORY_OPTION_GROUPS = [
@@ -62,6 +68,8 @@ const FILTER_OPTION_LABELS = {
   ...CAREER_LEVEL_LABELS,
   ...COMPANY_SIZE_LABELS,
   ...LOCATION_LABELS,
+  ...DEADLINE_TYPE_LABELS,
+  ...JOB_NOTICE_SOURCE_LABELS,
 } as const;
 
 export interface FilterGroup {
@@ -135,6 +143,11 @@ export function createJobNoticeQueryParams({
       params[paramKey] = values;
     }
   });
+
+  if (params.careerLevel) {
+    params.careerRange = params.careerLevel;
+    delete params.careerLevel;
+  }
 
   return params;
 }

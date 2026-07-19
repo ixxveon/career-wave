@@ -330,9 +330,19 @@
 
 .jn-filter-actions {
   display: grid;
-  grid-template-columns: 1fr 1.3fr;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 8px;
   padding-top: 14px;
+}
+
+.jn-filter-actions__count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #48637f;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .jn-filter-actions button {
