@@ -57,6 +57,9 @@ public class AuditLog {
     @Column(name = "detail", columnDefinition = "TEXT")
     private String detail;
 
+    @Column(name = "search_text", nullable = false, columnDefinition = "TEXT")
+    private String searchText;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;
 
@@ -79,7 +82,16 @@ public class AuditLog {
         auditLog.ipAddress = ipAddress;
         auditLog.severity = severity;
         auditLog.detail = detail;
+        auditLog.searchText = buildSearchText(action, targetType, targetId, detail);
         return auditLog;
+    }
+
+    private static String buildSearchText(String action, String targetType, String targetId, String detail) {
+        return String.join(" ",
+                action,
+                targetType != null ? targetType : "",
+                targetId != null ? targetId : "",
+                detail != null ? detail : "");
     }
 
     @PrePersist
