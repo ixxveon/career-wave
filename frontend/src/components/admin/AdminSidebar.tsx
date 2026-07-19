@@ -11,9 +11,11 @@ const ROLE_LABEL: Record<string, string> = {
   [ADMIN_DETAIL_ROLE.BACKEND]: '백엔드',
 };
 
+type AdminRoutePath = typeof ADMIN_ROUTE_PATHS[keyof typeof ADMIN_ROUTE_PATHS];
+
 interface AdminMenuItem {
   label: string;
-  path: string;
+  path: AdminRoutePath;
   isComingSoon?: boolean;
 }
 
