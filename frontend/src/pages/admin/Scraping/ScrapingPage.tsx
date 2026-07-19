@@ -7,14 +7,12 @@ import MiniPagination from '../../../components/admin/MiniPagination';
 import {
   PIPELINE_STATUS,
   SCRAPING_ACTION_TYPE,
-  SCRAPING_STATUS,
   scrapingApi,
   type ScrapingActionType,
-  type ScrapingLog,
   type ScrapingSource,
   type PipelineStatus,
-  type ScrapingStatus,
 } from '../../../api/admin/scrapingApi';
+import { AUDIT_LOG_TYPE, auditLogApi } from '../../../api/admin/auditLogApi';
 import { formatLogTime } from '../../../utils/admin/logView';
 
 type Tone = 'normal' | 'warning' | 'danger' | 'info';
@@ -40,9 +38,11 @@ const statusLabel: Record<PipelineStatus, string> = {
   [PIPELINE_STATUS.FAILED]: 'FAILED',
 };
 
-const auditToneForLogStatus: Record<ScrapingStatus, 'success' | 'danger'> = {
-  [SCRAPING_STATUS.SUCCESS]: 'success',
-  [SCRAPING_STATUS.FAILED]: 'danger',
+const auditToneForSeverity = {
+  INFO: 'info',
+  SUCCESS: 'success',
+  WARN: 'warning',
+  ERROR: 'danger',
 };
 
 const toPipelineStatusFilter = (value: string): PipelineStatusFilter =>
@@ -55,22 +55,6 @@ const formatDuration = (ms: number) => `${ms.toLocaleString()}ms`;
 const formatVolume = (value: number) => value.toLocaleString();
 const getRecentErrorText = (source: ScrapingSource) =>
   source.recentErrorCode ?? source.recentErrorMessage ?? '-';
-const sanitizeLogDetail = (detail: string) => {
-  const hasSensitiveKey = /\b(token|accessToken|refreshToken|authorization|cookie|set-cookie|proxy|proxyUrl|proxyAddress)\b/i.test(detail);
-  const hasNetworkAddress = /\b(?:https?:\/\/|(?:\d{1,3}\.){3}\d{1,3})(?:[^\s]*)/i.test(detail);
-  const looksLikeRawResponse = /<\/?[a-z][\s\S]*>|^\s*[{[][\s\S]*[}\]]\s*$/i.test(detail);
-
-  if (hasSensitiveKey || hasNetworkAddress || looksLikeRawResponse) {
-    return '민감 정보가 포함될 수 있어 상세 원문을 숨겼습니다.';
-  }
-
-  return detail;
-};
-const getLogMessage = (log: ScrapingLog) =>
-  log.detail
-    ? `${log.sourceName} ${sanitizeLogDetail(log.message)} ${sanitizeLogDetail(log.detail)}`
-    : `${log.sourceName} ${sanitizeLogDetail(log.message)}`;
-const getLogTarget = (log: ScrapingLog) => log.runId ? `${log.sourceName} #${log.runId}` : log.sourceName;
 const getActionErrorMessage = (error: unknown) =>
   error instanceof Error && error.message
     ? error.message
@@ -129,8 +113,9 @@ export default function ScrapingPage() {
   } = useQuery({
     queryKey: logListQueryKey,
     queryFn: async () => {
-      const response = await scrapingApi.getLogs({
-        sourceName: logSourceFilter ?? undefined,
+      const response = await auditLogApi.getLogs({
+        logType: AUDIT_LOG_TYPE.SCRAPING_SYSTEM,
+        keyword: logSourceFilter ?? undefined,
         page: 1,
         size: LOG_PAGE_SIZE,
       });
@@ -163,6 +148,7 @@ export default function ScrapingPage() {
     onSuccess: () => {
       setActionErrorMessage(null);
       queryClient.invalidateQueries({ queryKey: ['admin', 'scraping', 'sources'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'scraping', 'logs'] });
     },
     onError: (error) => {
       setActionErrorMessage(getActionErrorMessage(error));
@@ -453,7 +439,7 @@ export default function ScrapingPage() {
 
           {logSourceFilter ? (
             <div className="scrapeOpsLogScope">
-              <span>{logSourceFilter} 실패 로그</span>
+              <span>{logSourceFilter} 관련 로그</span>
               <button type="button" onClick={clearLogSourceFilter}>
                 해제
               </button>
@@ -482,13 +468,13 @@ export default function ScrapingPage() {
 
               {!isLogListLoading && !isLogListError
                 ? logs.map((log) => (
-                  <article key={log.logId} className="auditOpsTableRow">
+                  <article key={log.id} className="auditOpsTableRow">
                     <span className="timestamp">{formatLogTime(log.occurredAt)}</span>
-                    <span className="domain">스크래핑</span>
-                    <span className={`auditOpsTag ${auditToneForLogStatus[log.status]}`}>{log.status}</span>
-                    <strong className="summary">{getLogMessage(log)}</strong>
-                    <span className="target">{getLogTarget(log)}</span>
-                    <span className="actor">-</span>
+                    <span className="domain">{log.logTypeLabel}</span>
+                    <span className={`auditOpsTag ${auditToneForSeverity[log.severity]}`}>{log.severity}</span>
+                    <strong className="summary">{log.summary}</strong>
+                    <span className="target">{[log.targetType, log.targetId].filter((value) => value && value !== '-').join(' #') || '-'}</span>
+                    <span className="actor">{log.actorId}</span>
                   </article>
                 ))
                 : null}

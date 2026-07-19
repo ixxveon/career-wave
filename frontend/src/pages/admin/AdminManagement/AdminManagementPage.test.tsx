@@ -10,7 +10,6 @@ const adminManagementApiMock = vi.hoisted(() => ({
   getAdminManagementSummary: vi.fn(),
   getAdminAccounts: vi.fn(),
   getAdminAclRules: vi.fn(),
-  getAdminAuditLogs: vi.fn(),
   createAdminAccount: vi.fn(),
   updateAdminRole: vi.fn(),
   updateAdminStatus: vi.fn(),
@@ -20,14 +19,15 @@ const adminManagementApiMock = vi.hoisted(() => ({
   deleteAdminAclRule: vi.fn(),
 }));
 
+const auditLogApiMock = vi.hoisted(() => ({
+  getLogs: vi.fn(),
+}));
+
 vi.mock('../../../api/admin/adminManagementApi', () => ({
   ADMIN_ROLE: {
     MASTER: 'MASTER',
     CS: 'CS',
     BACKEND: 'BACKEND',
-  },
-  ADMIN_AUDIT_LOG_TYPE: {
-    ADMIN_MANAGEMENT: 'ADMIN_MANAGEMENT',
   },
   ACL_RISK_LEVEL: {
     LOW: 'LOW',
@@ -68,6 +68,17 @@ vi.mock('../../../api/admin/adminManagementApi', () => ({
   },
 }));
 
+vi.mock('../../../api/admin/auditLogApi', async () => {
+  const actual = await vi.importActual<typeof import('../../../api/admin/auditLogApi')>(
+    '../../../api/admin/auditLogApi',
+  );
+
+  return {
+    ...actual,
+    auditLogApi: auditLogApiMock,
+  };
+});
+
 function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
@@ -83,6 +94,22 @@ function renderPage() {
       <AdminManagementPage />
     </QueryClientProvider>,
   );
+}
+
+function auditLogListResponse(content: unknown[] = []) {
+  return {
+    data: {
+      success: true,
+      message: 'OK',
+      data: {
+        content,
+        page: 1,
+        size: 5,
+        totalElements: content.length,
+        totalPages: 1,
+      },
+    },
+  };
 }
 
 function seedApiMocks() {
@@ -139,13 +166,7 @@ function seedApiMocks() {
     totalItems: 1,
     totalPages: 1,
   });
-  adminManagementApiMock.getAdminAuditLogs.mockResolvedValue({
-    items: [],
-    page: 1,
-    size: 5,
-    totalItems: 0,
-    totalPages: 1,
-  });
+  auditLogApiMock.getLogs.mockResolvedValue(auditLogListResponse());
   adminManagementApiMock.updateAdminRole.mockResolvedValue({
     id: 'ADM-002',
     name: 'Backend Admin',
@@ -333,13 +354,7 @@ describe('AdminManagementPage master-only controls', () => {
 
   it('does not render local fallback audit logs when the server returns an empty audit log list', async () => {
     adminSession.setRole(ADMIN_ROLE.MASTER);
-    adminManagementApiMock.getAdminAuditLogs.mockResolvedValueOnce({
-      items: [],
-      page: 1,
-      size: 5,
-      totalItems: 0,
-      totalPages: 1,
-    });
+    auditLogApiMock.getLogs.mockResolvedValueOnce(auditLogListResponse());
 
     const { findByText, queryByText } = renderPage();
 
@@ -348,9 +363,36 @@ describe('AdminManagementPage master-only controls', () => {
     expect(queryByText('super_admin')).toBeNull();
   });
 
+  it('renders administrator activity from the common audit log response', async () => {
+    adminSession.setRole(ADMIN_ROLE.MASTER);
+    auditLogApiMock.getLogs.mockResolvedValueOnce(
+      auditLogListResponse([
+        {
+          id: '101',
+          logType: 'ADMIN_MANAGEMENT',
+          logTypeLabel: '관리자 계정 관리',
+          severity: 'INFO',
+          summary: '관리자 권한을 변경했습니다.',
+          detailSummary: '관리자 권한을 변경했습니다.',
+          actorId: 'admin-1',
+          targetType: 'ADMIN',
+          targetId: '2',
+          ipAddressMasked: '10.20.0.*',
+          occurredAt: '2026-07-18 09:30:00',
+        },
+      ]),
+    );
+
+    const { findByText } = renderPage();
+
+    expect(await findByText('관리자 권한을 변경했습니다.')).toBeTruthy();
+    expect(await findByText('ADMIN #2')).toBeTruthy();
+    expect(await findByText('admin-1')).toBeTruthy();
+  });
+
   it('shows a retry action when audit log retrieval fails', async () => {
     adminSession.setRole(ADMIN_ROLE.MASTER);
-    adminManagementApiMock.getAdminAuditLogs.mockRejectedValueOnce({
+    auditLogApiMock.getLogs.mockRejectedValueOnce({
       code: 'UNKNOWN',
       status: 500,
       message: '감사 로그 조회에 실패했습니다.',
@@ -362,12 +404,12 @@ describe('AdminManagementPage master-only controls', () => {
     const retryButton = await findByRole('button', { name: '다시 시도' });
     fireEvent.click(retryButton);
 
-    await waitFor(() => expect(adminManagementApiMock.getAdminAuditLogs).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(auditLogApiMock.getLogs).toHaveBeenCalledTimes(2));
   });
 
   it('does not show a retry action when audit log access is denied', async () => {
     adminSession.setRole(ADMIN_ROLE.MASTER);
-    adminManagementApiMock.getAdminAuditLogs.mockRejectedValueOnce({
+    auditLogApiMock.getLogs.mockRejectedValueOnce({
       code: 'FORBIDDEN',
       status: 403,
       message: '관리자 관리 권한이 없습니다.',
@@ -386,7 +428,7 @@ describe('AdminManagementPage master-only controls', () => {
 
     expect(await findByText('Master Admin')).toBeTruthy();
     await waitFor(() => {
-      expect(adminManagementApiMock.getAdminAuditLogs).toHaveBeenCalledWith({
+      expect(auditLogApiMock.getLogs).toHaveBeenCalledWith({
         logType: 'ADMIN_MANAGEMENT',
         page: 1,
         size: 5,

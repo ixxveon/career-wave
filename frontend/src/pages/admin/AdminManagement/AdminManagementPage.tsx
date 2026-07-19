@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ADMIN_ROLE, ADMIN_AUDIT_LOG_TYPE, ADMIN_MANAGEMENT_ERROR_CODE, createAdminAccount as createAdminAccountRequest, createAdminAclRule, deleteAdminAccount, deleteAdminAclRule, getAdminAccounts, getAdminAclRules, getAdminAuditLogs, getAdminManagementAuthErrorMessage, getAdminManagementSummary, toAdminManagementApiError, updateAdminAclEnabled, updateAdminRole, updateAdminStatus, type AdminRole } from '../../../api/admin/adminManagementApi';
+import { ADMIN_ROLE, ADMIN_MANAGEMENT_ERROR_CODE, createAdminAccount as createAdminAccountRequest, createAdminAclRule, deleteAdminAccount, deleteAdminAclRule, getAdminAccounts, getAdminAclRules, getAdminManagementAuthErrorMessage, getAdminManagementSummary, toAdminManagementApiError, updateAdminAclEnabled, updateAdminRole, updateAdminStatus, type AdminRole } from '../../../api/admin/adminManagementApi';
+import { AUDIT_LOG_TYPE, auditLogApi } from '../../../api/admin/auditLogApi';
 import { adminSession } from '../../../api/admin/adminAuthApi';
 import '../../../styles/admin/admin.css';
 import '../../../styles/admin/audit-log.css';
@@ -34,12 +35,19 @@ export default function AdminManagementPage() {
   const { data: adminAccounts, error: adminAccountsError, isError: isAdminAccountsError, isLoading: isAdminAccountsLoading } = useQuery({ queryKey: [...ADMIN_MANAGEMENT_ADMINS_QUERY_KEY, adminListQueryParams], queryFn: () => getAdminAccounts(adminListQueryParams), refetchOnMount: 'always' });
   const aclListQueryParams = { page: aclPage, size: ACL_PAGE_SIZE };
   const { data: adminAclRules, error: adminAclRulesError, isError: isAdminAclRulesError, isLoading: isAdminAclRulesLoading } = useQuery({ queryKey: [...ADMIN_MANAGEMENT_ACLS_QUERY_KEY, aclListQueryParams], queryFn: () => getAdminAclRules(aclListQueryParams) });
-  const auditLogQueryParams = { logType: ADMIN_AUDIT_LOG_TYPE.ADMIN_MANAGEMENT, page: 1, size: MAX_SECURITY_LOGS };
-  const { data: adminAuditLogs, error: adminAuditLogsError, isError: isAdminAuditLogsError, isLoading: isAdminAuditLogsLoading } = useQuery({ queryKey: [...ADMIN_MANAGEMENT_AUDIT_LOGS_QUERY_KEY, auditLogQueryParams], queryFn: () => getAdminAuditLogs(auditLogQueryParams) });
+  const auditLogQueryParams = { logType: AUDIT_LOG_TYPE.ADMIN_MANAGEMENT, page: 1, size: MAX_SECURITY_LOGS };
+  const { data: adminAuditLogs, error: adminAuditLogsError, isError: isAdminAuditLogsError, isLoading: isAdminAuditLogsLoading } = useQuery({
+    queryKey: [...ADMIN_MANAGEMENT_AUDIT_LOGS_QUERY_KEY, auditLogQueryParams],
+    queryFn: async () => {
+      const response = await auditLogApi.getLogs(auditLogQueryParams);
+      if (!response.data.success) throw new Error(response.data.message ?? '관리자 관리 활동 로그 조회에 실패했습니다.');
+      return response.data.data;
+    },
+  });
 
   const filteredAdmins = adminAccounts?.items.map(toAdminAccountRow) ?? [];
   const visibleAclRules = adminAclRules?.items.map(toAclRuleRow) ?? aclRules;
-  const filteredLogs = adminAuditLogs?.items.map(toAuditLogRow) ?? [];
+  const filteredLogs = adminAuditLogs?.content.map(toAuditLogRow) ?? [];
   const refreshAdminManagementQueries = () => { void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY }); void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_ADMINS_QUERY_KEY }); };
   const refreshAclManagementQueries = () => { void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_SUMMARY_QUERY_KEY }); void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_ACLS_QUERY_KEY }); };
   const refreshAuditLogQueries = () => { void queryClient.invalidateQueries({ queryKey: ADMIN_MANAGEMENT_AUDIT_LOGS_QUERY_KEY }); };
