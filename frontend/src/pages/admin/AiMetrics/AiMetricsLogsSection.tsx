@@ -1,15 +1,15 @@
-import type { AiMetricLog } from '../../../api/admin/aiMetricsApi';
-import { formatDateTime, getApiStateMessage, toneForStatus } from './aiMetricsPageUtils';
-import { sanitizeLogMessage } from '../../../utils/admin/aiMetricsLogSanitizer';
+import type { AuditLogItem } from '../../../api/admin/auditLogApi';
+import { formatDateTime, getApiStateMessage } from './aiMetricsPageUtils';
 
-const auditToneForStatus = (value: ReturnType<typeof toneForStatus>) => {
-  if (value === 'danger') return 'danger';
-  if (value === 'warning') return 'warning';
-  return 'info';
+const auditToneForSeverity: Record<AuditLogItem['severity'], 'info' | 'success' | 'warning' | 'danger'> = {
+  INFO: 'info',
+  SUCCESS: 'success',
+  WARN: 'warning',
+  ERROR: 'danger',
 };
 
 export default function AiMetricsLogsSection(props: {
-  metricLogs: AiMetricLog[];
+  metricLogs: AuditLogItem[];
   metricLogsLoading: boolean;
   metricLogsIsError: boolean;
   metricLogsError: Error | null;
@@ -44,13 +44,13 @@ export default function AiMetricsLogsSection(props: {
             </div>
           )}
           {metricLogs.map((event) => (
-            <article key={event.eventId} className="auditOpsTableRow">
+            <article key={event.id} className="auditOpsTableRow">
               <span className="timestamp">{formatDateTime(event.occurredAt)}</span>
-              <span className="domain">{event.domainLabel}</span>
-              <span className={`auditOpsTag ${auditToneForStatus(toneForStatus(event.severity))}`}>{event.severity}</span>
-              <strong className="summary">{sanitizeLogMessage(event.message)}</strong>
-              <span className="target">-</span>
-              <span className="actor">-</span>
+              <span className="domain">{event.logTypeLabel}</span>
+              <span className={`auditOpsTag ${auditToneForSeverity[event.severity]}`}>{event.severity}</span>
+              <strong className="summary">{event.summary}</strong>
+              <span className="target">{[event.targetType, event.targetId].filter((value) => value && value !== '-').join(' #') || '-'}</span>
+              <span className="actor">{event.actorId}</span>
             </article>
           ))}
         </div>

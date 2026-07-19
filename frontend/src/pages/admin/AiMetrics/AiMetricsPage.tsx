@@ -10,11 +10,10 @@ import {
   type AiDomain,
   type AiDomainUsage,
   type AiHeavyUser,
-  type AiMetricLog,
   type AiMetricSummary,
   type AiTokenTrendPoint,
-  type PageResult,
 } from '../../../api/admin/aiMetricsApi';
+import { AUDIT_LOG_TYPE, auditLogApi, type AuditLogItem } from '../../../api/admin/auditLogApi';
 import AiMetricsHeader from './AiMetricsHeader';
 import AiMetricsDomainSection from './AiMetricsDomainSection';
 import AiMetricsUsageSection from './AiMetricsUsageSection';
@@ -94,12 +93,12 @@ export default function AiMetricsPage() {
     },
   });
 
-  const { data: metricLogsData, isLoading: metricLogsLoading, isError: metricLogsIsError, error: metricLogsError } = useQuery<PageResult<AiMetricLog>, Error>({
+  const { data: metricLogsData, isLoading: metricLogsLoading, isError: metricLogsIsError, error: metricLogsError } = useQuery<AuditLogItem[], Error>({
     queryKey: LOGS_QUERY_KEY,
     queryFn: async () => {
-      const response = await aiMetricsApi.getLogs({ page: 1, size: 5 });
+      const response = await auditLogApi.getLogs({ logType: AUDIT_LOG_TYPE.AI_METRICS_SYSTEM, page: 1, size: 5 });
       if (!response.data.success) throw new Error(response.data.message ?? 'AI 운영 로그 조회에 실패했습니다.');
-      return response.data.data;
+      return response.data.data.content;
     },
   });
 
@@ -147,7 +146,7 @@ export default function AiMetricsPage() {
   const budgetMutationDisabled = !isBudgetLoaded || budgetLoading || budgetIsError;
   const heavyUsers = heavyUsersData ?? [];
   const heavyUsersEmpty = !heavyUsersLoading && !heavyUsersIsError && heavyUsers.length === 0;
-  const metricLogs = metricLogsData?.content ?? [];
+  const metricLogs = metricLogsData ?? [];
   const metricLogsEmpty = !metricLogsLoading && !metricLogsIsError && metricLogs.length === 0;
   const tokenChartAxis = useMemo(
     () => createTokenChartAxis(tokenTrendChartData.flatMap((item) => [item.input, item.output])),
