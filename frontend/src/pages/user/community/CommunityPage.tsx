@@ -43,10 +43,11 @@ type BoardResponse = {
   memberName: string;
   category: string;
   title: string;
-  contentPreview: string;
+  content: string;
   viewCount: number;
-  isBlind: boolean;
+  reportCount: number;
   commentCount: number;
+  blind: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -68,14 +69,14 @@ function toPosts(response: BoardResponse[]): CommunityPost[] {
     id: board.boardId,
     category: board.category,
     title: board.title,
-    preview: board.contentPreview,
+    preview: board.content,
     author: board.memberName,
     createdAt: board.createdAt?.slice(0, 10) ?? "",
     views: board.viewCount,
     likes: 0,
     comments: board.commentCount,
     hot: board.viewCount >= 100,
-    reportCount: 0,
+    reportCount: board.reportCount,
   }));
 }
 
