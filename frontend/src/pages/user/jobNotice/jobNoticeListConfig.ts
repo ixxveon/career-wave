@@ -5,6 +5,8 @@ import {
   JOB_CATEGORY_LABELS,
   JOB_NOTICE_ALL_FILTER_VALUE,
   JOB_TYPE_LABELS,
+  getJobNoticeFilterLabel,
+  LOCATION_LABELS,
 } from '../../../types/user/jobNotice';
 
 export const PERIODS = ['오늘', '7일', '30일', '기간 전체'] as const;
@@ -50,10 +52,8 @@ export const FILTER_GROUPS = [
 ] as const;
 
 const JOB_CATEGORY_OPTION_GROUPS = [
-  { label: '개발', options: ['BACKEND', 'FRONTEND', 'MOBILE', 'EMBEDDED'] },
-  { label: '데이터·인프라', options: ['DATA', 'DEVOPS'] },
-  { label: '품질·보안', options: ['QA', 'SECURITY'] },
-  { label: '특화', options: ['GAME'] },
+  { label: '개발/엔지니어링', options: ['BACKEND', 'FRONTEND', 'FULLSTACK', 'MOBILE', 'IOS', 'ANDROID', 'SERVER', 'WEB_DEVELOPMENT', 'SOFTWARE_ENGINEER', 'SYSTEM_ENGINEER'] },
+  { label: '데이터/AI', options: ['DATA_ANALYST', 'DATA_ENGINEER', 'DATA_SCIENTIST', 'ML_ENGINEER', 'AI_ENGINEER', 'MLOPS', 'BI', 'DBA'] },
 ] as const;
 
 const FILTER_OPTION_LABELS = {
@@ -61,6 +61,7 @@ const FILTER_OPTION_LABELS = {
   ...JOB_CATEGORY_LABELS,
   ...CAREER_LEVEL_LABELS,
   ...COMPANY_SIZE_LABELS,
+  ...LOCATION_LABELS,
 } as const;
 
 export interface FilterGroup {
@@ -104,7 +105,7 @@ export function getJobBookmark(bookmarks: Bookmarks, job: JobNotice): boolean {
 }
 
 export function getFilterOptionLabel(value: string) {
-  return FILTER_OPTION_LABELS[value as keyof typeof FILTER_OPTION_LABELS] ?? value;
+  return FILTER_OPTION_LABELS[value as keyof typeof FILTER_OPTION_LABELS] ?? getJobNoticeFilterLabel(value);
 }
 
 export function createJobNoticeQueryParams({

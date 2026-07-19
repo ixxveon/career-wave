@@ -78,11 +78,11 @@ public class JobNoticeCacheService {
     @Transactional(readOnly = true)
     public JobNoticeDTO.ResponseFilterOptions getFilterOptions() {
         return new JobNoticeDTO.ResponseFilterOptions(
-                jobNoticeQueryRepository.findDistinctActiveJobTypes(),
-                jobNoticeQueryRepository.findDistinctActiveJobCategories(),
-                jobNoticeQueryRepository.findDistinctActiveCareerLevels(),
-                jobNoticeQueryRepository.findDistinctActiveLocations(),
-                jobNoticeQueryRepository.findDistinctActiveCompanySizes()
+                JobNoticeFilterDictionary.JOB_TYPES,
+                JobNoticeFilterDictionary.JOB_CATEGORIES,
+                JobNoticeFilterDictionary.CAREER_LEVELS,
+                JobNoticeFilterDictionary.LOCATIONS,
+                JobNoticeFilterDictionary.COMPANY_SIZES
         );
     }
 

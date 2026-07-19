@@ -50,17 +50,14 @@ class JobNoticeCacheServiceTest {
 
     @Test
     @DisplayName("getFilterOptions — 레포지토리 Distinct 조회 결과를 DTO로 반환한다")
-    void getFilterOptions_delegatesToRepository() {
-        given(jobNoticeQueryRepository.findDistinctActiveJobTypes()).willReturn(List.of("FULLTIME", "CONTRACT"));
-        given(jobNoticeQueryRepository.findDistinctActiveJobCategories()).willReturn(List.of("BACKEND"));
-        given(jobNoticeQueryRepository.findDistinctActiveCareerLevels()).willReturn(List.of("JUNIOR"));
-        given(jobNoticeQueryRepository.findDistinctActiveLocations()).willReturn(List.of("Seoul"));
-        given(jobNoticeQueryRepository.findDistinctActiveCompanySizes()).willReturn(List.of("STARTUP"));
-
+    void getFilterOptions_returnsCompleteStandardDictionary() {
         JobNoticeDTO.ResponseFilterOptions result = jobNoticeCacheService.getFilterOptions();
 
-        assertThat(result.jobType()).containsExactly("FULLTIME", "CONTRACT");
-        assertThat(result.jobCategory()).containsExactly("BACKEND");
+        assertThat(result.jobType()).containsExactly("FULL_TIME", "CONTRACT", "INTERN", "FREELANCE", "DAILY");
+        assertThat(result.jobCategory()).contains("BACKEND", "ML_ENGINEER", "DBA");
+        assertThat(result.careerLevel()).containsExactly("FRESHER", "ANY_EXPERIENCE", "INTERN", "UNDER_1", "OVER_1", "OVER_2", "OVER_3", "OVER_5", "OVER_7", "OVER_10");
+        assertThat(result.location()).contains("SEOUL", "OVERSEAS");
+        assertThat(result.companySize()).containsExactly("STARTUP", "SME", "MID_MARKET", "LARGE", "PUBLIC", "UNICORN", "FOREIGN");
     }
 
     @Test

@@ -121,27 +121,49 @@ export const JOB_NOTICE_COMPANY_SIZE_API_VALUES = {
 } as const;
 
 export const JOB_TYPE_LABELS = {
+  FULL_TIME: '정규직',
   FULLTIME: '정규직',
   INTERN: '인턴',
   CONTRACT: '계약직',
+  FREELANCE: '프리랜서',
+  DAILY: '일용직',
 } as const;
 
 export const JOB_CATEGORY_LABELS = {
   BACKEND: '백엔드',
   FRONTEND: '프론트엔드',
-  DATA: '데이터',
-  DEVOPS: 'DevOps',
   MOBILE: '모바일',
-  SECURITY: '보안',
-  QA: 'QA',
-  GAME: '게임',
-  EMBEDDED: '임베디드',
+  FULLSTACK: '풀스택',
+  IOS: 'iOS',
+  ANDROID: 'Android',
+  SERVER: '서버',
+  WEB_DEVELOPMENT: '웹개발',
+  SOFTWARE_ENGINEER: '소프트웨어 엔지니어',
+  SYSTEM_ENGINEER: '시스템 엔지니어',
+  DATA_ANALYST: '데이터 분석가',
+  DATA_ENGINEER: '데이터 엔지니어',
+  DATA_SCIENTIST: '데이터 사이언티스트',
+  ML_ENGINEER: '머신러닝 엔지니어',
+  AI_ENGINEER: 'AI 엔지니어',
+  MLOPS: 'MLOps',
+  BI: 'BI',
+  DBA: 'DBA',
 } as const;
 
 export const CAREER_LEVEL_LABELS = {
   JUNIOR: '신입',
   SENIOR: '경력',
   ANY: '경력무관',
+  FRESHER: '신입',
+  ANY_EXPERIENCE: '경력무관',
+  INTERN: '인턴',
+  UNDER_1: '1년 이하',
+  OVER_1: '1년 이상',
+  OVER_2: '2년 이상',
+  OVER_3: '3년 이상',
+  OVER_5: '5년 이상',
+  OVER_7: '7년 이상',
+  OVER_10: '10년 이상',
 } as const;
 
 export const COMPANY_SIZE_LABELS = {
@@ -149,7 +171,29 @@ export const COMPANY_SIZE_LABELS = {
   SME: '중소',
   MID_MARKET: '중견',
   LARGE: '대기업',
+  PUBLIC: '공기업',
+  UNICORN: '유니콘',
+  FOREIGN: '외국계',
 } as const;
+
+export const LOCATION_LABELS = {
+  SEOUL: '서울', GYEONGGI: '경기', INCHEON: '인천', BUSAN: '부산', DAEGU: '대구',
+  GWANGJU: '광주', DAEJEON: '대전', ULSAN: '울산', SEJONG: '세종', GANGWON: '강원',
+  CHUNGBUK: '충북', CHUNGNAM: '충남', JEONBUK: '전북', JEONNAM: '전남',
+  GYEONGBUK: '경북', GYEONGNAM: '경남', JEJU: '제주', OVERSEAS: '해외',
+} as const;
+
+export function getJobNoticeFilterLabel(value: string) {
+  const labels = {
+    ...JOB_TYPE_LABELS,
+    ...JOB_CATEGORY_LABELS,
+    ...CAREER_LEVEL_LABELS,
+    ...COMPANY_SIZE_LABELS,
+    ...LOCATION_LABELS,
+  } as Record<string, string>;
+
+  return labels[value] ?? value;
+}
 
 export const JOB_NOTICE_PERIOD_OPTIONS = ['today', '7d', '30d', 'all'] as const;
 export const JOB_NOTICE_SORT_OPTIONS = ['recommend', 'latest', 'views'] as const;

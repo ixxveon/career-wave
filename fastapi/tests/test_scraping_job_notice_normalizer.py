@@ -4,9 +4,9 @@ from admin.scraping.adapter import RawJobNotice
 from admin.scraping.service import JobNoticeNormalizer
 
 
-SPRING_JOB_TYPES = {"FULLTIME", "INTERN", "CONTRACT"}
-SPRING_COMPANY_SIZES = {"STARTUP", "SME", "MID_MARKET", "LARGE"}
-SPRING_CAREER_LEVELS = {"JUNIOR", "SENIOR", "ANY"}
+SPRING_JOB_TYPES = {"FULL_TIME", "INTERN", "CONTRACT", "FREELANCE", "DAILY"}
+SPRING_COMPANY_SIZES = {"STARTUP", "SME", "MID_MARKET", "LARGE", "PUBLIC", "UNICORN", "FOREIGN"}
+SPRING_CAREER_LEVELS = {"FRESHER", "ANY_EXPERIENCE", "INTERN", "UNDER_1", "OVER_1", "OVER_2", "OVER_3", "OVER_5", "OVER_7", "OVER_10"}
 SPRING_NOTICE_STATUSES = {"ACTIVE", "CLOSED"}
 
 
@@ -42,9 +42,9 @@ def test_normalizer_maps_site_values_to_spring_enums():
         ),
     )
 
-    assert notice.job_type == "FULLTIME"
+    assert notice.job_type == "FULL_TIME"
     assert notice.company_size == "SME"
-    assert notice.career_level == "JUNIOR"
+    assert notice.career_level == "OVER_3"
     assert notice.notice_status == "ACTIVE"
     assert notice.job_type in SPRING_JOB_TYPES
     assert notice.company_size in SPRING_COMPANY_SIZES
@@ -74,10 +74,10 @@ def test_normalizer_maps_intern_contract_startup_large_and_senior_values():
 
     assert intern_notice.job_type == "INTERN"
     assert intern_notice.company_size == "STARTUP"
-    assert intern_notice.career_level == "JUNIOR"
+    assert intern_notice.career_level == "INTERN"
     assert contract_notice.job_type == "CONTRACT"
     assert contract_notice.company_size == "LARGE"
-    assert contract_notice.career_level == "SENIOR"
+    assert contract_notice.career_level == "OVER_5"
 
 
 def test_normalizer_maps_mid_sized_company_to_mid_market():
@@ -89,6 +89,29 @@ def test_normalizer_maps_mid_sized_company_to_mid_market():
     )
 
     assert notice.company_size == "MID_MARKET"
+
+
+def test_normalizer_uses_standard_codes_for_extended_filter_values():
+    normalizer = JobNoticeNormalizer()
+
+    notice = normalizer.normalize(
+        source_name="jumpit",
+        raw_notice=_raw_notice(
+            title="Machine Learning Engineer",
+            job_type="Freelance",
+            company_size="Foreign company",
+            career_level="10 years or more",
+            location="Seoul",
+        ),
+    )
+
+    assert notice.job_category == ["ML_ENGINEER"]
+    assert notice.job_type == "FREELANCE"
+    assert notice.company_size == "FOREIGN"
+    assert notice.career_level == "OVER_10"
+    assert notice.career_min_years == 10
+    assert notice.career_max_years is None
+    assert notice.location == "SEOUL"
 
 
 def test_normalizer_uses_enum_safe_fallbacks_for_unknown_values():
@@ -103,9 +126,9 @@ def test_normalizer_uses_enum_safe_fallbacks_for_unknown_values():
         ),
     )
 
-    assert notice.job_type == "FULLTIME"
+    assert notice.job_type is None
     assert notice.company_size is None
-    assert notice.career_level == "ANY"
+    assert notice.career_level is None
 
 
 def test_normalizer_keeps_company_size_empty_when_source_value_is_missing():
@@ -133,7 +156,7 @@ def test_normalizer_standardizes_job_category_location_and_company_size():
         ),
     )
 
-    assert notice.job_category == ["BACKEND", "DEVOPS"]
+    assert notice.job_category == ["BACKEND"]
     assert notice.skill_tags == ["Python", "FastAPI"]
     assert notice.location == "\uc11c\uc6b8"
     assert notice.company_size == "SME"
@@ -204,4 +227,4 @@ def test_normalizer_ignores_implausible_career_numbers():
         raw_notice=_raw_notice(career_level="2024년 채용"),
     )
 
-    assert notice.career_level == "ANY"
+    assert notice.career_level is None
