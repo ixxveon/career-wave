@@ -60,17 +60,9 @@ DELETE FROM faqs WHERE question IN (
 -- 관리자 먼저 삽입 (suspend_histories admin_id FK 보장)
 -- loginId=admin / 비밀번호: 1234
 -- ────────────────────────────────────────────
-UPDATE admins
-SET
-  login_id = 'seed_bootstrap_admin',
-  email = 'seed-bootstrap-admin@career-wave.local',
-  updated_at = NOW()
-WHERE login_id = 'cw_ops_master_7f3a'
-  AND email = 'admin@career-wave.local';
-
 INSERT INTO admins (login_id, email, password_hash, name, admin_role, status, created_at, updated_at)
 VALUES
-  ('admin', 'admin@career-wave.local',
+  ('admin', 'seed-admin@career-wave.local',
    '$2b$10$NPp0Acje.rj.VrDuRiPT2u.dXnCKzYGmxZn7Ro2BOw4qGDZIPr34W',
    '슈퍼관리자', 'MASTER', 'ACTIVE', NOW(), NOW()),
   ('cs', 'cs@career-wave.com',
