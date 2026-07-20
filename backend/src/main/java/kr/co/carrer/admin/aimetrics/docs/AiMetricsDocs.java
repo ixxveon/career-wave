@@ -74,7 +74,7 @@ public interface AiMetricsDocs {
             @Parameter(description = "집계 단위", required = true, schema = @Schema(allowableValues = {"HOURLY", "DAILY"})) @RequestParam IntervalType interval
     );
 
-    @Operation(summary = "고사용 사용자 조회", description = "ai_usage_logs.created_at 기간 조건과 featureType 필터 기준으로 AI 사용량이 높은 사용자를 요청 수, 토큰 수, 비용 기준으로 조회합니다. from/to는 ISO 8601 UTC 문자열을 사용합니다.")
+    @Operation(summary = "고사용 회원 조회", description = "ai_usage_logs.created_at 기간 조건과 featureType 필터 기준으로 회원의 누적 토큰이 높은 순으로 최대 6명을 조회합니다. 관리자 사용량은 제외하며, 동률이면 요청 수와 회원 ID 순으로 정렬합니다. from/to는 ISO 8601 UTC 문자열을 사용합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "고사용 사용자 목록 조회 성공", content = @Content(schema = @Schema(implementation = AiMetricsDTO.ResponseHeavyUsers.class))),
             @ApiResponse(responseCode = "400", description = "잘못된 조회 조건", content = @Content(examples = @ExampleObject(value = BAD_REQUEST_EXAMPLE))),

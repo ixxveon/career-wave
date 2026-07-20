@@ -101,12 +101,9 @@ export interface AiTokenTrendPoint {
 export interface AiHeavyUser {
   userId: string;
   maskedUserLabel: string;
-  domain: AiDomain;
-  domainLabel: string;
   tokenUsage: number;
+  estimatedCost: number | null;
   requestCount: number;
-  riskLevel: AiUsageRiskLevel;
-  lastUsedAt: string;
 }
 
 export interface AiMetricLog extends AiModelNameFields {
@@ -248,6 +245,7 @@ export interface AiHeavyUserRaw {
   requestCount: number;
   inputTokens: number;
   outputTokens: number;
+  totalTokens: number;
   cost: number | string | null;
 }
 
@@ -354,8 +352,10 @@ const getRiskLevel = (tokenUsage: number): AiUsageRiskLevel => {
   return AI_USAGE_RISK_LEVEL.NORMAL;
 };
 
-const getMaskedUserLabel = (memberId: string): string => {
-  const suffix = memberId.slice(-4).padStart(4, '*');
+const getMaskedUserLabel = (memberId: unknown): string => {
+  const normalizedMemberId = typeof memberId === 'string' ? memberId.trim() : '';
+  if (!normalizedMemberId) return 'USER-****';
+  const suffix = normalizedMemberId.slice(-4).padStart(4, '*');
   return `USER-${suffix}`;
 };
 
@@ -416,18 +416,15 @@ export const mapAiTokenTrend = (raw: AiTokenTrendRaw): AiTokenTrendPoint[] =>
     requestCount: 0,
   }));
 
-export const mapAiHeavyUsers = (raw: AiHeavyUsersRaw, domain?: AiDomain): AiHeavyUser[] =>
+export const mapAiHeavyUsers = (raw: AiHeavyUsersRaw): AiHeavyUser[] =>
   raw.users.map((user) => {
-    const tokenUsage = user.inputTokens + user.outputTokens;
+    const memberId = typeof user.memberId === 'string' && user.memberId.trim() ? user.memberId : 'UNKNOWN';
     return {
-      userId: user.memberId,
+      userId: memberId,
       maskedUserLabel: getMaskedUserLabel(user.memberId),
-      domain: domain ?? AI_DOMAIN.DOCUMENT,
-      domainLabel: domain ? DOMAIN_LABELS[domain] : '전체 도메인',
-      tokenUsage,
+      tokenUsage: user.totalTokens,
+      estimatedCost: toNumberOrNull(user.cost),
       requestCount: user.requestCount,
-      riskLevel: getRiskLevel(tokenUsage),
-      lastUsedAt: new Date().toISOString(),
     };
   });
 
@@ -542,7 +539,7 @@ export const aiMetricsApi = {
       .get<ApiResponse<AiHeavyUsersRaw>>(`${AI_METRICS_API_BASE_PATH}/heavy-users`, { params: toFeatureTypeParams(params) })
       .then((response) => ({
         ...response,
-        data: mapApiResponse(response.data, (raw) => mapAiHeavyUsers(raw, params?.domain)),
+        data: mapApiResponse(response.data, mapAiHeavyUsers),
       })),
 
   getLogs: (params?: AiMetricLogsParams) =>

@@ -345,18 +345,18 @@ def test_usage_metrics_service_returns_heavy_users_response():
     usage_log_repository.aggregate_heavy_users.return_value = [
         HeavyUserAggregateRecord(
             member_id=UUID("11111111-1111-1111-1111-111111111111"),
-            admin_id=None,
             request_count=34,
             input_tokens=220000,
             output_tokens=91000,
+            total_tokens=311000,
             cost=Decimal("390000"),
         ),
         HeavyUserAggregateRecord(
             member_id=UUID("22222222-2222-2222-2222-222222222222"),
-            admin_id=None,
             request_count=21,
             input_tokens=150000,
             output_tokens=64000,
+            total_tokens=214000,
             cost=Decimal("280000"),
         ),
     ]
@@ -378,18 +378,18 @@ def test_usage_metrics_service_returns_heavy_users_response():
         "users": [
             {
                 "memberId": UUID("11111111-1111-1111-1111-111111111111"),
-                "adminId": None,
                 "requestCount": 34,
                 "inputTokens": 220000,
                 "outputTokens": 91000,
+                "totalTokens": 311000,
                 "cost": Decimal("390000"),
             },
             {
                 "memberId": UUID("22222222-2222-2222-2222-222222222222"),
-                "adminId": None,
                 "requestCount": 21,
                 "inputTokens": 150000,
                 "outputTokens": 64000,
+                "totalTokens": 214000,
                 "cost": Decimal("280000"),
             },
         ]
@@ -403,21 +403,12 @@ def test_usage_metrics_service_returns_heavy_users_response():
     )
 
 
-def test_usage_metrics_service_returns_heavy_users_response_for_admin_actor():
+def test_usage_metrics_service_caps_heavy_users_at_six():
     usage_log_repository = Mock()
     ai_ops_setting_repository = Mock()
     ai_model_repository = Mock()
 
-    usage_log_repository.aggregate_heavy_users.return_value = [
-        HeavyUserAggregateRecord(
-            member_id=None,
-            admin_id=77,
-            request_count=9,
-            input_tokens=12000,
-            output_tokens=3100,
-            cost=Decimal("45000"),
-        )
-    ]
+    usage_log_repository.aggregate_heavy_users.return_value = []
 
     service = UsageMetricsService(
         usage_log_repository=usage_log_repository,
@@ -428,22 +419,17 @@ def test_usage_metrics_service_returns_heavy_users_response_for_admin_actor():
     response = service.get_heavy_users(
         created_from=datetime(2026, 6, 1, tzinfo=timezone.utc),
         created_to=datetime(2026, 6, 30, 23, 59, 59, tzinfo=timezone.utc),
-        feature_type="ADMIN_CS",
-        limit=3,
+        feature_type="DOCUMENT",
+        limit=10,
     )
 
-    assert response.model_dump(by_alias=True) == {
-        "users": [
-            {
-                "memberId": None,
-                "adminId": 77,
-                "requestCount": 9,
-                "inputTokens": 12000,
-                "outputTokens": 3100,
-                "cost": Decimal("45000"),
-            }
-        ]
-    }
+    assert response.model_dump(by_alias=True) == {"users": []}
+    usage_log_repository.aggregate_heavy_users.assert_called_once_with(
+        created_from=datetime(2026, 6, 1, tzinfo=timezone.utc),
+        created_to=datetime(2026, 6, 30, 23, 59, 59, tzinfo=timezone.utc),
+        feature_type="DOCUMENT",
+        limit=6,
+    )
 
 
 def test_usage_metrics_service_returns_usage_logs_response():

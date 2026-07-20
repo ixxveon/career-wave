@@ -173,75 +173,39 @@ describe("aiMetricsApi usage DTO mapper", () => {
     ]);
   });
 
-  it("maps Spring heavy users wrapper response to screen heavy user list", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-06-24T01:00:00.000Z"));
-
-    try {
-      expect(
-        mapAiHeavyUsers({
-          users: [
-            {
-              memberId: "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
-              requestCount: 9,
-              inputTokens: 60000,
-              outputTokens: 12000,
-              cost: "42",
-            },
-          ],
-        }),
-      ).toEqual([
-        {
-          userId: "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
-          maskedUserLabel: "USER-2f3a",
-          domain: AI_DOMAIN.DOCUMENT,
-          domainLabel: "전체 도메인",
-          tokenUsage: 72000,
-          requestCount: 9,
-          riskLevel: AI_USAGE_RISK_LEVEL.WARNING,
-          lastUsedAt: "2026-06-24T01:00:00.000Z",
-        },
-      ]);
-    } finally {
-      vi.useRealTimers();
-    }
+  it("maps Spring heavy users wrapper response to a member token ranking", () => {
+    expect(
+      mapAiHeavyUsers({
+        users: [
+          {
+            memberId: "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+            requestCount: 9,
+            inputTokens: 60000,
+            outputTokens: 12000,
+            totalTokens: 72000,
+            cost: "42",
+          },
+        ],
+      }),
+    ).toEqual([
+      {
+        userId: "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
+        maskedUserLabel: "USER-2f3a",
+        tokenUsage: 72000,
+        estimatedCost: 42,
+        requestCount: 9,
+      },
+    ]);
   });
 
-  it("maps heavy users with the requested domain metadata", () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-06-24T01:00:00.000Z"));
-
-    try {
-      expect(
-        mapAiHeavyUsers(
-          {
-            users: [
-              {
-                memberId: "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
-                requestCount: 9,
-                inputTokens: 60000,
-                outputTokens: 12000,
-                cost: "42",
-              },
-            ],
-          },
-          AI_DOMAIN.INTERVIEW,
-        ),
-      ).toEqual([
-        {
-          userId: "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
-          maskedUserLabel: "USER-2f3a",
-          domain: AI_DOMAIN.INTERVIEW,
-          domainLabel: "AI 면접 기능",
-          tokenUsage: 72000,
-          requestCount: 9,
-          riskLevel: AI_USAGE_RISK_LEVEL.WARNING,
-          lastUsedAt: "2026-06-24T01:00:00.000Z",
-        },
-      ]);
-    } finally {
-      vi.useRealTimers();
-    }
+  it("uses a masked fallback label when the heavy user member ID is malformed", () => {
+    expect(
+      mapAiHeavyUsers({
+        users: [{ memberId: null as unknown as string, requestCount: 1, inputTokens: 1, outputTokens: 2, totalTokens: 3, cost: "0" }],
+      }),
+    ).toEqual([
+      { userId: "UNKNOWN", maskedUserLabel: "USER-****", tokenUsage: 3, estimatedCost: 0, requestCount: 1 },
+    ]);
   });
 
   it("maps Spring usage log page response to screen log page type", () => {

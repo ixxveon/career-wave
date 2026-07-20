@@ -108,10 +108,10 @@ public class AiMetricsController implements AiMetricsDocs {
                 result.users().stream()
                         .map(user -> new AiMetricsDTO.ResponseHeavyUser(
                                 user.memberId(),
-                                user.adminId(),
                                 user.requestCount(),
                                 user.inputTokens(),
                                 user.outputTokens(),
+                                user.totalTokens(),
                                 user.cost()
                         ))
                         .toList()

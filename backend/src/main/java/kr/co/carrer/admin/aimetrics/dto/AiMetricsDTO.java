@@ -69,10 +69,10 @@ public class AiMetricsDTO {
     @Schema(description = "Heavy user response")
     public record ResponseHeavyUser(
             @Schema(description = "Member ID") UUID memberId,
-            @Schema(description = "Admin ID") Long adminId,
             @Schema(description = "Request count") long requestCount,
             @Schema(description = "Input tokens") long inputTokens,
             @Schema(description = "Output tokens") long outputTokens,
+            @Schema(description = "Total tokens") long totalTokens,
             @Schema(description = "Cost") BigDecimal cost
     ) {
     }

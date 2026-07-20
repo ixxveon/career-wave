@@ -160,21 +160,22 @@ class UsageMetricsService:
             feature_type=feature_type,
         )
         self._validate_limit(limit)
+        effective_limit = 6 if limit is None else min(limit, 6)
         users = self._usage_log_repository.aggregate_heavy_users(
             created_from=created_from,
             created_to=created_to,
             feature_type=feature_type,
-            limit=limit,
+            limit=effective_limit,
         )
 
         return HeavyUsersResponse(
             users=[
                 HeavyUserResponse(
                     memberId=user.member_id,
-                    adminId=user.admin_id,
                     requestCount=user.request_count,
                     inputTokens=user.input_tokens,
                     outputTokens=user.output_tokens,
+                    totalTokens=user.total_tokens,
                     cost=user.cost,
                 )
                 for user in users

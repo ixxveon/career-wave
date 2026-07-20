@@ -145,10 +145,10 @@ final class AiMetricsServiceMapper {
     private static AiMetricsService.ResponseHeavyUser toHeavyUser(AiMetricsFastApiGateway.HeavyUserResponse response) {
         return new AiMetricsService.ResponseHeavyUser(
                 response.memberId(),
-                response.adminId(),
                 response.requestCount(),
                 response.inputTokens(),
                 response.outputTokens(),
+                response.totalTokens(),
                 response.cost()
         );
     }
