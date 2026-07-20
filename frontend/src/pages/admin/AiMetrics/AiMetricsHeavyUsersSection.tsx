@@ -1,5 +1,5 @@
 import type { AiHeavyUser } from '../../../api/admin/aiMetricsApi';
-import { formatDateTime, getApiStateMessage, getMaskedHeavyUserLabel, getRiskTone } from './aiMetricsPageUtils';
+import { formatCost, getApiStateMessage, getMaskedHeavyUserLabel } from './aiMetricsPageUtils';
 
 export default function AiMetricsHeavyUsersSection(props: {
   heavyUsers: AiHeavyUser[];
@@ -14,8 +14,8 @@ export default function AiMetricsHeavyUsersSection(props: {
     <section className="admin-card aiOpsHeavyCard">
       <div className="aiOpsPanelHead compact">
         <div>
-          <span className="aiOpsEyebrow">이상치 트래커(토큰 사용량)</span>
-          <h3>헤비 유저 토큰 트래커</h3>
+          <span className="aiOpsEyebrow">회원별 AI 사용량</span>
+          <h3>누적 토큰 상위 사용자</h3>
         </div>
       </div>
 
@@ -23,18 +23,16 @@ export default function AiMetricsHeavyUsersSection(props: {
         <table className="aiOpsTable">
           <thead>
             <tr>
-              <th>사용자</th>
-              <th>도메인</th>
+              <th>회원</th>
               <th>누적 토큰</th>
+              <th>예상 비용</th>
               <th>요청 수</th>
-              <th>위험도</th>
-              <th>최근 사용</th>
             </tr>
           </thead>
           <tbody>
             {(heavyUsersLoading || heavyUsersIsError || heavyUsersEmpty) && (
               <tr className="placeholder">
-                <td colSpan={6}>
+                <td colSpan={4}>
                   {heavyUsersIsError
                     ? getApiStateMessage(heavyUsersError, '헤비 유저 데이터를 불러오지 못했습니다.')
                     : heavyUsersEmpty
@@ -44,13 +42,11 @@ export default function AiMetricsHeavyUsersSection(props: {
               </tr>
             )}
             {heavyUsers.map((user) => (
-              <tr key={`${user.userId}-${user.domain}`}>
+              <tr key={user.userId}>
                 <td>{getMaskedHeavyUserLabel(user)}</td>
-                <td>{user.domainLabel}</td>
                 <td>{user.tokenUsage.toLocaleString()}</td>
+                <td>{formatCost(user.estimatedCost)}</td>
                 <td>{user.requestCount.toLocaleString()}</td>
-                <td><span className={`aiOpsBadge ${getRiskTone(user.riskLevel)}`}>{user.riskLevel}</span></td>
-                <td>{formatDateTime(user.lastUsedAt)}</td>
               </tr>
             ))}
           </tbody>

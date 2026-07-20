@@ -64,10 +64,10 @@ public class AiMetricsFastApiResponse {
 
     public record HeavyUser(
             UUID memberId,
-            Long adminId,
             long requestCount,
             long inputTokens,
             long outputTokens,
+            long totalTokens,
             BigDecimal cost
     ) {
     }

@@ -55,11 +55,11 @@ class TokenTrendResponse(AiMetricsResponseBase):
 
 
 class HeavyUserResponse(AiMetricsResponseBase):
-    member_id: UUID | None = Field(default=None, alias="memberId")
-    admin_id: int | None = Field(default=None, alias="adminId")
+    member_id: UUID = Field(alias="memberId")
     request_count: int = Field(alias="requestCount")
     input_tokens: int = Field(alias="inputTokens")
     output_tokens: int = Field(alias="outputTokens")
+    total_tokens: int = Field(alias="totalTokens")
     cost: Decimal
 
 

@@ -295,18 +295,18 @@ class AiMetricsServiceImplTest {
                     List.of(
                             new AiMetricsFastApiGateway.HeavyUserResponse(
                                     firstMemberId,
-                                    null,
                                     35L,
                                     20_000L,
                                     8_000L,
+                                    28_000L,
                                     new BigDecimal("5.20")
                             ),
                             new AiMetricsFastApiGateway.HeavyUserResponse(
                                     secondMemberId,
-                                    null,
                                     28L,
                                     14_000L,
                                     6_000L,
+                                    20_000L,
                                     new BigDecimal("3.80")
                             )
                     )
@@ -324,11 +324,13 @@ class AiMetricsServiceImplTest {
             assertThat(result.users().get(0).requestCount()).isEqualTo(35L);
             assertThat(result.users().get(0).inputTokens()).isEqualTo(20_000L);
             assertThat(result.users().get(0).outputTokens()).isEqualTo(8_000L);
+            assertThat(result.users().get(0).totalTokens()).isEqualTo(28_000L);
             assertThat(result.users().get(0).cost()).isEqualByComparingTo("5.20");
             assertThat(result.users().get(1).memberId()).isEqualTo(secondMemberId);
             assertThat(result.users().get(1).requestCount()).isEqualTo(28L);
             assertThat(result.users().get(1).inputTokens()).isEqualTo(14_000L);
             assertThat(result.users().get(1).outputTokens()).isEqualTo(6_000L);
+            assertThat(result.users().get(1).totalTokens()).isEqualTo(20_000L);
             assertThat(result.users().get(1).cost()).isEqualByComparingTo("3.80");
 
             ArgumentCaptor<AiMetricsFastApiGateway.HeavyUsersRequest> requestCaptor =

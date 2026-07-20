@@ -255,10 +255,10 @@ def test_usage_response_contracts_match_spring_boot_fields():
         users=[
             HeavyUserResponse(
                 memberId="7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
-                adminId=None,
                 requestCount=95,
                 inputTokens=52000,
                 outputTokens=21000,
+                totalTokens=73000,
                 cost="118000",
             )
         ]
@@ -337,10 +337,10 @@ def test_usage_response_contracts_match_spring_boot_fields():
         "users": [
             {
                 "memberId": "7d8b4d74-0a38-4e4a-8c5d-a8d4b25d2f3a",
-                "adminId": None,
                 "requestCount": 95,
                 "inputTokens": 52000,
                 "outputTokens": 21000,
+                "totalTokens": 73000,
                 "cost": "118000",
             }
         ]
@@ -533,19 +533,8 @@ def test_usage_log_create_contract_supports_admin_actor():
     }
 
 
-def test_usage_response_contracts_support_admin_actor():
-    heavy_users_response = HeavyUsersResponse(
-        users=[
-            HeavyUserResponse(
-                memberId=None,
-                adminId=77,
-                requestCount=9,
-                inputTokens=12000,
-                outputTokens=3100,
-                cost="45000",
-            )
-        ]
-    )
+def test_usage_response_contracts_exclude_admin_actor_from_heavy_users():
+    heavy_users_response = HeavyUsersResponse(users=[])
     usage_log_list_response = UsageLogListResponse(
         content=[
             UsageLogItemResponse(
@@ -567,18 +556,7 @@ def test_usage_response_contracts_support_admin_actor():
         totalPages=1,
     )
 
-    assert heavy_users_response.model_dump(mode="json", by_alias=True) == {
-        "users": [
-            {
-                "memberId": None,
-                "adminId": 77,
-                "requestCount": 9,
-                "inputTokens": 12000,
-                "outputTokens": 3100,
-                "cost": "45000",
-            }
-        ]
-    }
+    assert heavy_users_response.model_dump(mode="json", by_alias=True) == {"users": []}
     assert usage_log_list_response.model_dump(mode="json", by_alias=True) == {
         "content": [
             {

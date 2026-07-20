@@ -186,10 +186,10 @@ final class AiMetricsFastApiMapper {
     private static AiMetricsFastApiGateway.HeavyUserResponse toHeavyUserResponse(AiMetricsFastApiResponse.HeavyUser response) {
         return new AiMetricsFastApiGateway.HeavyUserResponse(
                 response.memberId(),
-                response.adminId(),
                 response.requestCount(),
                 response.inputTokens(),
                 response.outputTokens(),
+                response.totalTokens(),
                 response.cost()
         );
     }

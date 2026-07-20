@@ -94,11 +94,11 @@ class TokenTrendPointAggregateRecord:
 
 @dataclass(frozen=True)
 class HeavyUserAggregateRecord:
-    member_id: UUID | None
-    admin_id: int | None
+    member_id: UUID
     request_count: int
     input_tokens: int
     output_tokens: int
+    total_tokens: int
     cost: Decimal
 
 
@@ -351,21 +351,25 @@ class AiUsageLogRepository:
     ) -> list[HeavyUserAggregateRecord]:
         cost_sum = func.coalesce(func.sum(ai_usage_logs_table.c.cost), 0).label("cost")
         request_count = func.count(ai_usage_logs_table.c.ai_usage_log_id).label("request_count")
+        total_tokens = func.coalesce(
+            func.sum(ai_usage_logs_table.c.input_tokens + ai_usage_logs_table.c.output_tokens),
+            0,
+        ).label("total_tokens")
         statement = (
             select(
                 ai_usage_logs_table.c.member_id,
-                ai_usage_logs_table.c.admin_id,
                 request_count,
                 func.coalesce(func.sum(ai_usage_logs_table.c.input_tokens), 0).label("input_tokens"),
                 func.coalesce(func.sum(ai_usage_logs_table.c.output_tokens), 0).label("output_tokens"),
+                total_tokens,
                 cost_sum,
             )
-            .group_by(ai_usage_logs_table.c.member_id, ai_usage_logs_table.c.admin_id)
+            .where(ai_usage_logs_table.c.member_id.is_not(None))
+            .group_by(ai_usage_logs_table.c.member_id)
             .order_by(
-                cost_sum.desc(),
+                total_tokens.desc(),
                 request_count.desc(),
                 ai_usage_logs_table.c.member_id.asc(),
-                ai_usage_logs_table.c.admin_id.asc(),
             )
         )
         statement = self._apply_usage_filters(statement, created_from, created_to, feature_type)
@@ -375,10 +379,10 @@ class AiUsageLogRepository:
         return [
             HeavyUserAggregateRecord(
                 member_id=row["member_id"],
-                admin_id=row["admin_id"],
                 request_count=row["request_count"],
                 input_tokens=row["input_tokens"],
                 output_tokens=row["output_tokens"],
+                total_tokens=row["total_tokens"],
                 cost=Decimal(row["cost"]),
             )
             for row in rows
