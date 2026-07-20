@@ -142,10 +142,10 @@ public interface AiMetricsFastApiGateway {
 
     record HeavyUserResponse(
             UUID memberId,
-            Long adminId,
             long requestCount,
             long inputTokens,
             long outputTokens,
+            long totalTokens,
             BigDecimal cost
     ) {
     }

@@ -52,9 +52,11 @@ export function formatLastSyncedLabel(value?: string) {
 }
 
 export function getMaskedHeavyUserLabel(user: AiHeavyUser) {
-  const label = user.maskedUserLabel.trim();
+  const label = typeof user.maskedUserLabel === 'string' ? user.maskedUserLabel.trim() : '';
   if (label) return label;
-  return `USER-${user.userId.slice(-4).padStart(4, '*')}`;
+  const userId = typeof user.userId === 'string' ? user.userId.trim() : '';
+  if (!userId) return 'USER-****';
+  return `USER-${userId.slice(-4).padStart(4, '*')}`;
 }
 
 function getApiErrorStatus(error: unknown) {

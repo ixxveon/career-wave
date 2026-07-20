@@ -100,10 +100,10 @@ class AiMetricsFastApiMapperTest {
         AiMetricsFastApiGateway.HeavyUsersResponse result = AiMetricsFastApiMapper.toHeavyUsersResponse(
                 new AiMetricsFastApiResponse.HeavyUsers(List.of(new AiMetricsFastApiResponse.HeavyUser(
                         memberId,
-                        null,
                         35L,
                         20_000L,
                         8_000L,
+                        28_000L,
                         new BigDecimal("5.20")
                 )))
         );
@@ -113,27 +113,29 @@ class AiMetricsFastApiMapperTest {
         assertThat(result.users().getFirst().requestCount()).isEqualTo(35L);
         assertThat(result.users().getFirst().inputTokens()).isEqualTo(20_000L);
         assertThat(result.users().getFirst().outputTokens()).isEqualTo(8_000L);
+        assertThat(result.users().getFirst().totalTokens()).isEqualTo(28_000L);
         assertThat(result.users().getFirst().cost()).isEqualByComparingTo("5.20");
     }
 
     @Test
-    @DisplayName("FastAPI heavy-users 응답에서 admin actor도 gateway 응답으로 매핑된다")
-    void mapsHeavyUsersAggregationResponseForAdminActor() {
+    @DisplayName("FastAPI heavy-users 응답은 회원 ID를 필수로 사용한다")
+    void mapsHeavyUsersAggregationResponseForMember() {
+        UUID memberId = UUID.fromString("33333333-3333-3333-3333-333333333333");
         AiMetricsFastApiGateway.HeavyUsersResponse result = AiMetricsFastApiMapper.toHeavyUsersResponse(
                 new AiMetricsFastApiResponse.HeavyUsers(List.of(new AiMetricsFastApiResponse.HeavyUser(
-                        null,
-                        77L,
+                        memberId,
                         9L,
                         12_000L,
                         3_100L,
+                        15_100L,
                         new BigDecimal("45.00")
                 )))
         );
 
         assertThat(result.users()).hasSize(1);
-        assertThat(result.users().getFirst().memberId()).isNull();
-        assertThat(result.users().getFirst().adminId()).isEqualTo(77L);
+        assertThat(result.users().getFirst().memberId()).isEqualTo(memberId);
         assertThat(result.users().getFirst().requestCount()).isEqualTo(9L);
+        assertThat(result.users().getFirst().totalTokens()).isEqualTo(15_100L);
     }
 
     @Test

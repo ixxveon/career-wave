@@ -89,10 +89,10 @@ public interface AiMetricsService {
 
     record ResponseHeavyUser(
             UUID memberId,
-            Long adminId,
             long requestCount,
             long inputTokens,
             long outputTokens,
+            long totalTokens,
             BigDecimal cost
     ) {
     }

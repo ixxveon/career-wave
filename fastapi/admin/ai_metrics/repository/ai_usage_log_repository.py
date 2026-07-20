@@ -12,6 +12,20 @@ from admin.ai_metrics.schema import UsageLogCreateRequest
 
 metadata = MetaData()
 
+# An admin-facing feature may be backed by multiple raw usage-log types.
+# Keep this mapping in the repository so every aggregate and filter uses
+# the same feature-domain boundary.
+FEATURE_TYPE_GROUPS: dict[str, tuple[str, ...]] = {
+    "DOCUMENT": ("DOCUMENT",),
+    "INTERVIEW": ("INTERVIEW", "INTERVIEW_STT", "INTERVIEW_TTS"),
+    "ADMIN_CS": ("ADMIN_CS",),
+    "ADMIN_REPORT": ("ADMIN_REPORT", "ADMIN_REPORT_MEMBER"),
+}
+
+
+def resolve_feature_types(feature_type: str) -> tuple[str, ...]:
+    return FEATURE_TYPE_GROUPS.get(feature_type, (feature_type,))
+
 ai_usage_logs_table = Table(
     "ai_usage_logs",
     metadata,
@@ -80,11 +94,11 @@ class TokenTrendPointAggregateRecord:
 
 @dataclass(frozen=True)
 class HeavyUserAggregateRecord:
-    member_id: UUID | None
-    admin_id: int | None
+    member_id: UUID
     request_count: int
     input_tokens: int
     output_tokens: int
+    total_tokens: int
     cost: Decimal
 
 
@@ -162,7 +176,7 @@ class AiUsageLogRepository:
                 0,
             ).label("document_requests"),
             func.coalesce(
-                func.sum(case((ai_usage_logs_table.c.feature_type == "INTERVIEW", 1), else_=0)),
+                func.sum(case((ai_usage_logs_table.c.feature_type.in_(resolve_feature_types("INTERVIEW")), 1), else_=0)),
                 0,
             ).label("interview_requests"),
             func.coalesce(
@@ -170,7 +184,7 @@ class AiUsageLogRepository:
                 0,
             ).label("admin_cs_requests"),
             func.coalesce(
-                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_REPORT", 1), else_=0)),
+                func.sum(case((ai_usage_logs_table.c.feature_type.in_(resolve_feature_types("ADMIN_REPORT")), 1), else_=0)),
                 0,
             ).label("admin_report_requests"),
         )
@@ -210,19 +224,19 @@ class AiUsageLogRepository:
                 0,
             ).label("document_cost"),
             func.coalesce(
-                func.sum(case((ai_usage_logs_table.c.feature_type == "INTERVIEW", 1), else_=0)),
+                func.sum(case((ai_usage_logs_table.c.feature_type.in_(resolve_feature_types("INTERVIEW")), 1), else_=0)),
                 0,
             ).label("interview_request_count"),
             func.coalesce(
-                func.sum(case((ai_usage_logs_table.c.feature_type == "INTERVIEW", ai_usage_logs_table.c.input_tokens), else_=0)),
+                func.sum(case((ai_usage_logs_table.c.feature_type.in_(resolve_feature_types("INTERVIEW")), ai_usage_logs_table.c.input_tokens), else_=0)),
                 0,
             ).label("interview_input_tokens"),
             func.coalesce(
-                func.sum(case((ai_usage_logs_table.c.feature_type == "INTERVIEW", ai_usage_logs_table.c.output_tokens), else_=0)),
+                func.sum(case((ai_usage_logs_table.c.feature_type.in_(resolve_feature_types("INTERVIEW")), ai_usage_logs_table.c.output_tokens), else_=0)),
                 0,
             ).label("interview_output_tokens"),
             func.coalesce(
-                func.sum(case((ai_usage_logs_table.c.feature_type == "INTERVIEW", ai_usage_logs_table.c.cost), else_=0)),
+                func.sum(case((ai_usage_logs_table.c.feature_type.in_(resolve_feature_types("INTERVIEW")), ai_usage_logs_table.c.cost), else_=0)),
                 0,
             ).label("interview_cost"),
             func.coalesce(
@@ -242,19 +256,19 @@ class AiUsageLogRepository:
                 0,
             ).label("admin_cs_cost"),
             func.coalesce(
-                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_REPORT", 1), else_=0)),
+                func.sum(case((ai_usage_logs_table.c.feature_type.in_(resolve_feature_types("ADMIN_REPORT")), 1), else_=0)),
                 0,
             ).label("admin_report_request_count"),
             func.coalesce(
-                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_REPORT", ai_usage_logs_table.c.input_tokens), else_=0)),
+                func.sum(case((ai_usage_logs_table.c.feature_type.in_(resolve_feature_types("ADMIN_REPORT")), ai_usage_logs_table.c.input_tokens), else_=0)),
                 0,
             ).label("admin_report_input_tokens"),
             func.coalesce(
-                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_REPORT", ai_usage_logs_table.c.output_tokens), else_=0)),
+                func.sum(case((ai_usage_logs_table.c.feature_type.in_(resolve_feature_types("ADMIN_REPORT")), ai_usage_logs_table.c.output_tokens), else_=0)),
                 0,
             ).label("admin_report_output_tokens"),
             func.coalesce(
-                func.sum(case((ai_usage_logs_table.c.feature_type == "ADMIN_REPORT", ai_usage_logs_table.c.cost), else_=0)),
+                func.sum(case((ai_usage_logs_table.c.feature_type.in_(resolve_feature_types("ADMIN_REPORT")), ai_usage_logs_table.c.cost), else_=0)),
                 0,
             ).label("admin_report_cost"),
         )
@@ -337,21 +351,25 @@ class AiUsageLogRepository:
     ) -> list[HeavyUserAggregateRecord]:
         cost_sum = func.coalesce(func.sum(ai_usage_logs_table.c.cost), 0).label("cost")
         request_count = func.count(ai_usage_logs_table.c.ai_usage_log_id).label("request_count")
+        total_tokens = func.coalesce(
+            func.sum(ai_usage_logs_table.c.input_tokens + ai_usage_logs_table.c.output_tokens),
+            0,
+        ).label("total_tokens")
         statement = (
             select(
                 ai_usage_logs_table.c.member_id,
-                ai_usage_logs_table.c.admin_id,
                 request_count,
                 func.coalesce(func.sum(ai_usage_logs_table.c.input_tokens), 0).label("input_tokens"),
                 func.coalesce(func.sum(ai_usage_logs_table.c.output_tokens), 0).label("output_tokens"),
+                total_tokens,
                 cost_sum,
             )
-            .group_by(ai_usage_logs_table.c.member_id, ai_usage_logs_table.c.admin_id)
+            .where(ai_usage_logs_table.c.member_id.is_not(None))
+            .group_by(ai_usage_logs_table.c.member_id)
             .order_by(
-                cost_sum.desc(),
+                total_tokens.desc(),
                 request_count.desc(),
                 ai_usage_logs_table.c.member_id.asc(),
-                ai_usage_logs_table.c.admin_id.asc(),
             )
         )
         statement = self._apply_usage_filters(statement, created_from, created_to, feature_type)
@@ -361,10 +379,10 @@ class AiUsageLogRepository:
         return [
             HeavyUserAggregateRecord(
                 member_id=row["member_id"],
-                admin_id=row["admin_id"],
                 request_count=row["request_count"],
                 input_tokens=row["input_tokens"],
                 output_tokens=row["output_tokens"],
+                total_tokens=row["total_tokens"],
                 cost=Decimal(row["cost"]),
             )
             for row in rows
@@ -404,7 +422,7 @@ class AiUsageLogRepository:
         if created_to is not None:
             statement = statement.where(ai_usage_logs_table.c.created_at <= created_to)
         if feature_type is not None:
-            statement = statement.where(ai_usage_logs_table.c.feature_type == feature_type)
+            statement = statement.where(ai_usage_logs_table.c.feature_type.in_(resolve_feature_types(feature_type)))
         return statement
 
     @staticmethod
