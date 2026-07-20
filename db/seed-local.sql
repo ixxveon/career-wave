@@ -6,12 +6,41 @@
 -- ============================================================
 
 -- 기존 테스트 데이터 초기화 (재실행 안전)
--- suspend_histories 자식 행 먼저 삭제 (FK 제약 위반 방지)
+-- 결제/구독 자식 행 먼저 삭제 (FK 제약 위반 방지)
+-- Keep members/admins and upsert them below because many tables can reference them.
+-- Clean up only the child rows that this seed recreates.
+DELETE FROM refunds
+WHERE payment_id IN (
+  SELECT payment_id FROM payments
+  WHERE member_id IN (
+    SELECT member_id FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01')
+  )
+  OR order_id LIKE 'DEMO-%'
+);
+DELETE FROM payments
+WHERE member_id IN (
+  SELECT member_id FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01')
+)
+OR order_id LIKE 'DEMO-%';
+DELETE FROM member_product_entitlements
+WHERE member_id IN (
+  SELECT member_id FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01')
+);
+DELETE FROM subscription_usage_periods
+WHERE subscription_id IN (
+  SELECT subscription_id FROM subscriptions
+  WHERE member_id IN (
+    SELECT member_id FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01')
+  )
+);
+DELETE FROM subscriptions
+WHERE member_id IN (
+  SELECT member_id FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01')
+);
 DELETE FROM suspend_histories
 WHERE member_id IN (
   SELECT member_id FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01')
 );
-DELETE FROM members WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05','testcompany01');
 DELETE FROM notices WHERE title IN (
   '[필독] 개인정보 처리방침 개정 안내',
   '서버 정기 점검 안내 (6월 28일 새벽 2시~4시)',
@@ -26,7 +55,6 @@ DELETE FROM faqs WHERE question IN (
   'AI 면접 연습은 어떤 방식으로 진행되나요?',
   '회원 탈퇴 후 데이터는 어떻게 되나요?'
 );
-DELETE FROM admins  WHERE login_id IN ('admin', 'cs');
 
 -- ────────────────────────────────────────────
 -- 관리자 먼저 삽입 (suspend_histories admin_id FK 보장)
@@ -39,7 +67,14 @@ VALUES
    '슈퍼관리자', 'MASTER', 'ACTIVE', NOW(), NOW()),
   ('cs', 'cs@career-wave.com',
    '$2b$10$NPp0Acje.rj.VrDuRiPT2u.dXnCKzYGmxZn7Ro2BOw4qGDZIPr34W',
-   'CS 담당자', 'CS', 'ACTIVE', NOW(), NOW());
+   'CS 담당자', 'CS', 'ACTIVE', NOW(), NOW())
+ON CONFLICT (login_id) DO UPDATE SET
+  email = EXCLUDED.email,
+  password_hash = EXCLUDED.password_hash,
+  name = EXCLUDED.name,
+  admin_role = EXCLUDED.admin_role,
+  status = EXCLUDED.status,
+  updated_at = NOW();
 
 -- ────────────────────────────────────────────
 -- 관리자 먼저 삽입 (suspend_histories admin_id FK 보장)
@@ -68,7 +103,16 @@ VALUES
 
   (gen_random_uuid(), 'testuser05', 'testuser05@test.com',
    '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
-   '테스트유저(정지)', 'USER', 'SUSPENDED', 'FREE', 0, NOW(), NOW());
+   '테스트유저(정지)', 'USER', 'SUSPENDED', 'FREE', 0, NOW(), NOW())
+ON CONFLICT (login_id) DO UPDATE SET
+  email = EXCLUDED.email,
+  password = EXCLUDED.password,
+  name = EXCLUDED.name,
+  role_type = EXCLUDED.role_type,
+  member_status = EXCLUDED.member_status,
+  subscription_status = EXCLUDED.subscription_status,
+  warning_count = EXCLUDED.warning_count,
+  updated_at = NOW();
 
 -- ────────────────────────────────────────────
 -- 정지 회원 suspend_histories (testuser05)
@@ -93,7 +137,16 @@ INSERT INTO members (member_id, login_id, email, password, name, role_type, memb
 VALUES
   (gen_random_uuid(), 'testcompany01', 'testcompany01@test.com',
    '$2b$10$ZjFpVBbyD9p.j4ZzCznhQultNGDWlje5i0AvrrgZi8pZCzxmDKEgS',
-   '테스트기업담당자', 'COMPANY', 'ACTIVE', 'FREE', 0, NOW(), NOW());
+   '테스트기업담당자', 'COMPANY', 'ACTIVE', 'FREE', 0, NOW(), NOW())
+ON CONFLICT (login_id) DO UPDATE SET
+  email = EXCLUDED.email,
+  password = EXCLUDED.password,
+  name = EXCLUDED.name,
+  role_type = EXCLUDED.role_type,
+  member_status = EXCLUDED.member_status,
+  subscription_status = EXCLUDED.subscription_status,
+  warning_count = EXCLUDED.warning_count,
+  updated_at = NOW();
 
 
 -- ────────────────────────────────────────────
