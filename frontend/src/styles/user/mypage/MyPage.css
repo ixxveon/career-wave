@@ -1531,10 +1531,18 @@ Empty UI
 }
 
 .cw-subscription-usage-stats dd {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 8px 0 0;
   color: #173765;
   font-size: 16px;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.cw-subscription-usage-stats dd svg {
+  flex-shrink: 0;
 }
 
 .cw-subscription-recommend-card {
@@ -2412,6 +2420,14 @@ Empty UI
   .cw-payment-history-hero,
   .cw-payment-history-record__grid,
   .cw-payment-history-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+
+  /* 3열 그리드가 좁아지면 '다음 결제일' 칸이 눌려 깨지므로 한 열로 스택 전환 */
+  .cw-subscription-usage-stats {
     grid-template-columns: 1fr;
   }
 }
