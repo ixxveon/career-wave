@@ -322,7 +322,12 @@ class GroupByScraper(ScraperAdapter):
             image = soup.select_one(selector)
             if image is None:
                 continue
-            value = image.get("data-src") or image.get("src")
+            value = (
+                image.get("data-src")
+                or image.get("data-original")
+                or image.get("data-lazy-src")
+                or image.get("src")
+            )
             if isinstance(value, str) and value.strip():
                 return urljoin(self._BASE_URL, value.strip())
         return None

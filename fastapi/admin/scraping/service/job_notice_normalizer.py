@@ -1,6 +1,7 @@
 import re
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
+from urllib.parse import urljoin, urlparse
 
 from admin.scraping.adapter import RawJobNotice
 from admin.scraping.service.job_notice_filter_dictionary import (
@@ -135,7 +136,10 @@ class JobNoticeNormalizer:
             source=source_name,
             view_count=0,
             deadline=parsed_deadline,
-            company_logo_url=self._normalize_logo_url(raw_notice.company_logo_url),
+            company_logo_url=self._normalize_logo_url(
+                raw_notice.company_logo_url,
+                base_url=raw_notice.original_url,
+            ),
         )
 
     @staticmethod
@@ -146,15 +150,19 @@ class JobNoticeNormalizer:
         return normalized or None
 
     @classmethod
-    def _normalize_logo_url(cls, value: str | None) -> str | None:
+    def _normalize_logo_url(cls, value: str | None, *, base_url: str) -> str | None:
         normalized = cls._normalize_text(value)
         if normalized is None:
             return None
         if normalized.startswith("//"):
-            return f"https:{normalized}"
-        if normalized.startswith(("https://", "http://")):
-            return normalized
-        return None
+            normalized = f"https:{normalized}"
+        elif not normalized.startswith(("https://", "http://")):
+            normalized = urljoin(base_url, normalized)
+
+        parsed = urlparse(normalized)
+        if parsed.scheme not in {"https", "http"} or not parsed.netloc:
+            return None
+        return normalized
 
     @classmethod
     def _normalize_required_text(cls, value: str | None, *, fallback: str) -> str:

@@ -103,11 +103,16 @@ class SaraminScraper(ScraperAdapter):
                 description = self._fetch_description(client, notice.original_url)
                 self._record_detail_outcome(succeeded=description is not None)
                 if description:
+                    detail_logo_url = (
+                        self._fetch_company_logo_from_detail(client, notice.original_url)
+                        if notice.company_logo_url is None
+                        else None
+                    )
                     notice = RawJobNotice(
                         original_url=notice.original_url,
                         title=notice.title,
                         company_name=notice.company_name,
-                        company_logo_url=notice.company_logo_url,
+                        company_logo_url=detail_logo_url or notice.company_logo_url,
                         description=description,
                         skill_tags=notice.skill_tags,
                         job_type=notice.job_type,
@@ -204,11 +209,24 @@ class SaraminScraper(ScraperAdapter):
         )
 
     def _extract_company_logo_url(self, item: Tag) -> str | None:
-        for selector in (".corp_logo img", ".company_logo img", ".logo img", "img.corp_logo"):
+        for selector in (
+            ".corp_logo img",
+            ".company_logo img",
+            ".company_logo_area img",
+            ".logo img",
+            "img.corp_logo",
+            "img[data-company-logo]",
+        ):
             image = item.select_one(selector)
             if image is None:
                 continue
-            value = image.get("data-src") or image.get("src")
+            value = (
+                image.get("data-src")
+                or image.get("data-original")
+                or image.get("data-lazy-src")
+                or image.get("data-lazy")
+                or image.get("src")
+            )
             if isinstance(value, str) and value.strip():
                 return urljoin(self._BASE_URL, value.strip())
         return None
@@ -272,6 +290,19 @@ class SaraminScraper(ScraperAdapter):
             if self._is_valid_description(text):
                 return text
         return None
+
+    def _fetch_company_logo_from_detail(self, client: httpx.Client, original_url: str) -> str | None:
+        response = self._get_detail_response(client, original_url)
+        if response is None:
+            return None
+
+        soup = BeautifulSoup(response.text, "html.parser")
+        meta_logo = soup.select_one("meta[property='og:image'], meta[name='twitter:image']")
+        if meta_logo is not None:
+            content = meta_logo.get("content")
+            if isinstance(content, str) and content.strip():
+                return urljoin(self._BASE_URL, content.strip())
+        return self._extract_company_logo_url(soup)
 
     def _get_detail_response(
         self,
