@@ -168,112 +168,130 @@ BEGIN
   -- 결제 내역 (payments) — 16건
   -- ════════════════════════════════════════════
   INSERT INTO payments (
-    payment_id, member_id, subscription_id, plan_id,
+    payment_id, member_id, subscription_id, plan_id, product_code,
     order_id, payment_key, idempotency_key,
+    customer_key, customer_name, customer_email,
     amount, currency,
     payment_status, payment_method, payment_type,
     attempt_sequence, approved_at, created_at, updated_at
   ) VALUES
     -- demouser01 면접 최초결제 (4개월 전)
-    (p01, v_d01, s01, v_plan_iv,
+    (p01, v_d01, s01, v_plan_iv, 'interview',
      'DEMO2-IV-D01-001', 'DEMO2-TOSS-IV-D01-001', 'DEMO2-IDEM-IV-D01-001',
+     'DEMO2-CUST-D01', '데모유저01', 'demouser01@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'MANUAL',
      0, NOW() - INTERVAL '120 days', NOW() - INTERVAL '120 days', NOW() - INTERVAL '120 days'),
 
     -- demouser01 면접 자동갱신 (3개월 전)
-    (p02, v_d01, s01, v_plan_iv,
+    (p02, v_d01, s01, v_plan_iv, 'interview',
      'DEMO2-IV-D01-002', 'DEMO2-TOSS-IV-D01-002', 'DEMO2-IDEM-IV-D01-002',
+     'DEMO2-CUST-D01', '데모유저01', 'demouser01@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'AUTO_RENEWAL',
      0, NOW() - INTERVAL '90 days', NOW() - INTERVAL '90 days', NOW() - INTERVAL '90 days'),
 
     -- demouser01 면접 자동갱신 (2개월 전)
-    (p03, v_d01, s01, v_plan_iv,
+    (p03, v_d01, s01, v_plan_iv, 'interview',
      'DEMO2-IV-D01-003', 'DEMO2-TOSS-IV-D01-003', 'DEMO2-IDEM-IV-D01-003',
+     'DEMO2-CUST-D01', '데모유저01', 'demouser01@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'AUTO_RENEWAL',
      0, NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days'),
 
     -- demouser01 서류 최초결제 (2개월 전)
-    (p04, v_d01, s02, v_plan_doc,
+    (p04, v_d01, s02, v_plan_doc, 'document-coaching',
      'DEMO2-DOC-D01-001', 'DEMO2-TOSS-DOC-D01-001', 'DEMO2-IDEM-DOC-D01-001',
+     'DEMO2-CUST-D01', '데모유저01', 'demouser01@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'MANUAL',
      0, NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days'),
 
     -- demouser01 면접 자동갱신 (1개월 전)
-    (p05, v_d01, s01, v_plan_iv,
+    (p05, v_d01, s01, v_plan_iv, 'interview',
      'DEMO2-IV-D01-004', 'DEMO2-TOSS-IV-D01-004', 'DEMO2-IDEM-IV-D01-004',
+     'DEMO2-CUST-D01', '데모유저01', 'demouser01@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'AUTO_RENEWAL',
      0, NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days'),
 
     -- demouser01 서류 자동갱신 (1개월 전)
-    (p06, v_d01, s02, v_plan_doc,
+    (p06, v_d01, s02, v_plan_doc, 'document-coaching',
      'DEMO2-DOC-D01-002', 'DEMO2-TOSS-DOC-D01-002', 'DEMO2-IDEM-DOC-D01-002',
+     'DEMO2-CUST-D01', '데모유저01', 'demouser01@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'AUTO_RENEWAL',
      0, NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days'),
 
     -- demouser02 면접 최초결제 (2개월 전)
-    (p07, v_d02, s08, v_plan_iv,
+    (p07, v_d02, s08, v_plan_iv, 'interview',
      'DEMO2-IV-D02-001', 'DEMO2-TOSS-IV-D02-001', 'DEMO2-IDEM-IV-D02-001',
+     'DEMO2-CUST-D02', '데모유저02', 'demouser02@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'MANUAL',
      0, NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days', NOW() - INTERVAL '60 days'),
 
     -- demouser02 면접 자동갱신 (1개월 전, 해지 예약 상태)
-    (p08, v_d02, s08, v_plan_iv,
+    (p08, v_d02, s08, v_plan_iv, 'interview',
      'DEMO2-IV-D02-002', 'DEMO2-TOSS-IV-D02-002', 'DEMO2-IDEM-IV-D02-002',
+     'DEMO2-CUST-D02', '데모유저02', 'demouser02@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'AUTO_RENEWAL',
      0, NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days'),
 
     -- demouser03 면접 최초결제 (2개월 전)
-    (p09, v_d03, s03, v_plan_iv,
+    (p09, v_d03, s03, v_plan_iv, 'interview',
      'DEMO2-IV-D03-001', 'DEMO2-TOSS-IV-D03-001', 'DEMO2-IDEM-IV-D03-001',
+     'DEMO2-CUST-D03', '데모유저03', 'demouser03@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'MANUAL',
      0, NOW() - INTERVAL '65 days', NOW() - INTERVAL '65 days', NOW() - INTERVAL '65 days'),
 
     -- demouser03 면접 자동갱신 (35일 전)
-    (p10, v_d03, s03, v_plan_iv,
+    (p10, v_d03, s03, v_plan_iv, 'interview',
      'DEMO2-IV-D03-002', 'DEMO2-TOSS-IV-D03-002', 'DEMO2-IDEM-IV-D03-002',
+     'DEMO2-CUST-D03', '데모유저03', 'demouser03@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'AUTO_RENEWAL',
      0, NOW() - INTERVAL '35 days', NOW() - INTERVAL '35 days', NOW() - INTERVAL '35 days'),
 
     -- demouser03 서류 최초결제 (35일 전)
-    (p11, v_d03, s04, v_plan_doc,
+    (p11, v_d03, s04, v_plan_doc, 'document-coaching',
      'DEMO2-DOC-D03-001', 'DEMO2-TOSS-DOC-D03-001', 'DEMO2-IDEM-DOC-D03-001',
+     'DEMO2-CUST-D03', '데모유저03', 'demouser03@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'MANUAL',
      0, NOW() - INTERVAL '35 days', NOW() - INTERVAL '35 days', NOW() - INTERVAL '35 days'),
 
     -- demouser04 서류 최초결제 (45일 전, 해지 예약 상태)
-    (p12, v_d04, s09, v_plan_doc,
+    (p12, v_d04, s09, v_plan_doc, 'document-coaching',
      'DEMO2-DOC-D04-001', 'DEMO2-TOSS-DOC-D04-001', 'DEMO2-IDEM-DOC-D04-001',
+     'DEMO2-CUST-D04', '데모유저04', 'demouser04@test.com',
      29000, 'KRW', 'PAID', 'KAKAO_PAY', 'MANUAL',
      0, NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days', NOW() - INTERVAL '45 days'),
 
     -- demouser05 면접 최초결제 (1개월 전)
-    (p13, v_d05, s05, v_plan_iv,
+    (p13, v_d05, s05, v_plan_iv, 'interview',
      'DEMO2-IV-D05-001', 'DEMO2-TOSS-IV-D05-001', 'DEMO2-IDEM-IV-D05-001',
+     'DEMO2-CUST-D05', '데모유저05', 'demouser05@test.com',
      29000, 'KRW', 'PAID', 'NAVER_PAY', 'MANUAL',
      0, NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days', NOW() - INTERVAL '30 days'),
 
     -- demouser06 서류 최초결제 (20일 전)
-    (p14, v_d06, s06, v_plan_doc,
+    (p14, v_d06, s06, v_plan_doc, 'document-coaching',
      'DEMO2-DOC-D06-001', 'DEMO2-TOSS-DOC-D06-001', 'DEMO2-IDEM-DOC-D06-001',
+     'DEMO2-CUST-D06', '데모유저06', 'demouser06@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'MANUAL',
      0, NOW() - INTERVAL '20 days', NOW() - INTERVAL '20 days', NOW() - INTERVAL '20 days'),
 
     -- demouser07 면접 최초결제 (15일 전, 환불 요청 중)
-    (p15, v_d07, s10, v_plan_iv,
+    (p15, v_d07, s10, v_plan_iv, 'interview',
      'DEMO2-IV-D07-001', 'DEMO2-TOSS-IV-D07-001', 'DEMO2-IDEM-IV-D07-001',
+     'DEMO2-CUST-D07', '데모유저07', 'demouser07@test.com',
      29000, 'KRW', 'PAID', 'CARD', 'MANUAL',
      0, NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days', NOW() - INTERVAL '15 days');
 
   -- demouser08 면접 최초결제 (10일 전)
   INSERT INTO payments (
-    payment_id, member_id, subscription_id, plan_id,
+    payment_id, member_id, subscription_id, plan_id, product_code,
     order_id, payment_key, idempotency_key,
+    customer_key, customer_name, customer_email,
     amount, currency,
     payment_status, payment_method, payment_type,
     attempt_sequence, approved_at, created_at, updated_at
   ) VALUES (
-    gen_random_uuid(), v_d08, s07, v_plan_iv,
+    gen_random_uuid(), v_d08, s07, v_plan_iv, 'interview',
     'DEMO2-IV-D08-001', 'DEMO2-TOSS-IV-D08-001', 'DEMO2-IDEM-IV-D08-001',
+    'DEMO2-CUST-D08', '데모유저08', 'demouser08@test.com',
     29000, 'KRW', 'PAID', 'CARD', 'MANUAL',
     0, NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'
   );
