@@ -1,9 +1,6 @@
 from contextlib import nullcontext
 from dataclasses import replace
 from time import sleep
-from urllib.parse import urlparse
-from xml.etree import ElementTree
-
 import httpx
 from bs4 import BeautifulSoup
 
@@ -13,15 +10,15 @@ from admin.scraping.exception import ScrapingErrorCode, ScrapingException
 
 class JumpitScraper(ScraperAdapter):
     _BASE_URL = "https://jumpit.saramin.co.kr"
-    _POSITION_SITEMAP_URL = f"{_BASE_URL}/sitemap/sitemap_position_view_1.xml"
-    _DETAIL_API_PATH = f"{_BASE_URL}/api/position/{{position_id}}"
+    _API_BASE_URL = "https://jumpit-api.saramin.co.kr"
+    _POSITIONS_API_URL = f"{_API_BASE_URL}/api/positions"
+    _DETAIL_API_PATH = f"{_API_BASE_URL}/api/position/{{position_id}}"
+    _PUBLIC_POSITION_URL = f"{_BASE_URL}/position/{{position_id}}"
     _DEFAULT_HEADERS = {
         "User-Agent": "CareerWaveScraper/1.0 (+https://github.com/ixxveon/career-wave)",
         "Accept": "application/json, text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8",
         "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
     }
-    _XML_NAMESPACE = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-
     def __init__(
         self,
         *,
@@ -51,11 +48,12 @@ class JumpitScraper(ScraperAdapter):
     def scrape(self) -> list[RawJobNotice]:
         self._detail_metrics = ScrapingDetailMetrics()
         with self._client_context() as client:
-            position_urls = self._fetch_position_urls(client)
+            position_ids = self._fetch_position_ids(client)
             notices: list[RawJobNotice] = []
-            for index, position_url in enumerate(position_urls):
+            for index, position_id in enumerate(position_ids):
                 if index > 0:
                     self._delay()
+                position_url = self._PUBLIC_POSITION_URL.format(position_id=position_id)
                 detail = self._fetch_position_detail(client, position_url)
                 notice = self._to_raw_notice(position_url=position_url, detail=detail) if detail else None
                 self._record_detail_outcome(succeeded=notice is not None)
@@ -74,11 +72,12 @@ class JumpitScraper(ScraperAdapter):
     def test_connection(self) -> bool:
         try:
             with self._client_context() as client:
-                response = client.get(self._POSITION_SITEMAP_URL)
+                response = client.get(self._POSITIONS_API_URL, params={"page": 1})
                 response.raise_for_status()
-                root = ElementTree.fromstring(response.text)
-                return bool(root.findall("sm:url/sm:loc", self._XML_NAMESPACE))
-        except (httpx.HTTPError, ElementTree.ParseError):
+                payload = response.json()
+                result = payload.get("result") if isinstance(payload, dict) else None
+                return isinstance(result, dict) and isinstance(result.get("positions"), list)
+        except (httpx.HTTPError, ValueError):
             return False
 
     def _client_context(self):
@@ -90,50 +89,65 @@ class JumpitScraper(ScraperAdapter):
             follow_redirects=True,
         )
 
-    def _fetch_position_urls(self, client: httpx.Client) -> list[str]:
-        response, _ = get_with_retry(
-            client,
-            self._POSITION_SITEMAP_URL,
-            timeout_seconds=self._timeout_seconds,
-            max_retries=self._max_detail_retries,
-            retry_backoff_seconds=self._retry_backoff_seconds,
-        )
-        if response is None:
-            raise ScrapingException(
-                error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
-                message="Jumpit sitemap request failed.",
-                detail={"sourceName": self.source_name, "failureStage": "LIST"},
-            )
-        try:
-            root = ElementTree.fromstring(response.text)
-        except ElementTree.ParseError as error:
-            raise ScrapingException(
-                error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
-                message="Jumpit sitemap parsing failed.",
-                detail={"sourceName": self.source_name, "failureStage": "LIST"},
-            ) from error
-        if root.tag.rsplit("}", 1)[-1] != "urlset":
-            raise ScrapingException(
-                error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
-                message="Jumpit sitemap response format is invalid.",
-                detail={"sourceName": self.source_name, "failureStage": "LIST"},
-            )
-        urls: list[str] = []
+    def _fetch_position_ids(self, client: httpx.Client) -> list[str]:
+        position_ids: list[str] = []
         seen: set[str] = set()
-        for loc in root.findall("sm:url/sm:loc", self._XML_NAMESPACE):
-            position_url = (loc.text or "").strip()
-            if not position_url or "/position/" not in position_url:
-                continue
-            if position_url in seen:
-                continue
-            seen.add(position_url)
-            urls.append(position_url)
-        return urls
+        page = 1
+
+        while len(position_ids) < self._max_items:
+            response, _ = get_with_retry(
+                client,
+                self._POSITIONS_API_URL,
+                params={"page": page},
+                timeout_seconds=self._timeout_seconds,
+                max_retries=self._max_detail_retries,
+                retry_backoff_seconds=self._retry_backoff_seconds,
+            )
+            if response is None:
+                raise ScrapingException(
+                    error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                    message="Jumpit positions request failed.",
+                    detail={"sourceName": self.source_name, "failureStage": "LIST"},
+                )
+            try:
+                payload = response.json()
+            except ValueError as error:
+                raise ScrapingException(
+                    error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                    message="Jumpit positions response parsing failed.",
+                    detail={"sourceName": self.source_name, "failureStage": "LIST"},
+                ) from error
+
+            result = payload.get("result") if isinstance(payload, dict) else None
+            positions = result.get("positions") if isinstance(result, dict) else None
+            if not isinstance(positions, list):
+                raise ScrapingException(
+                    error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                    message="Jumpit positions response format is invalid.",
+                    detail={"sourceName": self.source_name, "failureStage": "LIST"},
+                )
+            if not positions:
+                break
+
+            added_count = 0
+            for position in positions:
+                position_id = self._string_value(position.get("id")) if isinstance(position, dict) else None
+                if position_id is None or position_id in seen:
+                    continue
+                seen.add(position_id)
+                position_ids.append(position_id)
+                added_count += 1
+                if len(position_ids) >= self._max_items:
+                    break
+
+            if added_count == 0:
+                break
+            page += 1
+
+        return position_ids
 
     def _fetch_position_detail(self, client: httpx.Client, position_url: str) -> dict | None:
-        position_id = self._extract_position_id(position_url)
-        if position_id is None:
-            return None
+        position_id = position_url.rsplit("/", 1)[-1]
 
         response = self._get_detail_response(client, self._DETAIL_API_PATH.format(position_id=position_id))
         if response is None:
@@ -221,14 +235,6 @@ class JumpitScraper(ScraperAdapter):
             salary=None,
             deadline=cls._string_value(detail.get("closedAt")),
         )
-
-    @staticmethod
-    def _extract_position_id(position_url: str) -> str | None:
-        path = urlparse(position_url).path.rstrip("/")
-        if not path:
-            return None
-        position_id = path.split("/")[-1].strip()
-        return position_id or None
 
     @classmethod
     def _extract_company_logo_url(cls, detail: dict) -> str | None:

@@ -537,17 +537,13 @@ def test_saramin_scraper_raises_for_invalid_list_json_payload():
     assert exc_info.value.detail["failureStage"] == "LIST"
 
 
-def test_jumpit_scraper_maps_sitemap_and_detail_api_to_raw_job_notices():
-    sitemap_xml = """
-    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-      <url><loc>https://jumpit.saramin.co.kr/position/54365723</loc></url>
-      <url><loc>https://jumpit.saramin.co.kr/position/54397427</loc></url>
-    </urlset>
-    """
-
+def test_jumpit_scraper_maps_positions_api_and_detail_api_to_raw_job_notices():
     def handler(request: httpx.Request) -> httpx.Response:
-        if request.url.path == "/sitemap/sitemap_position_view_1.xml":
-            return httpx.Response(200, text=sitemap_xml)
+        if request.url.path == "/api/positions":
+            return httpx.Response(
+                200,
+                json={"result": {"positions": [{"id": 54365723}, {"id": 54397427}]}},
+            )
         if request.url.path == "/api/position/54365723":
             return httpx.Response(
                 200,
@@ -612,11 +608,6 @@ def test_jumpit_scraper_maps_sitemap_and_detail_api_to_raw_job_notices():
 
 
 def test_jumpit_scraper_uses_html_fallback_when_detail_api_fails():
-    sitemap_xml = """
-    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-      <url><loc>https://jumpit.saramin.co.kr/position/54365723</loc></url>
-    </urlset>
-    """
     html = """
     <html>
       <head>
@@ -628,8 +619,8 @@ def test_jumpit_scraper_uses_html_fallback_when_detail_api_fails():
     """
 
     def handler(request: httpx.Request) -> httpx.Response:
-        if request.url.path == "/sitemap/sitemap_position_view_1.xml":
-            return httpx.Response(200, text=sitemap_xml)
+        if request.url.path == "/api/positions":
+            return httpx.Response(200, json={"result": {"positions": [{"id": 54365723}]}})
         if request.url.path == "/api/position/54365723":
             return httpx.Response(500)
         if request.url.path == "/position/54365723":
@@ -650,19 +641,13 @@ def test_jumpit_scraper_uses_html_fallback_when_detail_api_fails():
 
 
 def test_jumpit_scraper_delays_between_positions_after_failed_detail(monkeypatch):
-    sitemap_xml = """
-    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-      <url><loc>https://jumpit.saramin.co.kr/position/111</loc></url>
-      <url><loc>https://jumpit.saramin.co.kr/position/222</loc></url>
-    </urlset>
-    """
     request_paths: list[str] = []
     delays: list[float] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
         request_paths.append(request.url.path)
-        if request.url.path == "/sitemap/sitemap_position_view_1.xml":
-            return httpx.Response(200, text=sitemap_xml)
+        if request.url.path == "/api/positions":
+            return httpx.Response(200, json={"result": {"positions": [{"id": 111}, {"id": 222}]}})
         if request.url.path == "/api/position/111":
             return httpx.Response(500)
         if request.url.path == "/position/111":
@@ -686,7 +671,7 @@ def test_jumpit_scraper_delays_between_positions_after_failed_detail(monkeypatch
     assert request_paths.index("/api/position/222") > request_paths.index("/position/111")
 
 
-def test_jumpit_scraper_raises_for_invalid_sitemap_payload():
+def test_jumpit_scraper_raises_for_invalid_positions_payload():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, text="<html>not xml</html>")
 
