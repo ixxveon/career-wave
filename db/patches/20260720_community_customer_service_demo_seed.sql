@@ -10,16 +10,28 @@
 DELETE FROM comments WHERE board_id IN (
   SELECT board_id FROM boards WHERE member_id IN (
     SELECT member_id FROM members
-    WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05')
+    WHERE login_id IN (
+      'testuser01','testuser02','testuser03','testuser04','testuser05',
+      'demouser01','demouser02','demouser03','demouser04',
+      'demouser05','demouser06','demouser07','demouser08'
+    )
   )
 );
 DELETE FROM boards WHERE member_id IN (
   SELECT member_id FROM members
-  WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05')
+  WHERE login_id IN (
+    'testuser01','testuser02','testuser03','testuser04','testuser05',
+    'demouser01','demouser02','demouser03','demouser04',
+    'demouser05','demouser06','demouser07','demouser08'
+  )
 );
 DELETE FROM inquiries WHERE member_id IN (
   SELECT member_id FROM members
-  WHERE login_id IN ('testuser01','testuser02','testuser03','testuser04','testuser05')
+  WHERE login_id IN (
+    'testuser01','testuser02','testuser03','testuser04','testuser05',
+    'demouser01','demouser02','demouser03','demouser04',
+    'demouser05','demouser06','demouser07','demouser08'
+  )
 );
 DELETE FROM notices WHERE title IN (
   '[공지] CareerWave 서비스 오픈 안내',
