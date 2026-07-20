@@ -294,3 +294,91 @@ async def test_send_error_message_structure():
     assert msg["questionOrder"] == 1
 
     _live_sessions.clear()
+
+
+# ── RAG 선행 세션 메타 member_id 병합 ────────────────────────────────────────
+
+def test_connect_merges_member_id_when_rag_created_meta_first(client: TestClient, valid_token: str):
+    """rag-context가 member_id 없이 세션 메타를 먼저 생성한 경우 WS 연결 시 JWT member_id가 병합된다."""
+    _live_sessions.clear()
+
+    # rag-context가 먼저 생성한 메타: member_id 없음
+    rag_pre_meta = {"rag_status": "READY", "rag_context": "서류 내용"}
+    saved_meta: dict = {}
+
+    async def _fake_save(redis, session_id, meta):
+        saved_meta.update(meta)
+
+    with (
+        patch(
+            "user.interview.websocket.interview_ws_handler._verify_session_ownership",
+            new=AsyncMock(return_value=True),
+        ),
+        patch(
+            "user.interview.websocket.interview_ws_handler.session_store.load_session_meta",
+            new=AsyncMock(return_value=rag_pre_meta),
+        ),
+        patch(
+            "user.interview.websocket.interview_ws_handler.session_store.save_session_meta",
+            side_effect=_fake_save,
+        ),
+        patch(
+            "user.interview.websocket.interview_ws_handler.session_store.get_seq",
+            new=AsyncMock(return_value=0),
+        ),
+        patch(
+            "user.interview.websocket.interview_ws_handler.session_store.pop_pending_llm",
+            new=AsyncMock(return_value=None),
+        ),
+    ):
+        with client.websocket_connect(f"{WS_PATH}?token={valid_token}"):
+            pass
+
+    assert "member_id" in saved_meta, "member_id가 기존 세션 메타에 병합되어야 합니다."
+    assert saved_meta["member_id"] != "", "병합된 member_id는 빈 값이 아니어야 합니다."
+    _live_sessions.clear()
+
+
+def test_connect_does_not_overwrite_existing_member_id(client: TestClient, valid_token: str):
+    """기존 메타에 member_id가 이미 있으면 save_session_meta를 호출하지 않고 TTL만 갱신한다."""
+    _live_sessions.clear()
+
+    existing_meta_with_member = {
+        "member_id": "existing-member-uuid",
+        "rag_status": "READY",
+    }
+    mock_save = AsyncMock()
+    mock_refresh = AsyncMock()
+
+    with (
+        patch(
+            "user.interview.websocket.interview_ws_handler._verify_session_ownership",
+            new=AsyncMock(return_value=True),
+        ),
+        patch(
+            "user.interview.websocket.interview_ws_handler.session_store.load_session_meta",
+            new=AsyncMock(return_value=existing_meta_with_member),
+        ),
+        patch(
+            "user.interview.websocket.interview_ws_handler.session_store.save_session_meta",
+            new=mock_save,
+        ),
+        patch(
+            "user.interview.websocket.interview_ws_handler.session_store.refresh_session_ttl",
+            new=mock_refresh,
+        ),
+        patch(
+            "user.interview.websocket.interview_ws_handler.session_store.get_seq",
+            new=AsyncMock(return_value=0),
+        ),
+        patch(
+            "user.interview.websocket.interview_ws_handler.session_store.pop_pending_llm",
+            new=AsyncMock(return_value=None),
+        ),
+    ):
+        with client.websocket_connect(f"{WS_PATH}?token={valid_token}"):
+            pass
+
+    mock_save.assert_not_called()
+    mock_refresh.assert_called_once()
+    _live_sessions.clear()
