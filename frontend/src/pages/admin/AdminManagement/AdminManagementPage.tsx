@@ -35,12 +35,12 @@ export default function AdminManagementPage() {
   const { data: adminAccounts, error: adminAccountsError, isError: isAdminAccountsError, isLoading: isAdminAccountsLoading } = useQuery({ queryKey: [...ADMIN_MANAGEMENT_ADMINS_QUERY_KEY, adminListQueryParams], queryFn: () => getAdminAccounts(adminListQueryParams), refetchOnMount: 'always' });
   const aclListQueryParams = { page: aclPage, size: ACL_PAGE_SIZE };
   const { data: adminAclRules, error: adminAclRulesError, isError: isAdminAclRulesError, isLoading: isAdminAclRulesLoading } = useQuery({ queryKey: [...ADMIN_MANAGEMENT_ACLS_QUERY_KEY, aclListQueryParams], queryFn: () => getAdminAclRules(aclListQueryParams) });
-  const auditLogQueryParams = { logType: AUDIT_LOG_TYPE.ADMIN_MANAGEMENT, page: 1, size: MAX_SECURITY_LOGS };
+  const auditLogQueryParams = { logType: AUDIT_LOG_TYPE.ADMIN_ACTIVITY, page: 1, size: MAX_SECURITY_LOGS };
   const { data: adminAuditLogs, error: adminAuditLogsError, isError: isAdminAuditLogsError, isLoading: isAdminAuditLogsLoading } = useQuery({
     queryKey: [...ADMIN_MANAGEMENT_AUDIT_LOGS_QUERY_KEY, auditLogQueryParams],
     queryFn: async () => {
       const response = await auditLogApi.getLogs(auditLogQueryParams);
-      if (!response.data.success) throw new Error(response.data.message ?? '관리자 관리 활동 로그 조회에 실패했습니다.');
+      if (!response.data.success) throw new Error(response.data.message ?? '관리자 활동 로그 조회에 실패했습니다.');
       return response.data.data;
     },
   });
@@ -115,7 +115,7 @@ export default function AdminManagementPage() {
 
   return (
     <section className="admin-managementPage">
-      <header className="admin-header"><div><h2>관리자 관리</h2><p>관리자 계정, IP ACL, 관리자 관리 활동 로그를 한 화면에서 확인합니다.</p></div></header>
+      <header className="admin-header"><div><h2>관리자 관리</h2><p>관리자 계정, IP ACL, 관리자 활동 로그를 한 화면에서 확인합니다.</p></div></header>
       <AdminManagementSummarySection
         isAllAdminManagementQueryError={isAllAdminManagementQueryError}
         globalErrorTitle={isRoleAdminAccessDenied ? '관리자 관리 화면에 접근할 권한이 없습니다.' : '관리자 관리 데이터를 불러오지 못했습니다.'}
