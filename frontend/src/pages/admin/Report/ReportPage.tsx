@@ -649,7 +649,7 @@ export default function ReportPage() {
                 onChange={(e) => setSuspendReason(e.target.value)}
                 rows={3}
               />
-              <p className="sanctionNote">해당 회원에게 안내됩니다. (최소 10자)</p>
+              <p className="sanctionNote">내부 기록용으로 저장됩니다. (최소 10자)</p>
             </div>
 
             <div className="modalAction">
