@@ -324,12 +324,34 @@ class WantedScraper(ScraperAdapter):
     @staticmethod
     def _company_logo_url(item: dict[str, Any]) -> str | None:
         company = item.get("company")
-        if not isinstance(company, dict):
-            return None
-        for key in ("logo_img", "logo_url", "logoUrl", "image_url", "imageUrl", "image"):
-            value = company.get(key)
-            if isinstance(value, str) and value.strip():
-                return value.strip()
+        candidates = [company] if isinstance(company, dict) else []
+        candidates.append(item)
+        for candidate in candidates:
+            logo_url = WantedScraper._logo_url_from_mapping(candidate)
+            if logo_url:
+                return logo_url
+        return None
+
+    @staticmethod
+    def _logo_url_from_mapping(value: dict[str, Any]) -> str | None:
+        for key in (
+            "logo_img",
+            "logo_url",
+            "logoUrl",
+            "company_logo",
+            "companyLogo",
+            "company_logo_url",
+            "companyLogoUrl",
+            "image_url",
+            "imageUrl",
+            "image",
+            "logo",
+        ):
+            candidate = value.get(key)
+            if isinstance(candidate, dict):
+                candidate = candidate.get("url") or candidate.get("src") or candidate.get("imageUrl")
+            if isinstance(candidate, str) and candidate.strip():
+                return candidate.strip()
         return None
 
     @staticmethod

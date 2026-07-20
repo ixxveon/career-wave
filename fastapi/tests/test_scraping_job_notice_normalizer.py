@@ -193,7 +193,7 @@ def test_normalizer_does_not_match_short_ascii_keywords_inside_words():
     assert notice.job_category is None
 
 
-def test_normalizer_keeps_only_http_company_logo_urls():
+def test_normalizer_normalizes_company_logo_urls():
     normalizer = JobNoticeNormalizer()
 
     protocol_relative = normalizer.normalize(
@@ -204,9 +204,17 @@ def test_normalizer_keeps_only_http_company_logo_urls():
         source_name="wanted",
         raw_notice=_raw_notice(company_logo_url="javascript:alert(1)"),
     )
+    relative = normalizer.normalize(
+        source_name="wanted",
+        raw_notice=_raw_notice(
+            original_url="https://www.wanted.co.kr/wd/123",
+            company_logo_url="/images/company-logo.png",
+        ),
+    )
 
     assert protocol_relative.company_logo_url == "https://cdn.example.com/logo.png"
     assert invalid.company_logo_url is None
+    assert relative.company_logo_url == "https://www.wanted.co.kr/images/company-logo.png"
 
 
 def test_normalizer_closes_notice_when_deadline_is_past():

@@ -232,6 +232,20 @@ def test_wanted_scraper_test_connection_returns_false_on_request_error():
     assert scraper.test_connection() is False
 
 
+def test_wanted_scraper_extracts_top_level_and_nested_logo_candidates():
+    assert WantedScraper._company_logo_url(
+        {
+            "company": {"name": "Career Wave"},
+            "companyLogo": {"url": "/images/company-logo.png"},
+        }
+    ) == "/images/company-logo.png"
+    assert WantedScraper._company_logo_url(
+        {
+            "company": {"logo": {"src": "https://cdn.example.com/wanted-logo.png"}},
+        }
+    ) == "https://cdn.example.com/wanted-logo.png"
+
+
 def test_wanted_scraper_keeps_html_fallback_after_sparse_detail_payload():
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/api/v4/jobs":
@@ -407,7 +421,7 @@ def test_saramin_scraper_maps_search_html_to_raw_job_notices():
     search_html = """
     <html>
       <div class="item_recruit">
-        <div class="corp_logo"><img src="//cdn.example.com/saramin-logo.png" /></div>
+        <div class="corp_logo"><img data-original="//cdn.example.com/saramin-logo.png" /></div>
         <div class="corp_detail">\uc911\uc18c\uae30\uc5c5</div>
         <div class="corp_name"><a>Career Wave</a></div>
         <h2 class="job_tit">
@@ -504,6 +518,38 @@ def test_saramin_scraper_does_not_store_shell_content_when_ajax_detail_missing()
     assert scraper.detail_metrics.failed_count == 1
 
 
+def test_saramin_scraper_uses_detail_logo_when_list_logo_is_missing():
+    search_html = """
+    <div class="item_recruit">
+      <div class="corp_name"><a>Career Wave</a></div>
+      <h2 class="job_tit"><a href="/zf_user/jobs/relay/view?rec_idx=990">Backend Engineer</a></h2>
+    </div>
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/zf_user/search/get-recruit-list":
+            return httpx.Response(200, json={"innerHTML": search_html})
+        if request.url.path == "/zf_user/jobs/relay/view-ajax":
+            return httpx.Response(200, text="<div class='jv_cont'>Build reliable services.</div>")
+        if request.url.path == "/zf_user/jobs/relay/view":
+            return httpx.Response(
+                200,
+                text="<meta property='og:image' content='/images/career-wave-logo.png' />",
+            )
+        return httpx.Response(404)
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(handler),
+        base_url="https://www.saramin.co.kr",
+    )
+    scraper = SaraminScraper(client=client, request_delay_seconds=0)
+
+    notices = scraper.scrape()
+
+    assert len(notices) == 1
+    assert notices[0].company_logo_url == "https://www.saramin.co.kr/images/career-wave-logo.png"
+
+
 def test_saramin_scraper_does_not_store_long_shell_content():
     shell_content = " ".join(SaraminScraper._SHELL_CONTENT_MARKERS) + " " + ("menu " * 80)
 
@@ -542,7 +588,14 @@ def test_jumpit_scraper_maps_positions_api_and_detail_api_to_raw_job_notices():
         if request.url.path == "/api/positions":
             return httpx.Response(
                 200,
-                json={"result": {"positions": [{"id": 54365723}, {"id": 54397427}]}},
+                json={
+                    "result": {
+                        "positions": [
+                            {"id": 54365723},
+                            {"id": 54397427, "logo": "https://cdn.example.com/jumpit-list-logo.png"},
+                        ]
+                    }
+                },
             )
         if request.url.path == "/api/position/54365723":
             return httpx.Response(
@@ -605,6 +658,7 @@ def test_jumpit_scraper_maps_positions_api_and_detail_api_to_raw_job_notices():
     assert notices[0].location == "Seoul Gangnam"
     assert notices[0].deadline == "2026-12-31 23:59:59"
     assert notices[1].title == "Frontend Engineer"
+    assert notices[1].company_logo_url == "https://cdn.example.com/jumpit-list-logo.png"
 
 
 def test_jumpit_scraper_uses_html_fallback_when_detail_api_fails():

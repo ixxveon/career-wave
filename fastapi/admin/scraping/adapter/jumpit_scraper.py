@@ -48,14 +48,25 @@ class JumpitScraper(ScraperAdapter):
     def scrape(self) -> list[RawJobNotice]:
         self._detail_metrics = ScrapingDetailMetrics()
         with self._client_context() as client:
-            position_ids = self._fetch_position_ids(client)
+            positions = self._fetch_positions(client)
             notices: list[RawJobNotice] = []
-            for index, position_id in enumerate(position_ids):
+            for index, position in enumerate(positions):
                 if index > 0:
                     self._delay()
+                position_id = self._string_value(position.get("id"))
+                if position_id is None:
+                    continue
                 position_url = self._PUBLIC_POSITION_URL.format(position_id=position_id)
                 detail = self._fetch_position_detail(client, position_url)
-                notice = self._to_raw_notice(position_url=position_url, detail=detail) if detail else None
+                notice = (
+                    self._to_raw_notice(
+                        position_url=position_url,
+                        detail=detail,
+                        list_logo_url=self._string_value(position.get("logo")),
+                    )
+                    if detail
+                    else None
+                )
                 self._record_detail_outcome(succeeded=notice is not None)
                 if notice is None:
                     continue
@@ -89,12 +100,12 @@ class JumpitScraper(ScraperAdapter):
             follow_redirects=True,
         )
 
-    def _fetch_position_ids(self, client: httpx.Client) -> list[str]:
-        position_ids: list[str] = []
+    def _fetch_positions(self, client: httpx.Client) -> list[dict]:
+        collected_positions: list[dict] = []
         seen: set[str] = set()
         page = 1
 
-        while len(position_ids) < self._max_items:
+        while len(collected_positions) < self._max_items:
             response, _ = get_with_retry(
                 client,
                 self._POSITIONS_API_URL,
@@ -135,16 +146,16 @@ class JumpitScraper(ScraperAdapter):
                 if position_id is None or position_id in seen:
                     continue
                 seen.add(position_id)
-                position_ids.append(position_id)
+                collected_positions.append(position)
                 added_count += 1
-                if len(position_ids) >= self._max_items:
+                if len(collected_positions) >= self._max_items:
                     break
 
             if added_count == 0:
                 break
             page += 1
 
-        return position_ids
+        return collected_positions
 
     def _fetch_position_detail(self, client: httpx.Client, position_url: str) -> dict | None:
         position_id = position_url.rsplit("/", 1)[-1]
@@ -215,7 +226,13 @@ class JumpitScraper(ScraperAdapter):
         )
 
     @classmethod
-    def _to_raw_notice(cls, *, position_url: str, detail: dict) -> RawJobNotice | None:
+    def _to_raw_notice(
+        cls,
+        *,
+        position_url: str,
+        detail: dict,
+        list_logo_url: str | None = None,
+    ) -> RawJobNotice | None:
         title = cls._string_value(detail.get("title"))
         if title is None:
             return None
@@ -224,7 +241,7 @@ class JumpitScraper(ScraperAdapter):
             original_url=position_url,
             title=title,
             company_name=cls._string_value(detail.get("companyName")),
-            company_logo_url=cls._extract_company_logo_url(detail),
+            company_logo_url=cls._extract_company_logo_url(detail) or list_logo_url,
             description=cls._build_description(detail),
             skill_tags=cls._extract_tech_stacks(detail.get("techStacks")),
             job_type=None,
