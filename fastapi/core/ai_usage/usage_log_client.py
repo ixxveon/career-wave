@@ -63,6 +63,17 @@ async def record_ai_usage(
                 json=_to_request_body(payload),
             )
             response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        error_code, validation_fields = _extract_error_context(exc.response)
+        logger.warning(
+            "[AI Usage] usage log record rejected: featureType=%s modelName=%s statusCode=%s errorCode=%s validationFields=%s",
+            payload.feature_type,
+            payload.model_name,
+            exc.response.status_code,
+            error_code,
+            validation_fields,
+        )
+        return False
     except Exception as exc:
         logger.warning(
             "[AI Usage] usage log record failed: featureType=%s modelName=%s reason=%s",
@@ -73,6 +84,39 @@ async def record_ai_usage(
         return False
 
     return True
+
+
+def _extract_error_context(response: httpx.Response) -> tuple[str | None, list[str]]:
+    """Keep diagnostics useful without logging the request body or error values."""
+    try:
+        body = response.json()
+    except ValueError:
+        return None, []
+    if not isinstance(body, dict):
+        return None, []
+
+    error_code = body.get("code") or body.get("errorCode")
+    normalized_error_code = str(error_code) if error_code is not None else None
+    detail = body.get("detail")
+    validation_fields: list[str] = []
+    if isinstance(detail, list):
+        if normalized_error_code is None:
+            normalized_error_code = "VALIDATION_ERROR"
+        for item in detail:
+            if not isinstance(item, dict):
+                continue
+            location = item.get("loc")
+            if not isinstance(location, (list, tuple)):
+                continue
+            field = ".".join(str(part) for part in location if part != "body")
+            if field and field not in validation_fields:
+                validation_fields.append(field)
+    elif isinstance(detail, dict):
+        field = detail.get("field")
+        if isinstance(field, str) and field:
+            validation_fields.append(field)
+
+    return normalized_error_code, validation_fields
 
 
 def _build_payload(
@@ -87,7 +131,9 @@ def _build_payload(
     output_tokens: int | None,
 ) -> AiUsageLogPayload | None:
     normalized_model_name = model_name.strip() if model_name else ""
-    has_member_id = member_id is not None
+    normalized_member_id = _normalize_optional_identifier(member_id)
+    normalized_session_id = _normalize_optional_identifier(session_id)
+    has_member_id = normalized_member_id is not None
     has_admin_id = admin_id is not None
     if has_member_id == has_admin_id or not normalized_model_name:
         logger.warning(
@@ -107,14 +153,21 @@ def _build_payload(
         return None
 
     return AiUsageLogPayload(
-        member_id=member_id,
+        member_id=normalized_member_id,
         admin_id=admin_id,
-        session_id=session_id,
+        session_id=normalized_session_id,
         model_name=normalized_model_name,
         feature_type=feature_type,
         input_tokens=resolved_input_tokens,
         output_tokens=resolved_output_tokens,
     )
+
+
+def _normalize_optional_identifier(value: UUID | str | None) -> UUID | str | None:
+    if isinstance(value, str):
+        normalized = value.strip()
+        return normalized or None
+    return value
 
 
 def _resolve_input_tokens(usage: Any | None, fallback: int | None) -> int | None:
