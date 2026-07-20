@@ -11,7 +11,15 @@ const ROLE_LABEL: Record<string, string> = {
   [ADMIN_DETAIL_ROLE.BACKEND]: '백엔드',
 };
 
-const menuGroups = [
+type AdminRoutePath = typeof ADMIN_ROUTE_PATHS[keyof typeof ADMIN_ROUTE_PATHS];
+
+interface AdminMenuItem {
+  label: string;
+  path: AdminRoutePath;
+  isComingSoon?: boolean;
+}
+
+const menuGroups: Array<{ title: string; items: AdminMenuItem[] }> = [
   {
     title: 'OVERVIEW',
     items: [{ label: '종합 대시보드', path: ADMIN_ROUTE_PATHS.dashboard }],
@@ -37,7 +45,7 @@ const menuGroups = [
     items: [
       { label: 'AI 메트릭스', path: ADMIN_ROUTE_PATHS.ai },
       { label: '스크래핑 관리', path: ADMIN_ROUTE_PATHS.scraping },
-      { label: 'RAG 관리', path: ADMIN_ROUTE_PATHS.rag },
+      { label: 'RAG 관리', path: ADMIN_ROUTE_PATHS.rag, isComingSoon: true },
       { label: '감사 로그', path: ADMIN_ROUTE_PATHS.log },
     ],
   },
@@ -80,20 +88,26 @@ export default function AdminSidebar({ drawerOpen, onDrawerClose, onLogout }: Ad
             <p>{group.title}</p>
             {group.items.map((item) => {
               const hasAccess = hasAdminRouteAccess(currentAdminRole, item.path);
+              const isDisabled = !hasAccess || item.isComingSoon;
               return (
                 <NavLink
                   key={item.path}
                   to={item.path}
                   onClick={(event) => {
-                    if (hasAccess) {
-                      setAccessNotice(null);
+                    if (!hasAccess) {
+                      event.preventDefault();
+                      setAccessNotice('해당 메뉴에 접근할 권한이 없습니다.');
                       return;
                     }
-                    event.preventDefault();
-                    setAccessNotice('해당 메뉴에 접근할 권한이 없습니다.');
+                    if (item.isComingSoon) {
+                      event.preventDefault();
+                      setAccessNotice('준비중인 서비스입니다.');
+                      return;
+                    }
+                    setAccessNotice(null);
                   }}
-                  className={({ isActive }) => `admin-menuItem${isActive ? ' active' : ''}${hasAccess ? '' : ' disabled'}`}
-                  aria-disabled={!hasAccess}
+                  className={({ isActive }) => `admin-menuItem${isActive ? ' active' : ''}${isDisabled ? ' disabled' : ''}`}
+                  aria-disabled={isDisabled}
                 >
                   {item.label}
                 </NavLink>
