@@ -393,15 +393,6 @@ export default function ScrapingPage() {
                           >
                             테스트
                           </button>
-                          <button
-                            type="button"
-                            className="scrapeOpsActionButton dangerGhost"
-                            disabled
-                            title="미구현"
-                          >
-                            {/* TODO: 중지 액션은 백엔드 계약 확정 후 연결한다. */}
-                            중지
-                          </button>
                         </div>
                       </td>
                     </tr>

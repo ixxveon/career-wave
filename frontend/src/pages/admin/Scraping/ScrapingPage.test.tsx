@@ -111,12 +111,12 @@ describe('ScrapingPage action guards', () => {
       }),
     );
     await waitFor(() =>
-      expect(container.querySelectorAll<HTMLButtonElement>('.scrapeOpsActionGroup button')).toHaveLength(4),
+      expect(container.querySelectorAll<HTMLButtonElement>('.scrapeOpsActionGroup button')).toHaveLength(3),
     );
 
     const actionButtons = container.querySelectorAll<HTMLButtonElement>('.scrapeOpsActionGroup button');
 
-    expect(actionButtons).toHaveLength(4);
+    expect(actionButtons).toHaveLength(3);
     expect(actionButtons[0].disabled).toBe(true);
     expect(actionButtons[1].disabled).toBe(true);
     expect(actionButtons[2].disabled).toBe(true);
