@@ -2,6 +2,7 @@ import pytest
 import httpx
 
 from admin.scraping.adapter import GroupByScraper, JumpitScraper, SaraminScraper, WantedScraper
+from admin.scraping.exception import ScrapingErrorCode, ScrapingException
 
 
 def test_groupby_scraper_maps_sitemap_and_job_posting_html_to_raw_job_notices():
@@ -140,6 +141,20 @@ def test_groupby_scraper_test_connection_returns_false_on_request_error():
     assert scraper.test_connection() is False
 
 
+def test_groupby_scraper_raises_for_invalid_sitemap_response_format():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text="<html>not a sitemap</html>")
+
+    client = httpx.Client(transport=httpx.MockTransport(handler), base_url="https://groupby.kr")
+    scraper = GroupByScraper(client=client, request_delay_seconds=0)
+
+    with pytest.raises(ScrapingException) as exc_info:
+        scraper.scrape()
+
+    assert exc_info.value.error_code == ScrapingErrorCode.SCRAPING_EXECUTION_FAILED
+    assert exc_info.value.detail["failureStage"] == "LIST"
+
+
 def test_wanted_scraper_maps_api_jobs_to_raw_job_notices():
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/api/v4/jobs":
@@ -243,7 +258,7 @@ def test_wanted_scraper_keeps_html_fallback_after_sparse_detail_payload():
     assert notices[0].skill_tags == ["Python"]
 
 
-def test_wanted_scraper_returns_empty_list_for_invalid_list_payload():
+def test_wanted_scraper_raises_for_invalid_list_payload():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, text="<html>not json</html>")
 
@@ -253,7 +268,11 @@ def test_wanted_scraper_returns_empty_list_for_invalid_list_payload():
     )
     scraper = WantedScraper(client=client, request_delay_seconds=0)
 
-    assert scraper.scrape() == []
+    with pytest.raises(ScrapingException) as exc_info:
+        scraper.scrape()
+
+    assert exc_info.value.error_code == ScrapingErrorCode.SCRAPING_EXECUTION_FAILED
+    assert exc_info.value.detail["failureStage"] == "LIST"
 
 
 def test_wanted_scraper_maps_list_based_skill_tags_without_detail_payload():
@@ -480,8 +499,9 @@ def test_saramin_scraper_does_not_store_shell_content_when_ajax_detail_missing()
 
     notices = scraper.scrape()
 
-    assert len(notices) == 1
-    assert notices[0].description is None
+    assert notices == []
+    assert scraper.detail_metrics.attempted_count == 1
+    assert scraper.detail_metrics.failed_count == 1
 
 
 def test_saramin_scraper_does_not_store_long_shell_content():
@@ -500,7 +520,7 @@ def test_saramin_scraper_test_connection_returns_false_for_forbidden_response():
     assert scraper.test_connection() is False
 
 
-def test_saramin_scraper_returns_empty_list_for_invalid_json_payload():
+def test_saramin_scraper_raises_for_invalid_list_json_payload():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, text="<html>not json</html>")
 
@@ -510,7 +530,11 @@ def test_saramin_scraper_returns_empty_list_for_invalid_json_payload():
     )
     scraper = SaraminScraper(client=client, request_delay_seconds=0)
 
-    assert scraper.scrape() == []
+    with pytest.raises(ScrapingException) as exc_info:
+        scraper.scrape()
+
+    assert exc_info.value.error_code == ScrapingErrorCode.SCRAPING_EXECUTION_FAILED
+    assert exc_info.value.detail["failureStage"] == "LIST"
 
 
 def test_jumpit_scraper_maps_sitemap_and_detail_api_to_raw_job_notices():
@@ -662,7 +686,7 @@ def test_jumpit_scraper_delays_between_positions_after_failed_detail(monkeypatch
     assert request_paths.index("/api/position/222") > request_paths.index("/position/111")
 
 
-def test_jumpit_scraper_returns_empty_list_for_invalid_sitemap_payload():
+def test_jumpit_scraper_raises_for_invalid_sitemap_payload():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, text="<html>not xml</html>")
 
@@ -672,7 +696,11 @@ def test_jumpit_scraper_returns_empty_list_for_invalid_sitemap_payload():
     )
     scraper = JumpitScraper(client=client, request_delay_seconds=0)
 
-    assert scraper.scrape() == []
+    with pytest.raises(ScrapingException) as exc_info:
+        scraper.scrape()
+
+    assert exc_info.value.error_code == ScrapingErrorCode.SCRAPING_EXECUTION_FAILED
+    assert exc_info.value.detail["failureStage"] == "LIST"
 
 
 def test_jumpit_scraper_test_connection_returns_false_on_request_error():

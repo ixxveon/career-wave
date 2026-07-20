@@ -327,7 +327,7 @@ class ScrapingTask:
     ) -> None:
         updated_pipeline = pipeline_status_service.mark_failed(
             source_name,
-            error_message=error.message,
+            error_message=self._format_failure_message(error),
         )
 
         if action_type == ScrapingActionType.TEST:
@@ -336,15 +336,28 @@ class ScrapingTask:
                 scraping_pipeline_id=updated_pipeline.scraping_pipeline_id,
                 scraping_status="FAILED",
                 total_count=None,
-                error_message=error.message,
+                error_message=self._format_failure_message(error),
             )
             return
 
         scraping_log_service.log_failure(
             source_name=source_name,
             scraping_pipeline_id=updated_pipeline.scraping_pipeline_id,
-            error_message=error.message,
+            error_message=self._format_failure_message(error),
         )
+
+    @staticmethod
+    def _format_failure_message(error: ScrapingException) -> str:
+        detail = error.detail
+        fields = [
+            ("stage", detail.get("failureStage")),
+            ("attempted", detail.get("detailAttemptedCount")),
+            ("failed", detail.get("detailFailedCount")),
+            ("timeouts", detail.get("detailTimeoutCount")),
+            ("retries", detail.get("detailRetryCount")),
+        ]
+        summary = ", ".join(f"{key}={value}" for key, value in fields if value is not None)
+        return f"{error.message} ({summary})" if summary else error.message
 
     @staticmethod
     def _wrap_unexpected_error(

@@ -230,7 +230,9 @@ async def test_scraping_task_marks_pipeline_failed_when_all_detail_requests_fail
 
     assert exc_info.value.error_code == ScrapingErrorCode.SCRAPING_DETAIL_COMPLETENESS_FAILED
     assert status_service.success_calls == []
-    assert status_service.failure_calls == [("wanted", "All detail scraping requests failed.")]
+    assert status_service.failure_calls == [
+        ("wanted", "All detail scraping requests failed. (attempted=1, failed=1, timeouts=4, retries=2)")
+    ]
     assert len(log_service.failure_logs) == 1
     assert repository.saved_items == []
 

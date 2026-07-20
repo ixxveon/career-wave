@@ -1,4 +1,5 @@
 from contextlib import nullcontext
+from dataclasses import replace
 from time import sleep
 from urllib.parse import urlparse
 from xml.etree import ElementTree
@@ -6,7 +7,8 @@ from xml.etree import ElementTree
 import httpx
 from bs4 import BeautifulSoup
 
-from admin.scraping.adapter.scraper_adapter import RawJobNotice, ScraperAdapter
+from admin.scraping.adapter.scraper_adapter import RawJobNotice, ScraperAdapter, ScrapingDetailMetrics, get_with_retry
+from admin.scraping.exception import ScrapingErrorCode, ScrapingException
 
 
 class JumpitScraper(ScraperAdapter):
@@ -27,11 +29,16 @@ class JumpitScraper(ScraperAdapter):
         timeout_seconds: float = 10.0,
         max_items: int = 20,
         request_delay_seconds: float = 0.1,
+        max_detail_retries: int = 1,
+        retry_backoff_seconds: float = 0.2,
     ) -> None:
         self._client = client
         self._timeout_seconds = timeout_seconds
         self._max_items = max_items
         self._request_delay_seconds = request_delay_seconds
+        self._max_detail_retries = max_detail_retries
+        self._retry_backoff_seconds = retry_backoff_seconds
+        self._detail_metrics = ScrapingDetailMetrics()
 
     @property
     def source_name(self) -> str:
@@ -42,27 +49,27 @@ class JumpitScraper(ScraperAdapter):
         return "Jumpit"
 
     def scrape(self) -> list[RawJobNotice]:
-        try:
-            with self._client_context() as client:
-                position_urls = self._fetch_position_urls(client)
-                notices: list[RawJobNotice] = []
-                for index, position_url in enumerate(position_urls):
-                    if index > 0:
-                        self._delay()
-                    detail = self._fetch_position_detail(client, position_url)
-                    if detail is None:
-                        continue
+        self._detail_metrics = ScrapingDetailMetrics()
+        with self._client_context() as client:
+            position_urls = self._fetch_position_urls(client)
+            notices: list[RawJobNotice] = []
+            for index, position_url in enumerate(position_urls):
+                if index > 0:
+                    self._delay()
+                detail = self._fetch_position_detail(client, position_url)
+                notice = self._to_raw_notice(position_url=position_url, detail=detail) if detail else None
+                self._record_detail_outcome(succeeded=notice is not None)
+                if notice is None:
+                    continue
 
-                    notice = self._to_raw_notice(position_url=position_url, detail=detail)
-                    if notice is None:
-                        continue
+                notices.append(notice)
+                if len(notices) >= self._max_items:
+                    break
+            return notices
 
-                    notices.append(notice)
-                    if len(notices) >= self._max_items:
-                        break
-                return notices
-        except (httpx.HTTPError, ElementTree.ParseError):
-            return []
+    @property
+    def detail_metrics(self) -> ScrapingDetailMetrics:
+        return self._detail_metrics
 
     def test_connection(self) -> bool:
         try:
@@ -84,10 +91,33 @@ class JumpitScraper(ScraperAdapter):
         )
 
     def _fetch_position_urls(self, client: httpx.Client) -> list[str]:
-        response = client.get(self._POSITION_SITEMAP_URL)
-        response.raise_for_status()
-
-        root = ElementTree.fromstring(response.text)
+        response, _ = get_with_retry(
+            client,
+            self._POSITION_SITEMAP_URL,
+            timeout_seconds=self._timeout_seconds,
+            max_retries=self._max_detail_retries,
+            retry_backoff_seconds=self._retry_backoff_seconds,
+        )
+        if response is None:
+            raise ScrapingException(
+                error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                message="Jumpit sitemap request failed.",
+                detail={"sourceName": self.source_name, "failureStage": "LIST"},
+            )
+        try:
+            root = ElementTree.fromstring(response.text)
+        except ElementTree.ParseError as error:
+            raise ScrapingException(
+                error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                message="Jumpit sitemap parsing failed.",
+                detail={"sourceName": self.source_name, "failureStage": "LIST"},
+            ) from error
+        if root.tag.rsplit("}", 1)[-1] != "urlset":
+            raise ScrapingException(
+                error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                message="Jumpit sitemap response format is invalid.",
+                detail={"sourceName": self.source_name, "failureStage": "LIST"},
+            )
         urls: list[str] = []
         seen: set[str] = set()
         for loc in root.findall("sm:url/sm:loc", self._XML_NAMESPACE):
@@ -105,11 +135,12 @@ class JumpitScraper(ScraperAdapter):
         if position_id is None:
             return None
 
+        response = self._get_detail_response(client, self._DETAIL_API_PATH.format(position_id=position_id))
+        if response is None:
+            return self._fetch_position_html_fallback(client, position_url)
         try:
-            response = client.get(self._DETAIL_API_PATH.format(position_id=position_id))
-            response.raise_for_status()
             payload = response.json()
-        except (httpx.HTTPError, ValueError):
+        except ValueError:
             return self._fetch_position_html_fallback(client, position_url)
 
         result = payload.get("result") if isinstance(payload, dict) else None
@@ -118,10 +149,8 @@ class JumpitScraper(ScraperAdapter):
         return self._fetch_position_html_fallback(client, position_url)
 
     def _fetch_position_html_fallback(self, client: httpx.Client, position_url: str) -> dict | None:
-        try:
-            response = client.get(position_url)
-            response.raise_for_status()
-        except httpx.HTTPError:
+        response = self._get_detail_response(client, position_url)
+        if response is None:
             return None
 
         soup = BeautifulSoup(response.text, "html.parser")
@@ -147,6 +176,29 @@ class JumpitScraper(ScraperAdapter):
             "companyLogoUrl": self._meta_content(soup, "property", "og:image"),
             "serviceInfo": description,
         }
+
+    def _get_detail_response(self, client: httpx.Client, url: str) -> httpx.Response | None:
+        response, metrics = get_with_retry(
+            client,
+            url,
+            timeout_seconds=self._timeout_seconds,
+            max_retries=self._max_detail_retries,
+            retry_backoff_seconds=self._retry_backoff_seconds,
+        )
+        self._detail_metrics = replace(
+            self._detail_metrics,
+            timeout_count=self._detail_metrics.timeout_count + metrics.timeout_count,
+            retry_count=self._detail_metrics.retry_count + metrics.retry_count,
+        )
+        return response
+
+    def _record_detail_outcome(self, *, succeeded: bool) -> None:
+        self._detail_metrics = replace(
+            self._detail_metrics,
+            attempted_count=self._detail_metrics.attempted_count + 1,
+            succeeded_count=self._detail_metrics.succeeded_count + int(succeeded),
+            failed_count=self._detail_metrics.failed_count + int(not succeeded),
+        )
 
     @classmethod
     def _to_raw_notice(cls, *, position_url: str, detail: dict) -> RawJobNotice | None:

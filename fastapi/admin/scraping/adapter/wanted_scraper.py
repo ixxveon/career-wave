@@ -7,7 +7,8 @@ from typing import Any
 import httpx
 from bs4 import BeautifulSoup
 
-from admin.scraping.adapter.scraper_adapter import RawJobNotice, ScraperAdapter, ScrapingDetailMetrics
+from admin.scraping.adapter.scraper_adapter import RawJobNotice, ScraperAdapter, ScrapingDetailMetrics, get_with_retry
+from admin.scraping.exception import ScrapingErrorCode, ScrapingException
 
 
 class WantedScraper(ScraperAdapter):
@@ -104,16 +105,35 @@ class WantedScraper(ScraperAdapter):
         )
 
     def _fetch_job_list(self, client: httpx.Client) -> dict[str, Any]:
-        response = client.get(
+        response, _ = get_with_retry(
+            client,
             self._LIST_API_URL,
+            timeout_seconds=self._timeout_seconds,
+            max_retries=self._max_detail_retries,
+            retry_backoff_seconds=self._retry_backoff_seconds,
             params=self._list_params(limit=self._max_items, offset=0),
         )
-        response.raise_for_status()
+        if response is None:
+            raise ScrapingException(
+                error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                message="Wanted list request failed.",
+                detail={"sourceName": self.source_name, "failureStage": "LIST"},
+            )
         try:
             payload = response.json()
         except ValueError:
-            return {}
-        return payload if isinstance(payload, dict) else {}
+            raise ScrapingException(
+                error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                message="Wanted list response parsing failed.",
+                detail={"sourceName": self.source_name, "failureStage": "LIST"},
+            )
+        if not isinstance(payload, dict):
+            raise ScrapingException(
+                error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                message="Wanted list response format is invalid.",
+                detail={"sourceName": self.source_name, "failureStage": "LIST"},
+            )
+        return payload
 
     @staticmethod
     def _list_params(*, limit: int, offset: int) -> dict[str, str | int]:
