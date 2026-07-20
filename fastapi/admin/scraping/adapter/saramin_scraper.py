@@ -1,4 +1,5 @@
 from contextlib import nullcontext
+from dataclasses import replace
 from time import sleep
 from urllib.parse import parse_qs, urljoin, urlparse
 
@@ -6,7 +7,13 @@ import httpx
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from admin.scraping.adapter.scraper_adapter import RawJobNotice, ScraperAdapter
+from admin.scraping.adapter.scraper_adapter import (
+    RawJobNotice,
+    ScraperAdapter,
+    ScrapingDetailMetrics,
+    get_with_retry,
+)
+from admin.scraping.exception import ScrapingErrorCode, ScrapingException
 
 
 class SaraminScraper(ScraperAdapter):
@@ -33,12 +40,17 @@ class SaraminScraper(ScraperAdapter):
         max_items: int = 20,
         request_delay_seconds: float = 0.1,
         keyword: str = "python",
+        max_detail_retries: int = 1,
+        retry_backoff_seconds: float = 0.2,
     ) -> None:
         self._client = client
         self._timeout_seconds = timeout_seconds
         self._max_items = max_items
         self._request_delay_seconds = request_delay_seconds
         self._keyword = keyword
+        self._max_detail_retries = max_detail_retries
+        self._retry_backoff_seconds = retry_backoff_seconds
+        self._detail_metrics = ScrapingDetailMetrics()
 
     @property
     def source_name(self) -> str:
@@ -49,17 +61,37 @@ class SaraminScraper(ScraperAdapter):
         return "Saramin"
 
     def scrape(self) -> list[RawJobNotice]:
+        self._detail_metrics = ScrapingDetailMetrics()
         with self._client_context() as client:
-            response = client.get(
+            response, _ = get_with_retry(
+                client,
                 self._LIST_API_URL,
+                timeout_seconds=self._timeout_seconds,
+                max_retries=self._max_detail_retries,
+                retry_backoff_seconds=self._retry_backoff_seconds,
                 params=self._search_params(),
             )
-            response.raise_for_status()
+            if response is None:
+                raise ScrapingException(
+                    error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                    message="Saramin list request failed.",
+                    detail={"sourceName": self.source_name, "failureStage": "LIST"},
+                )
             try:
                 payload = response.json()
             except ValueError:
-                return []
+                raise ScrapingException(
+                    error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                    message="Saramin list response parsing failed.",
+                    detail={"sourceName": self.source_name, "failureStage": "LIST"},
+                )
             inner_html = payload.get("innerHTML") if isinstance(payload, dict) else None
+            if not isinstance(inner_html, str):
+                raise ScrapingException(
+                    error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                    message="Saramin list response format is invalid.",
+                    detail={"sourceName": self.source_name, "failureStage": "LIST"},
+                )
 
             soup = BeautifulSoup(inner_html or "", "html.parser")
             notices: list[RawJobNotice] = []
@@ -69,6 +101,7 @@ class SaraminScraper(ScraperAdapter):
                     continue
 
                 description = self._fetch_description(client, notice.original_url)
+                self._record_detail_outcome(succeeded=description is not None)
                 if description:
                     notice = RawJobNotice(
                         original_url=notice.original_url,
@@ -86,11 +119,18 @@ class SaraminScraper(ScraperAdapter):
                         deadline=notice.deadline,
                     )
 
+                if description is None:
+                    self._delay()
+                    continue
                 notices.append(notice)
                 if len(notices) >= self._max_items:
                     break
                 self._delay()
             return notices
+
+    @property
+    def detail_metrics(self) -> ScrapingDetailMetrics:
+        return self._detail_metrics
 
     def test_connection(self) -> bool:
         try:
@@ -193,10 +233,8 @@ class SaraminScraper(ScraperAdapter):
             if ajax_description:
                 return ajax_description
 
-        try:
-            response = client.get(original_url)
-            response.raise_for_status()
-        except httpx.HTTPError:
+        response = self._get_detail_response(client, original_url)
+        if response is None:
             return None
 
         soup = BeautifulSoup(response.text, "html.parser")
@@ -213,13 +251,12 @@ class SaraminScraper(ScraperAdapter):
         return None
 
     def _fetch_ajax_description(self, client: httpx.Client, rec_idx: str) -> str | None:
-        try:
-            response = client.get(
-                urljoin(self._BASE_URL, self._DETAIL_AJAX_PATH),
-                params={"rec_idx": rec_idx},
-            )
-            response.raise_for_status()
-        except httpx.HTTPError:
+        response = self._get_detail_response(
+            client,
+            urljoin(self._BASE_URL, self._DETAIL_AJAX_PATH),
+            params={"rec_idx": rec_idx},
+        )
+        if response is None:
             return None
 
         soup = BeautifulSoup(response.text, "html.parser")
@@ -235,6 +272,36 @@ class SaraminScraper(ScraperAdapter):
             if self._is_valid_description(text):
                 return text
         return None
+
+    def _get_detail_response(
+        self,
+        client: httpx.Client,
+        url: str,
+        *,
+        params: dict[str, object] | None = None,
+    ) -> httpx.Response | None:
+        response, metrics = get_with_retry(
+            client,
+            url,
+            timeout_seconds=self._timeout_seconds,
+            max_retries=self._max_detail_retries,
+            retry_backoff_seconds=self._retry_backoff_seconds,
+            params=params,
+        )
+        self._detail_metrics = replace(
+            self._detail_metrics,
+            timeout_count=self._detail_metrics.timeout_count + metrics.timeout_count,
+            retry_count=self._detail_metrics.retry_count + metrics.retry_count,
+        )
+        return response
+
+    def _record_detail_outcome(self, *, succeeded: bool) -> None:
+        self._detail_metrics = replace(
+            self._detail_metrics,
+            attempted_count=self._detail_metrics.attempted_count + 1,
+            succeeded_count=self._detail_metrics.succeeded_count + int(succeeded),
+            failed_count=self._detail_metrics.failed_count + int(not succeeded),
+        )
 
     @staticmethod
     def _extract_rec_idx(original_url: str) -> str | None:

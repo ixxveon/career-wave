@@ -2,13 +2,15 @@ import json
 import re
 import xml.etree.ElementTree as ET
 from contextlib import nullcontext
+from dataclasses import replace
 from time import sleep
 from urllib.parse import urljoin, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
 
-from admin.scraping.adapter.scraper_adapter import RawJobNotice, ScraperAdapter
+from admin.scraping.adapter.scraper_adapter import RawJobNotice, ScraperAdapter, ScrapingDetailMetrics, get_with_retry
+from admin.scraping.exception import ScrapingErrorCode, ScrapingException
 
 
 class GroupByScraper(ScraperAdapter):
@@ -49,11 +51,16 @@ class GroupByScraper(ScraperAdapter):
         timeout_seconds: float = 10.0,
         max_items: int = 20,
         request_delay_seconds: float = 0.1,
+        max_detail_retries: int = 1,
+        retry_backoff_seconds: float = 0.2,
     ) -> None:
         self._client = client
         self._timeout_seconds = timeout_seconds
         self._max_items = max_items
         self._request_delay_seconds = request_delay_seconds
+        self._max_detail_retries = max_detail_retries
+        self._retry_backoff_seconds = retry_backoff_seconds
+        self._detail_metrics = ScrapingDetailMetrics()
 
     @property
     def source_name(self) -> str:
@@ -64,10 +71,12 @@ class GroupByScraper(ScraperAdapter):
         return "GroupBy"
 
     def scrape(self) -> list[RawJobNotice]:
+        self._detail_metrics = ScrapingDetailMetrics()
         with self._client_context() as client:
             notices: list[RawJobNotice] = []
             for notice_url in self._collect_notice_urls(client):
                 notice = self._fetch_notice(client, notice_url)
+                self._record_detail_outcome(succeeded=notice is not None)
                 if notice is None:
                     continue
                 notices.append(notice)
@@ -75,6 +84,10 @@ class GroupByScraper(ScraperAdapter):
                     break
                 self._delay()
             return notices
+
+    @property
+    def detail_metrics(self) -> ScrapingDetailMetrics:
+        return self._detail_metrics
 
     def test_connection(self) -> bool:
         try:
@@ -101,6 +114,7 @@ class GroupByScraper(ScraperAdapter):
         visited: set[str] = set()
         seen_notice_urls: set[str] = set()
         notice_urls: list[str] = []
+        successful_sitemap_count = 0
 
         while queue and len(notice_urls) < self._max_items:
             sitemap_url = queue.pop(0)
@@ -108,13 +122,26 @@ class GroupByScraper(ScraperAdapter):
                 continue
             visited.add(sitemap_url)
 
-            try:
-                response = client.get(sitemap_url)
-                response.raise_for_status()
-            except httpx.HTTPError:
+            response, _ = get_with_retry(
+                client,
+                sitemap_url,
+                timeout_seconds=self._timeout_seconds,
+                max_retries=self._max_detail_retries,
+                retry_backoff_seconds=self._retry_backoff_seconds,
+            )
+            if response is None:
                 continue
+            successful_sitemap_count += 1
 
-            for loc in self._extract_sitemap_locations(response.text):
+            try:
+                locations = self._extract_sitemap_locations(response.text)
+            except ET.ParseError:
+                raise ScrapingException(
+                    error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                    message="GroupBy sitemap parsing failed.",
+                    detail={"sourceName": self.source_name, "failureStage": "LIST"},
+                )
+            for loc in locations:
                 if not self._is_same_host(loc):
                     continue
                 if loc.endswith(".xml"):
@@ -129,14 +156,19 @@ class GroupByScraper(ScraperAdapter):
                 notice_urls.append(loc)
                 if len(notice_urls) >= self._max_items:
                     break
+        if successful_sitemap_count == 0:
+            raise ScrapingException(
+                error_code=ScrapingErrorCode.SCRAPING_EXECUTION_FAILED,
+                message="GroupBy sitemap request failed.",
+                detail={"sourceName": self.source_name, "failureStage": "LIST"},
+            )
         return notice_urls
 
     @staticmethod
     def _extract_sitemap_locations(xml_text: str) -> list[str]:
-        try:
-            root = ET.fromstring(xml_text)
-        except ET.ParseError:
-            return []
+        root = ET.fromstring(xml_text)
+        if root.tag.rsplit("}", 1)[-1] not in {"urlset", "sitemapindex"}:
+            raise ET.ParseError("Unexpected sitemap root element.")
 
         locations: list[str] = []
         for element in root.iter():
@@ -148,10 +180,19 @@ class GroupByScraper(ScraperAdapter):
         return locations
 
     def _fetch_notice(self, client: httpx.Client, notice_url: str) -> RawJobNotice | None:
-        try:
-            response = client.get(notice_url)
-            response.raise_for_status()
-        except httpx.HTTPError:
+        response, metrics = get_with_retry(
+            client,
+            notice_url,
+            timeout_seconds=self._timeout_seconds,
+            max_retries=self._max_detail_retries,
+            retry_backoff_seconds=self._retry_backoff_seconds,
+        )
+        self._detail_metrics = replace(
+            self._detail_metrics,
+            timeout_count=self._detail_metrics.timeout_count + metrics.timeout_count,
+            retry_count=self._detail_metrics.retry_count + metrics.retry_count,
+        )
+        if response is None:
             return None
 
         soup = BeautifulSoup(response.text, "html.parser")
@@ -186,6 +227,14 @@ class GroupByScraper(ScraperAdapter):
                 self._schema_text(job_posting, "validThrough")
                 or self._find_labeled_value(soup, ("deadline", "due date", "closing date"))
             ),
+        )
+
+    def _record_detail_outcome(self, *, succeeded: bool) -> None:
+        self._detail_metrics = replace(
+            self._detail_metrics,
+            attempted_count=self._detail_metrics.attempted_count + 1,
+            succeeded_count=self._detail_metrics.succeeded_count + int(succeeded),
+            failed_count=self._detail_metrics.failed_count + int(not succeeded),
         )
 
     @staticmethod
