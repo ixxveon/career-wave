@@ -211,7 +211,12 @@ async def interview_ws(
             "voice_quality_by_order": {},
         })
     else:
-        await session_store.refresh_session_ttl(redis, session_id)
+        # rag-context / pending LLM 경로가 WS 연결 전 세션 메타를 먼저 생성한 경우
+        # member_id 없이 생성되므로, JWT에서 검증한 값을 병합해 파이프라인 사용량 적재 누락을 방지한다.
+        if not existing_meta.get("member_id"):
+            await session_store.save_session_meta(redis, session_id, {"member_id": member_id})
+        else:
+            await session_store.refresh_session_ttl(redis, session_id)
 
     slog.info("WS connected: lastReceivedSeq=%s", lastReceivedSequenceNumber)
 
