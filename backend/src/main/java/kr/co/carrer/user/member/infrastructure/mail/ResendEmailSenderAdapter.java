@@ -62,8 +62,8 @@ public class ResendEmailSenderAdapter implements EmailSenderPort {
     public void sendVerificationCode(String toEmail, String code) {
         if (webClient == null) {
             if (isLocalOrTest()) {
-                // local/test: 키 없어도 기동 가능 — 발송 skip (인증번호는 로그로 확인)
-                log.warn("[Resend] 이메일 발송 스킵 — API 키 미설정 (local/test). code={}", code);
+                // local/test: 키 없어도 기동 가능 — 발송 skip (인증번호는 로그에 미노출, NFR-002)
+                log.warn("[Resend] 이메일 발송 스킵 — API 키 미설정 (local/test)");
                 return;
             }
             // 운영/스테이징: 키 미설정은 설정 오류 — fail-fast
