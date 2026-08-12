@@ -9,6 +9,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.net.URI;
@@ -43,8 +44,8 @@ public class S3Config {
                 .build();
     }
 
-    private S3Client.Builder clientBuilder() {
-        S3Client.Builder builder = S3Client.builder()
+    private S3ClientBuilder clientBuilder() {
+        S3ClientBuilder builder = S3Client.builder()
                 .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(credentials()))
                 .serviceConfiguration(serviceConfiguration());
