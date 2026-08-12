@@ -4,6 +4,7 @@ from pathlib import Path
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
+from botocore.config import Config
 import pdfplumber
 from docx import Document
 
@@ -115,6 +116,11 @@ class RagDocumentParser:
             aws_access_key_id=settings.aws_access_key_id,
             aws_secret_access_key=settings.aws_secret_access_key,
             region_name=settings.aws_region,
+            endpoint_url=settings.aws_s3_endpoint or None,
+            config=Config(
+                signature_version="s3v4",
+                s3={"addressing_style": "path" if settings.aws_s3_force_path_style else "auto"},
+            ),
         )
 
         try:

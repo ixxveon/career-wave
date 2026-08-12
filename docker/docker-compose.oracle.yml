@@ -1,0 +1,110 @@
+services:
+  nginx:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_WS_BASE_URL: ${VITE_WS_BASE_URL}
+        VITE_FASTAPI_BASE_URL: ${VITE_FASTAPI_BASE_URL}
+        VITE_FASTAPI_WS_URL: ${VITE_FASTAPI_WS_URL}
+        VITE_TOSS_CLIENT_KEY: ${VITE_TOSS_CLIENT_KEY}
+        VITE_COOKIE_DOMAIN: ${VITE_COOKIE_DOMAIN}
+        VITE_USE_MOCK_DATA: ${VITE_USE_MOCK_DATA}
+    container_name: careerwave-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - nginx_certs:/etc/letsencrypt:ro
+      - nginx_webroot:/var/www/certbot:ro
+    depends_on:
+      - spring
+      - fastapi
+    restart: unless-stopped
+
+  spring:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: career-wave-spring
+    env_file:
+      - ../.env
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      FASTAPI_BASE_URL: http://fastapi:8000
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      fastapi:
+        condition: service_started
+    restart: unless-stopped
+
+  fastapi:
+    build:
+      context: ..
+      dockerfile: fastapi/Dockerfile
+    container_name: career-wave-fastapi
+    env_file:
+      - ../.env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+      SPRING_BASE_URL: http://spring:8080
+      AI_METRICS_INTERNAL_BASE_URL: http://fastapi:8000/internal/admin/ai-metrics
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - fastapi_data:/app/data
+      - fastapi_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17
+    container_name: careerwave-db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: careerwave-redis
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  fastapi_data:
+  fastapi_storage:
+  nginx_certs:
+  nginx_webroot:

@@ -7,6 +7,7 @@ import boto3
 import httpx
 import pdfplumber
 from botocore.exceptions import BotoCoreError, ClientError
+from botocore.config import Config
 from docx import Document
 
 from core.config import get_settings
@@ -36,6 +37,11 @@ def _get_s3_client():
         aws_access_key_id=settings.aws_access_key_id,
         aws_secret_access_key=settings.aws_secret_access_key,
         region_name=settings.aws_region,
+        endpoint_url=settings.aws_s3_endpoint or None,
+        config=Config(
+            signature_version="s3v4",
+            s3={"addressing_style": "path" if settings.aws_s3_force_path_style else "auto"},
+        ),
     )
 
 

@@ -43,6 +43,8 @@ class AiMetricsSettings(BaseSettings):
     aws_access_key_id: str = Field(default="", alias="AWS_ACCESS_KEY_ID")
     aws_secret_access_key: str = Field(default="", alias="AWS_SECRET_ACCESS_KEY")
     aws_region: str = Field(default="ap-northeast-2", alias="AWS_REGION")
+    aws_s3_endpoint: str = Field(default="", alias="AWS_S3_ENDPOINT")
+    aws_s3_force_path_style: bool = Field(default=True, alias="AWS_S3_FORCE_PATH_STYLE")
     aws_s3_bucket: str = Field(
         default="",
         validation_alias=AliasChoices("AWS_S3_BUCKET", "AWS_S3_BUCKET_NAME"),

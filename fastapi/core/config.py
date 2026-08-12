@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -47,7 +48,9 @@ class Settings(BaseSettings):
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""
     aws_region: str = "ap-northeast-2"
-    aws_s3_bucket: str = ""
+    aws_s3_bucket: str = Field(default="", validation_alias="AWS_S3_BUCKET_NAME")
+    aws_s3_endpoint: str = Field(default="", validation_alias="AWS_S3_ENDPOINT")
+    aws_s3_force_path_style: bool = Field(default=True, validation_alias="AWS_S3_FORCE_PATH_STYLE")
 
 
 @lru_cache
